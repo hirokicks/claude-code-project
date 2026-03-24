@@ -1,0 +1,68 @@
+/* ============================================================
+   Design System: 事業紹介・社会的役割
+   Generated from Google Stitch
+   Project ID: projects/8895361997370032049
+   Device: DESKTOP
+   Color Mode: LIGHT
+   Fonts: PLUS_JAKARTA_SANS (headline) / MANROPE (body)
+   ============================================================ */
+
+/* --- Color Tokens --- */
+:root {
+  --background: #f8faf8;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --inverse-on-surface: #eff1ef;
+  --inverse-primary: #8ad893;
+  --inverse-surface: #2e3130;
+  --on-background: #191c1b;
+  --on-error: #ffffff;
+  --on-error-container: #93000a;
+  --on-primary: #ffffff;
+  --on-primary-container: #003512;
+  --on-primary-fixed: #002108;
+  --on-primary-fixed-variant: #005320;
+  --on-secondary: #ffffff;
+  --on-secondary-container: #506873;
+  --on-secondary-fixed: #051e28;
+  --on-secondary-fixed-variant: #334a55;
+  --on-surface: #191c1b;
+  --on-surface-variant: #40493f;
+  --on-tertiary: #ffffff;
+  --on-tertiary-container: #003143;
+  --on-tertiary-fixed: #001e2b;
+  --on-tertiary-fixed-variant: #004d67;
+  --outline: #707a6e;
+  --outline-variant: #bfc9bc;
+  --primary: #1e6c33;
+  --primary-container: #58a464;
+  --primary-fixed: #a5f5ad;
+  --primary-fixed-dim: #8ad893;
+  --secondary: #4a626d;
+  --secondary-container: #cde6f4;
+  --secondary-fixed: #cde6f4;
+  --secondary-fixed-dim: #b1cad7;
+  --surface: #f8faf8;
+  --surface-bright: #f8faf8;
+  --surface-container: #eceeec;
+  --surface-container-high: #e6e9e7;
+  --surface-container-highest: #e1e3e1;
+  --surface-container-low: #f2f4f2;
+  --surface-container-lowest: #ffffff;
+  --surface-dim: #d8dad9;
+  --surface-tint: #1e6c33;
+  --surface-variant: #e1e3e1;
+  --tertiary: #006688;
+  --tertiary-container: #0f9fd1;
+  --tertiary-fixed: #c2e8ff;
+  --tertiary-fixed-dim: #75d1ff;
+}
+
+/* --- Component Styles --- */
+.material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      /* Ensure zero radius across all elements */
+      *, *::before, *::after {
+        border-radius: 0 !important;
+      }

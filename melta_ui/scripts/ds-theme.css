@@ -1,0 +1,113 @@
+/* ==========================================================================
+   melta UI — Shared Theme (ds-theme.css)
+   Base styles, CSS variables, sidebar chrome, keyframes
+   ========================================================================== */
+
+/* --- Base Styles --- */
+body { line-height: 2.0; letter-spacing: 0.02em; }
+h1, h2, h3, h4, h5, h6 { line-height: 1.4; letter-spacing: 0.01em; }
+
+/* --- CSS Variables (Light Theme) --- */
+:root {
+  --bg-page: #f9fafb;
+  --bg-page-alt: #f3f4f6;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f9fafb;
+  --text-heading: #0f172a;
+  --text-default: #3d4b5f;
+  --text-muted: #64748b;
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --sidebar-active-color: #2b70ef;
+  --sidebar-active-bg: #f0f5ff;
+
+  --wf-bg: #FFFFFF;
+  --wf-surface: #F5F5F5;
+  --wf-border: #E0E0E0;
+  --wf-text: #333333;
+  --wf-text-sub: #888888;
+  --wf-accent: #666666;
+}
+
+/* --- Dark Theme --- */
+html[data-theme="dark"] {
+  --bg-page: #0f172a;
+  --bg-page-alt: #1e293b;
+  --bg-surface: #1e293b;
+  --bg-surface-alt: #0f172a;
+  --text-heading: #f1f5f9;
+  --text-default: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-default: #334155;
+  --border-strong: #475569;
+  --input-bg: #0f172a;
+  --input-border: #475569;
+  --sidebar-active-color: #95b6ff;
+  --sidebar-active-bg: #0e266a;
+}
+
+/* Bug fix: dark mode body background */
+html[data-theme="dark"] body {
+  background: var(--bg-page);
+}
+
+/* --- Sidebar Chrome --- */
+.ds-sidebar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.ds-sidebar::-webkit-scrollbar { width: 4px; }
+.ds-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+.ds-sidebar a[data-nav]:hover {
+  background: var(--bg-page-alt);
+}
+.ds-sidebar a.active {
+  color: var(--sidebar-active-color) !important;
+  font-weight: 600;
+  background: var(--sidebar-active-bg) !important;
+}
+.ds-nav-group-items { display: none; }
+.ds-nav-group-items.open { display: block; }
+
+/* --- Keyframes --- */
+@keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.skeleton-pulse { animation: skeletonPulse 1.5s ease-in-out infinite; }
+
+.inline-spinner {
+  width: 1em; aspect-ratio: 1; border-radius: 50%;
+  border: 2.5px solid currentColor;
+  animation: spinnerClip 0.8s infinite linear alternate, spinnerRotate 1.6s infinite linear;
+}
+@keyframes spinnerClip {
+  0%{clip-path:polygon(50% 50%,0 0,50% 0%,50% 0%,50% 0%,50% 0%,50% 0%)}
+  12.5%{clip-path:polygon(50% 50%,0 0,50% 0%,100% 0%,100% 0%,100% 0%,100% 0%)}
+  25%{clip-path:polygon(50% 50%,0 0,50% 0%,100% 0%,100% 100%,100% 100%,100% 100%)}
+  50%{clip-path:polygon(50% 50%,0 0,50% 0%,100% 0%,100% 100%,50% 100%,0% 100%)}
+  62.5%{clip-path:polygon(50% 50%,100% 0,100% 0%,100% 0%,100% 100%,50% 100%,0% 100%)}
+  75%{clip-path:polygon(50% 50%,100% 100%,100% 100%,100% 100%,100% 100%,50% 100%,0% 100%)}
+  100%{clip-path:polygon(50% 50%,50% 100%,50% 100%,50% 100%,50% 100%,50% 100%,0% 100%)}
+}
+@keyframes spinnerRotate {
+  0%{transform:scaleY(1) rotate(0deg)} 49.99%{transform:scaleY(1) rotate(135deg)}
+  50%{transform:scaleY(-1) rotate(0deg)} 100%{transform:scaleY(-1) rotate(-135deg)}
+}
+
+.dot-loader { display:flex; align-items:center; gap:5px; height:34px; }
+.dot-loader span { width:9px; height:17px; background:#2b70ef; border-radius:3px; animation:dotWave 1.2s infinite ease-in-out; }
+.dot-loader span:nth-child(2){animation-delay:0.2s}
+.dot-loader span:nth-child(3){animation-delay:0.4s}
+@keyframes dotWave { 0%,100%{transform:translateY(0)} 25%{transform:translateY(-50%)} 50%{transform:translateY(50%)} 75%{transform:translateY(0)} }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+@keyframes scaleCheck { 0%{transform:scale(0);opacity:0} 50%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-2px)} }
+@keyframes toastSlideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes toastSlideOut { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

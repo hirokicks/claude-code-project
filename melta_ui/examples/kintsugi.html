@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <title>Kintsugi - プロジェクトアナリティクス</title>
+  <meta name="description" content="melta UI で構築したプロジェクト管理ツールサンプル。">
+  <meta property="og:title" content="Kintsugi - プロジェクトアナリティクス">
+  <meta property="og:description" content="melta UI で構築したプロジェクト管理ツールサンプル。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/kintsugi.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Kintsugi - プロジェクトアナリティクス">
+  <meta name="twitter:description" content="melta UI で構築したプロジェクト管理ツールサンプル。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+              400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+              800:'#13318d',900:'#0e266a',950:'#07194e'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+    body {
+      font-family: 'Inter', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      line-height: 2.0;
+      letter-spacing: 0.02em;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <div class="flex h-screen">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col h-full">
+      <!-- Header -->
+      <div class="px-4 py-4 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <svg class="w-7 h-7 text-primary-500" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="6" fill="currentColor"/>
+            <path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="text-lg font-bold text-slate-900">Kintsugi</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="メインナビゲーション">
+        <!-- Active: ダッシュボード -->
+        <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+          ダッシュボード
+        </a>
+        <!-- プロジェクト -->
+        <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+          プロジェクト
+        </a>
+        <!-- タスク -->
+        <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          タスク
+        </a>
+        <!-- チーム -->
+        <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          チーム
+        </a>
+        <!-- レポート -->
+        <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          レポート
+        </a>
+
+        <!-- Separator -->
+        <div class="border-t border-slate-200 my-2 mx-1"></div>
+
+        <!-- 設定 -->
+        <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          設定
+        </a>
+      </nav>
+
+      <!-- Footer -->
+      <div class="mt-auto border-t border-slate-200 p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-500 font-medium text-sm flex items-center justify-center flex-shrink-0" role="img" aria-label="田中 悠太">TY</div>
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-slate-900 truncate">田中 悠太</p>
+            <p class="text-xs text-slate-500 truncate">tanaka@kintsugi.io</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <main class="flex-1 bg-gray-50 overflow-y-auto">
+      <div class="max-w-7xl mx-auto px-8 py-12">
+
+        <!-- Page Header -->
+        <header class="flex items-center justify-between mb-10">
+          <div>
+            <h1 class="text-3xl font-bold text-slate-900">ダッシュボード</h1>
+            <p class="mt-1 text-sm text-body">プロジェクト全体の進捗状況を確認できます</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <!-- Date range selector -->
+            <div class="relative leading-normal">
+              <select class="appearance-none pl-3 pr-10 h-10 text-sm border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-primary-500/50 cursor-pointer">
+                <option>2026年3月1日 〜 3月13日</option>
+                <option>2026年2月1日 〜 2月28日</option>
+                <option>2026年1月1日 〜 1月31日</option>
+              </select>
+              <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+            <!-- Export button -->
+            <button class="inline-flex items-center justify-center gap-2 h-10 pl-3 pr-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              レポート出力
+            </button>
+          </div>
+        </header>
+
+        <!-- ===== KPI Metric Cards ===== -->
+        <section aria-label="主要指標">
+          <div class="grid grid-cols-4 gap-6">
+            <!-- 完了タスク -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-body">完了タスク</p>
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 inline-flex items-center justify-center">
+                  <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900">128</p>
+              <p class="mt-1 text-sm text-emerald-600 font-medium">+14% 前月比</p>
+            </div>
+            <!-- 進行中 -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-body">進行中</p>
+                <div class="w-10 h-10 rounded-lg bg-primary-50 inline-flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900">34</p>
+              <p class="mt-1 text-sm text-body">5件が期限間近</p>
+            </div>
+            <!-- チームメンバー -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-body">チームメンバー</p>
+                <div class="w-10 h-10 rounded-lg bg-slate-100 inline-flex items-center justify-center">
+                  <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900">12</p>
+              <p class="mt-1 text-sm text-body">3チーム構成</p>
+            </div>
+            <!-- 達成率 -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-body">達成率</p>
+                <div class="w-10 h-10 rounded-lg bg-amber-50 inline-flex items-center justify-center">
+                  <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900">87%</p>
+              <div class="mt-2">
+                <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="87" aria-valuemin="0" aria-valuemax="100">
+                  <div class="bg-primary-500 rounded-full h-2" style="width: 87%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== Two-column: Table + Sprint Progress ===== -->
+        <div class="mt-10 grid grid-cols-3 gap-6">
+
+          <!-- Left: Recent Tasks Table (2/3) -->
+          <section class="col-span-2" aria-label="最近のタスク">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-semibold text-slate-900">最近のタスク</h2>
+              <a href="#" class="text-sm text-primary-500 hover:text-primary-700 font-medium cursor-pointer">すべて表示</a>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-slate-200 bg-gray-50">
+                    <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">タスク名</th>
+                    <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">担当者</th>
+                    <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">ステータス</th>
+                    <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">期限</th>
+                    <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">優先度</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <!-- Row 1 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">ユーザー認証フローの改善</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="佐藤 美咲">SM</div>
+                        <span class="text-body">佐藤 美咲</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">完了</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月8日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">高</span>
+                    </td>
+                  </tr>
+                  <!-- Row 2 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">決済API連携テスト</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="高橋 健一">TK</div>
+                        <span class="text-body">高橋 健一</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700">進行中</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月15日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">高</span>
+                    </td>
+                  </tr>
+                  <!-- Row 3 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">ダッシュボードUI刷新</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="山本 瞳">YH</div>
+                        <span class="text-body">山本 瞳</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">レビュー</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月12日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">中</span>
+                    </td>
+                  </tr>
+                  <!-- Row 4 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">多言語対応（i18n）</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="渡辺 拓也">WT</div>
+                        <span class="text-body">渡辺 拓也</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">未着手</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月20日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">低</span>
+                    </td>
+                  </tr>
+                  <!-- Row 5 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">パフォーマンス最適化</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="中村 蓮">NR</div>
+                        <span class="text-body">中村 蓮</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700">進行中</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月18日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">高</span>
+                    </td>
+                  </tr>
+                  <!-- Row 6 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">E2Eテスト拡充</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="佐藤 美咲">SM</div>
+                        <span class="text-body">佐藤 美咲</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">完了</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月10日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">中</span>
+                    </td>
+                  </tr>
+                  <!-- Row 7 -->
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-slate-900 font-medium">通知システムリファクタ</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="高橋 健一">TK</div>
+                        <span class="text-body">高橋 健一</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">未着手</span>
+                    </td>
+                    <td class="py-3 px-4 text-body">3月25日</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">低</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Right: Sprint Progress (1/3) -->
+          <section class="col-span-1" aria-label="スプリント進捗">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-semibold text-slate-900">スプリント進捗</h2>
+              <span class="text-xs font-medium text-body">Sprint #14</span>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              <!-- Sprint summary -->
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <p class="text-2xl font-bold text-slate-900">72%</p>
+                  <p class="text-sm text-body">全体達成率</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">残り4日</p>
+                  <p class="text-xs text-body">3月17日まで</p>
+                </div>
+              </div>
+              <div class="mb-6">
+                <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100" aria-label="スプリント全体進捗">
+                  <div class="bg-primary-500 rounded-full h-2" style="width: 72%"></div>
+                </div>
+              </div>
+
+              <hr class="border-t border-slate-200 mb-6" role="separator">
+
+              <!-- Per-member progress -->
+              <h3 class="text-sm font-semibold text-slate-900 mb-4">メンバー別進捗</h3>
+              <div class="space-y-5">
+                <!-- Member 1 -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="佐藤 美咲">SM</div>
+                      <span class="text-sm text-slate-900">佐藤 美咲</span>
+                    </div>
+                    <span class="text-xs font-medium text-body">92%</span>
+                  </div>
+                  <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100" aria-label="佐藤 美咲の進捗">
+                    <div class="bg-emerald-500 rounded-full h-2" style="width: 92%"></div>
+                  </div>
+                </div>
+                <!-- Member 2 -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="高橋 健一">TK</div>
+                      <span class="text-sm text-slate-900">高橋 健一</span>
+                    </div>
+                    <span class="text-xs font-medium text-body">78%</span>
+                  </div>
+                  <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100" aria-label="高橋 健一の進捗">
+                    <div class="bg-primary-500 rounded-full h-2" style="width: 78%"></div>
+                  </div>
+                </div>
+                <!-- Member 3 -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="山本 瞳">YH</div>
+                      <span class="text-sm text-slate-900">山本 瞳</span>
+                    </div>
+                    <span class="text-xs font-medium text-body">65%</span>
+                  </div>
+                  <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" aria-label="山本 瞳の進捗">
+                    <div class="bg-primary-500 rounded-full h-2" style="width: 65%"></div>
+                  </div>
+                </div>
+                <!-- Member 4 -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="渡辺 拓也">WT</div>
+                      <span class="text-sm text-slate-900">渡辺 拓也</span>
+                    </div>
+                    <span class="text-xs font-medium text-body">45%</span>
+                  </div>
+                  <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" aria-label="渡辺 拓也の進捗">
+                    <div class="bg-amber-500 rounded-full h-2" style="width: 45%"></div>
+                  </div>
+                </div>
+                <!-- Member 5 -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="中村 蓮">NR</div>
+                      <span class="text-sm text-slate-900">中村 蓮</span>
+                    </div>
+                    <span class="text-xs font-medium text-body">58%</span>
+                  </div>
+                  <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100" aria-label="中村 蓮の進捗">
+                    <div class="bg-primary-500 rounded-full h-2" style="width: 58%"></div>
+                  </div>
+                </div>
+                <!-- Member 6 -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-primary-50 text-primary-500 font-medium text-xs flex items-center justify-center flex-shrink-0" role="img" aria-label="田中 悠太">TY</div>
+                      <span class="text-sm text-slate-900">田中 悠太</span>
+                    </div>
+                    <span class="text-xs font-medium text-body">84%</span>
+                  </div>
+                  <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="84" aria-valuemin="0" aria-valuemax="100" aria-label="田中 悠太の進捗">
+                    <div class="bg-primary-500 rounded-full h-2" style="width: 84%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+</body>
+</html>

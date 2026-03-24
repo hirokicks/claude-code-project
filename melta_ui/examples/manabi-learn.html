@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学びLearn - オンライン学習プラットフォーム</title>
+  <meta name="description" content="melta UI で構築した学習プラットフォームサンプル。">
+  <meta property="og:title" content="学びLearn - オンライン学習プラットフォーム">
+  <meta property="og:description" content="melta UI で構築した学習プラットフォームサンプル。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/manabi-learn.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="学びLearn - オンライン学習プラットフォーム">
+  <meta name="twitter:description" content="melta UI で構築した学習プラットフォームサンプル。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: {
+            50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',
+            400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',
+            800:'#3730a3',900:'#312e81',950:'#1e1b4b'
+          }
+        },
+        fontFamily: {
+          sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+        }
+      }
+    }
+  }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+    body { line-height: 2.0; letter-spacing: 0.02em; }
+    h1, h2, h3, h4, h5, h6 { line-height: 1.4; letter-spacing: 0.01em; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <!-- Header (sticky) -->
+  <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-8 flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2 cursor-pointer">
+        <svg class="w-7 h-7 text-primary-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+        </svg>
+        <span class="text-xl font-bold text-slate-900">学びLearn</span>
+      </a>
+
+      <!-- Navigation -->
+      <nav aria-label="メインナビゲーション">
+        <ul class="flex items-center gap-1">
+          <li>
+            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg cursor-pointer" aria-current="page">コース一覧</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">マイコース</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">学習履歴</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">コミュニティ</a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Right side: bell + user -->
+      <div class="flex items-center gap-4">
+        <button class="w-10 h-10 inline-flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" aria-label="通知">
+          <svg class="w-5 h-5 text-body" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </button>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-50 inline-flex items-center justify-center" role="img" aria-label="田中 美咲">
+            <span class="text-sm font-medium text-primary-500">美咲</span>
+          </div>
+          <span class="text-sm font-medium text-slate-900">田中 美咲</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="max-w-6xl mx-auto px-8 py-12">
+
+    <!-- Welcome section -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900">おかえりなさい、美咲さん</h1>
+          <p class="text-body mt-1">今日も一歩ずつ、学びを重ねていきましょう。</p>
+        </div>
+        <div class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          学習ストリーク: 12日連続
+        </div>
+      </div>
+    </section>
+
+    <!-- Learning stats -->
+    <section class="mb-10">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <p class="text-sm text-body mb-1">総学習時間</p>
+          <p class="text-2xl font-bold text-slate-900">48<span class="text-base font-medium text-body ml-1">時間</span></p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <p class="text-sm text-body mb-1">修了コース</p>
+          <p class="text-2xl font-bold text-slate-900">3<span class="text-base font-medium text-body ml-1">コース</span></p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <p class="text-sm text-body mb-1">取得バッジ</p>
+          <p class="text-2xl font-bold text-slate-900">7<span class="text-base font-medium text-body ml-1">個</span></p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <p class="text-sm text-body mb-1">今週の学習</p>
+          <p class="text-2xl font-bold text-primary-500">5.2<span class="text-base font-medium text-body ml-1">時間</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- My progress section -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold text-slate-900 mb-6">学習中のコース</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Course 1: TypeScript -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-primary-50 inline-flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">TypeScript 入門</h3>
+              <p class="text-sm text-body">65% 完了</p>
+            </div>
+          </div>
+          <div class="bg-slate-200 rounded-full h-2 mb-4" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" aria-label="TypeScript 入門の進捗">
+            <div class="bg-primary-500 rounded-full h-2" style="width: 65%"></div>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer w-full transition-colors">続きから学習</button>
+        </div>
+
+        <!-- Course 2: UI Design -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-primary-50 inline-flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">UI デザインの基礎</h3>
+              <p class="text-sm text-body">30% 完了</p>
+            </div>
+          </div>
+          <div class="bg-slate-200 rounded-full h-2 mb-4" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" aria-label="UI デザインの基礎の進捗">
+            <div class="bg-primary-500 rounded-full h-2" style="width: 30%"></div>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-gray-50 cursor-pointer w-full transition-colors">続きから学習</button>
+        </div>
+
+        <!-- Course 3: Project Management -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 inline-flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">プロジェクト管理実践</h3>
+              <p class="text-sm text-body">92% 完了</p>
+            </div>
+          </div>
+          <div class="bg-slate-200 rounded-full h-2 mb-4" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100" aria-label="プロジェクト管理実践の進捗">
+            <div class="bg-emerald-600 rounded-full h-2" style="width: 92%"></div>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer w-full transition-colors">あと少しで修了!</button>
+        </div>
+
+      </div>
+    </section>
+
+    <hr class="border-t border-slate-200 mb-10">
+
+    <!-- Tabs + Course catalog -->
+    <section>
+      <h2 class="text-xl font-bold text-slate-900 mb-6">コースを探す</h2>
+
+      <!-- Tabs -->
+      <div class="border-b border-slate-200 mb-8" role="tablist" aria-label="コース表示切り替え">
+        <button role="tab" aria-selected="true" class="text-sm font-semibold text-primary-500 border-b-2 border-primary-500 px-4 py-3 cursor-default">おすすめ</button>
+        <button role="tab" aria-selected="false" class="text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 px-4 py-3 cursor-pointer transition-colors">人気</button>
+        <button role="tab" aria-selected="false" class="text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 px-4 py-3 cursor-pointer transition-colors">新着</button>
+      </div>
+
+      <!-- Course card grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="tabpanel">
+
+        <!-- Card 1 -->
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="h-40 bg-cover bg-center" style="background-image: url('https://picsum.photos/seed/react-course/400/240')" role="img" aria-label="React コースのサムネイル"></div>
+          <div class="p-5">
+            <span class="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-xs font-medium">フロントエンド</span>
+            <h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">React で学ぶモダン Web 開発</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-200 inline-flex items-center justify-center flex-shrink-0" role="img" aria-label="佐藤 健太">
+                <span class="text-[10px] font-medium text-slate-600">佐</span>
+              </div>
+              <span class="text-sm text-body">佐藤 健太</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex items-center gap-0.5" aria-label="評価 4.8 / 5">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-sm text-body ml-1">4.8</span>
+              </div>
+              <span class="text-sm text-body">2,340人受講</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold text-slate-900">&yen;4,800</span>
+              <button class="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-[0.875rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">詳細を見る</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="h-40 bg-cover bg-center" style="background-image: url('https://picsum.photos/seed/python-ai/400/240')" role="img" aria-label="Python AI コースのサムネイル"></div>
+          <div class="p-5">
+            <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">AI / 機械学習</span>
+            <h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">Python で始める AI・機械学習</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-200 inline-flex items-center justify-center flex-shrink-0" role="img" aria-label="山田 理恵">
+                <span class="text-[10px] font-medium text-slate-600">山</span>
+              </div>
+              <span class="text-sm text-body">山田 理恵</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex items-center gap-0.5" aria-label="評価 4.9 / 5">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-sm text-body ml-1">4.9</span>
+              </div>
+              <span class="text-sm text-body">5,120人受講</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold text-slate-900">&yen;6,200</span>
+              <button class="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-[0.875rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">詳細を見る</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="h-40 bg-cover bg-center" style="background-image: url('https://picsum.photos/seed/figma-design/400/240')" role="img" aria-label="Figma コースのサムネイル"></div>
+          <div class="p-5">
+            <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">デザイン</span>
+            <h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">Figma 実践ワークショップ</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-200 inline-flex items-center justify-center flex-shrink-0" role="img" aria-label="鈴木 翔">
+                <span class="text-[10px] font-medium text-slate-600">鈴</span>
+              </div>
+              <span class="text-sm text-body">鈴木 翔</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex items-center gap-0.5" aria-label="評価 4.6 / 5">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-sm text-body ml-1">4.6</span>
+              </div>
+              <span class="text-sm text-body">1,870人受講</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold text-slate-900">&yen;3,500</span>
+              <button class="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-[0.875rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">詳細を見る</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="h-40 bg-cover bg-center" style="background-image: url('https://picsum.photos/seed/aws-cloud/400/240')" role="img" aria-label="AWS コースのサムネイル"></div>
+          <div class="p-5">
+            <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium">インフラ</span>
+            <h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">AWS クラウドアーキテクチャ入門</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-200 inline-flex items-center justify-center flex-shrink-0" role="img" aria-label="高橋 大輔">
+                <span class="text-[10px] font-medium text-slate-600">高</span>
+              </div>
+              <span class="text-sm text-body">高橋 大輔</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex items-center gap-0.5" aria-label="評価 4.7 / 5">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-sm text-body ml-1">4.7</span>
+              </div>
+              <span class="text-sm text-body">3,450人受講</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold text-slate-900">&yen;5,400</span>
+              <button class="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-[0.875rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">詳細を見る</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="h-40 bg-cover bg-center" style="background-image: url('https://picsum.photos/seed/data-analytics/400/240')" role="img" aria-label="データ分析コースのサムネイル"></div>
+          <div class="p-5">
+            <span class="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-xs font-medium">データ分析</span>
+            <h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">SQL とデータ分析の実践スキル</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-200 inline-flex items-center justify-center flex-shrink-0" role="img" aria-label="中村 優子">
+                <span class="text-[10px] font-medium text-slate-600">中</span>
+              </div>
+              <span class="text-sm text-body">中村 優子</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex items-center gap-0.5" aria-label="評価 4.5 / 5">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-sm text-body ml-1">4.5</span>
+              </div>
+              <span class="text-sm text-body">2,890人受講</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold text-slate-900">&yen;4,200</span>
+              <button class="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-[0.875rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">詳細を見る</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="h-40 bg-cover bg-center" style="background-image: url('https://picsum.photos/seed/agile-scrum/400/240')" role="img" aria-label="アジャイルコースのサムネイル"></div>
+          <div class="p-5">
+            <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">マネジメント</span>
+            <h3 class="text-base font-semibold text-slate-900 mt-3 mb-2">アジャイル開発とスクラム実践</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-200 inline-flex items-center justify-center flex-shrink-0" role="img" aria-label="伊藤 誠">
+                <span class="text-[10px] font-medium text-slate-600">伊</span>
+              </div>
+              <span class="text-sm text-body">伊藤 誠</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex items-center gap-0.5" aria-label="評価 4.4 / 5">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-4 h-4 text-amber-400 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-sm text-body ml-1">4.4</span>
+              </div>
+              <span class="text-sm text-body">1,560人受講</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold text-slate-900">&yen;3,800</span>
+              <button class="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-[0.875rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">詳細を見る</button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- View all link -->
+      <div class="text-center mt-10">
+        <a href="#" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium text-primary-500 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer">
+          すべてのコースを見る
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Learning tip banner -->
+    <section class="mt-12">
+      <div class="bg-primary-50 border border-primary-200 rounded-xl p-6 flex items-start gap-4">
+        <div class="w-10 h-10 rounded-lg bg-primary-100 inline-flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-semibold text-primary-800 mb-1">今日の学習ヒント</h3>
+          <p class="text-sm text-primary-700">ポモドーロテクニックを試してみましょう。25分の集中学習と5分の休憩を繰り返すことで、効率よく知識を定着させることができます。</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 mt-12">
+    <div class="max-w-6xl mx-auto px-8 py-8 flex items-center justify-between">
+      <p class="text-sm text-body">&copy; 2026 学びLearn. All rights reserved.</p>
+      <div class="flex items-center gap-6">
+        <a href="#" class="text-sm text-body hover:text-slate-900 transition-colors cursor-pointer">利用規約</a>
+        <a href="#" class="text-sm text-body hover:text-slate-900 transition-colors cursor-pointer">プライバシーポリシー</a>
+        <a href="#" class="text-sm text-body hover:text-slate-900 transition-colors cursor-pointer">お問い合わせ</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

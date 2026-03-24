@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>OG Image for X</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px;
+    height: 480px;
+    font-family: 'Inter', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .mesh {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    background: #2b70ef;
+  }
+  .blob-1 { width: 500px; height: 500px; top: -200px; right: -50px; opacity: 0.15; }
+  .blob-2 { width: 400px; height: 400px; bottom: -200px; left: -50px; opacity: 0.08; }
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 72px;
+    padding: 0 40px;
+  }
+  .left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .title {
+    font-size: 48px;
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  .title em {
+    font-style: normal;
+    color: #e07a3a;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: -4px;
+  }
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+    image-rendering: pixelated;
+  }
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+  .meta {
+    font-size: 16px;
+    color: #64748b;
+    font-weight: 500;
+  }
+  .right {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .code-block {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #94a3b8;
+    white-space: pre;
+    min-width: 340px;
+  }
+  .code-block .fn { color: #6492ff; }
+  .code-block .str { color: #34d399; }
+  .code-block .comment { color: #475569; }
+  .code-block .arrow { color: #64748b; }
+  .code-block .result { color: #f1f5f9; }
+</style>
+</head>
+<body>
+  <div class="mesh">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+  <div class="content">
+    <div class="left">
+      <h1 class="title">
+        <em>Claude Code</em>に特化した<br>デザインシステムを作って<br>工夫したこと
+      </h1>
+      <div class="brand">
+        <img class="brand-icon" src="Meltan.svg" alt="melta UI">
+        <span class="brand-name">melta UI</span>
+      </div>
+      <span class="meta">@tsubotax</span>
+    </div>
+    <div class="right">
+      <div class="code-block"><span class="comment">// AI が DS を API として叩ける</span>
+<span class="fn">get_component</span>(<span class="str">"table"</span>)
+<span class="arrow">→</span> <span class="result">仕様 + HTML + 禁止パターン</span>
+
+<span class="fn">check_rule</span>(<span class="str">"text-black shadow-lg"</span>)
+<span class="arrow">→</span> <span class="result">2 violations detected</span></div>
+    </div>
+  </div>
+</body>
+</html>

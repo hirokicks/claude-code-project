@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユーザー一覧 — melta UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+              400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+              800:'#13318d',900:'#0e266a',950:'#07194e'
+            },
+            wf: { bg:'#FFFFFF', surface:'#F5F5F5', border:'#E0E0E0', text:'#333333', 'text-sub':'#888888', accent:'#666666' }
+          },
+          fontFamily: {
+            sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>.text-body { color: #3d4b5f; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <div class="max-w-7xl mx-auto px-8 py-12">
+
+    <!-- ページヘッダー -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">ユーザー一覧</h1>
+        <p class="mt-1 text-base text-body">登録済みユーザーの管理・確認ができます</p>
+      </div>
+      <button class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        ユーザーを追加
+      </button>
+    </div>
+
+    <!-- テーブル -->
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[720px]">
+          <thead>
+            <tr class="border-b border-slate-200 bg-gray-50">
+              <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1 cursor-pointer hover:text-slate-700 select-none" aria-sort="ascending">
+                  ユーザー
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                  </svg>
+                </div>
+              </th>
+              <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1 cursor-pointer hover:text-slate-700 select-none" aria-sort="none">
+                  ロール
+                  <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </div>
+              </th>
+              <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">ステータス</th>
+              <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1 cursor-pointer hover:text-slate-700 select-none" aria-sort="none">
+                  登録日
+                  <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </div>
+              </th>
+              <th scope="col" class="text-right py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">アクション</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+
+            <!-- Row 1 -->
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-primary-50 text-primary-500 font-medium inline-flex items-center justify-center text-sm flex-shrink-0" role="img" aria-label="田中 翔太">田</div>
+                  <div>
+                    <div class="text-slate-900 font-medium">田中 翔太</div>
+                    <div class="text-xs text-body">tanaka.shota@example.com</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-body">管理者</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  アクティブ
+                </span>
+              </td>
+              <td class="py-3 px-4 text-body">2025-11-03</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button aria-label="田中 翔太を編集" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-body rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button aria-label="田中 翔太を削除" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 2 -->
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-600 font-medium inline-flex items-center justify-center text-sm flex-shrink-0" role="img" aria-label="佐藤 美咲">佐</div>
+                  <div>
+                    <div class="text-slate-900 font-medium">佐藤 美咲</div>
+                    <div class="text-xs text-body">sato.misaki@example.com</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-body">編集者</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  アクティブ
+                </span>
+              </td>
+              <td class="py-3 px-4 text-body">2025-12-18</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button aria-label="佐藤 美咲を編集" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-body rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button aria-label="佐藤 美咲を削除" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 3 -->
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-violet-50 text-violet-600 font-medium inline-flex items-center justify-center text-sm flex-shrink-0" role="img" aria-label="鈴木 健一">鈴</div>
+                  <div>
+                    <div class="text-slate-900 font-medium">鈴木 健一</div>
+                    <div class="text-xs text-body">suzuki.kenichi@example.com</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-body">閲覧者</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">招待中</span>
+              </td>
+              <td class="py-3 px-4 text-body">2026-01-07</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button aria-label="鈴木 健一を編集" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-body rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button aria-label="鈴木 健一を削除" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 4 -->
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-primary-50 text-primary-500 font-medium inline-flex items-center justify-center text-sm flex-shrink-0" role="img" aria-label="中村 彩香">中</div>
+                  <div>
+                    <div class="text-slate-900 font-medium">中村 彩香</div>
+                    <div class="text-xs text-body">nakamura.ayaka@example.com</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-body">編集者</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  アクティブ
+                </span>
+              </td>
+              <td class="py-3 px-4 text-body">2026-02-14</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button aria-label="中村 彩香を編集" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-body rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button aria-label="中村 彩香を削除" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 5 -->
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 font-medium inline-flex items-center justify-center text-sm flex-shrink-0" role="img" aria-label="山本 大輔">山</div>
+                  <div>
+                    <div class="text-slate-900 font-medium">山本 大輔</div>
+                    <div class="text-xs text-body">yamamoto.daisuke@example.com</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-body">閲覧者</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">無効</span>
+              </td>
+              <td class="py-3 px-4 text-body">2026-03-01</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button aria-label="山本 大輔を編集" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-body rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button aria-label="山本 大輔を削除" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 6 -->
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 font-medium inline-flex items-center justify-center text-sm flex-shrink-0" role="img" aria-label="伊藤 さくら">伊</div>
+                  <div>
+                    <div class="text-slate-900 font-medium">伊藤 さくら</div>
+                    <div class="text-xs text-body">ito.sakura@example.com</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-3 px-4 text-body">管理者</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  アクティブ
+                </span>
+              </td>
+              <td class="py-3 px-4 text-body">2026-03-15</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button aria-label="伊藤 さくらを編集" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-body rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button aria-label="伊藤 さくらを削除" class="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- テーブルフッター: 件数 + ページネーション -->
+      <div class="flex items-center justify-between px-4 py-3 border-t border-slate-200">
+        <p class="text-sm text-body">全 42 件中 1〜6 件を表示</p>
+
+        <nav aria-label="ページネーション">
+          <ul class="flex items-center gap-1">
+            <li>
+              <button disabled class="w-10 h-10 inline-flex items-center justify-center text-slate-300 cursor-not-allowed rounded-lg" aria-label="前のページ">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+            </li>
+            <li>
+              <button class="w-10 h-10 inline-flex items-center justify-center text-base font-medium text-white bg-primary-500 rounded-lg" aria-current="page" aria-label="ページ 1">1</button>
+            </li>
+            <li>
+              <button class="w-10 h-10 inline-flex items-center justify-center text-base font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" aria-label="ページ 2">2</button>
+            </li>
+            <li>
+              <button class="w-10 h-10 inline-flex items-center justify-center text-base font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" aria-label="ページ 3">3</button>
+            </li>
+            <li>
+              <span class="w-10 h-10 inline-flex items-center justify-center text-slate-500" aria-hidden="true">...</span>
+            </li>
+            <li>
+              <button class="w-10 h-10 inline-flex items-center justify-center text-base font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" aria-label="ページ 7">7</button>
+            </li>
+            <li>
+              <button class="w-10 h-10 inline-flex items-center justify-center text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" aria-label="次のページ">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

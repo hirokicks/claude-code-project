@@ -1,0 +1,30 @@
+{
+  "name": "@melta/design-system",
+  "version": "1.1.1",
+  "description": "melta UI — AI-Ready Design System with MCP server",
+  "private": true,
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsubotax/melta-ui.git"
+  },
+  "homepage": "https://melta.tsubotax.com",
+  "bin": {
+    "melta-ds-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "generate": "tsx tools/generate-css.ts && tsx tools/generate-tailwind.ts && tsx tools/generate-pen-variables.ts",
+    "validate": "tsx tools/validate-tokens.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  },
+  "license": "MIT"
+}

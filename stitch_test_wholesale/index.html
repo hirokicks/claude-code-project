@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Careers at Lumina Wholesale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Public Sans', sans-serif; background: #f7faf8; }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #f7faf8; border-bottom: 1px solid #bccabe;
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+    }
+    .nav-logo {
+      font-family: 'Public Sans', sans-serif; font-weight: 900;
+      font-size: 20px; color: #002110; letter-spacing: -1px; text-transform: uppercase;
+    }
+    .nav-links { display: flex; align-items: center; gap: 0; }
+    .nav-links a {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 14px; color: #002110; letter-spacing: 1.4px; text-transform: uppercase;
+      text-decoration: none; padding-left: 32px;
+    }
+    .nav-links a:first-child { padding-left: 0; }
+    .nav-btn {
+      background: #006d41; color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase;
+      padding: 8px 24px; border: none; cursor: pointer;
+    }
+
+    /* ── Main ── */
+    .main { padding-top: 96px; }
+
+    /* ── Hero ── */
+    .hero {
+      border-bottom: 1px solid #bccabe;
+      padding: 80px 48px 81px;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 48px;
+      grid-template-rows: 356px;
+    }
+    .hero-left {
+      grid-column: 1 / span 8;
+      display: flex; flex-direction: column; gap: 16px;
+      align-self: end; padding-bottom: 32px;
+    }
+    .hero-eyebrow {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 14px; color: #006d41; letter-spacing: 2.8px; text-transform: uppercase;
+      line-height: 20px;
+    }
+    .hero-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 96px; color: #002110; letter-spacing: -4.8px; text-transform: uppercase;
+      line-height: 96px;
+    }
+    .hero-right {
+      grid-column: 9 / span 4;
+      display: flex; flex-direction: column; gap: 32px;
+      align-self: end; padding-bottom: 16px;
+    }
+    .hero-border {
+      border-left: 4px solid #006d41; padding-left: 28px;
+    }
+    .hero-desc {
+      font-family: 'Public Sans', sans-serif; font-weight: 300;
+      font-size: 20px; color: #002110; line-height: 32.5px;
+    }
+    .hero-btn {
+      display: inline-flex; align-items: center; justify-content: space-between;
+      background: #006d41; padding: 20px 40px; cursor: pointer; border: none;
+      gap: 16px;
+    }
+    .hero-btn-text {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 16px; color: #fff; letter-spacing: 1.6px; text-transform: uppercase;
+    }
+    .hero-btn img { width: 16px; height: 16px; display: block; }
+
+    /* ── Image Block ── */
+    .image-block {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: 600px;
+    }
+    .image-block-photo {
+      grid-column: 1; grid-row: 1;
+      position: relative; overflow: hidden;
+      border-right: 1px solid #bccabe;
+    }
+    .image-block-photo img {
+      position: absolute; width: 100%; height: 106.5%; top: -3.25%; left: 0;
+      object-fit: cover; filter: saturate(0);
+    }
+    .image-block-photo-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,109,65,0.1); mix-blend-mode: multiply;
+    }
+    .image-block-content {
+      grid-column: 2; grid-row: 1;
+      background: #002110;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 96px;
+    }
+    .image-block-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 48px; color: #f7faf8; text-transform: uppercase; line-height: 48px;
+      margin-bottom: 32px;
+    }
+    .image-block-heading span { color: #4fd48f; }
+    .image-block-desc {
+      font-family: 'Public Sans', sans-serif; font-weight: 400;
+      font-size: 18px; color: rgba(247,250,248,0.7); line-height: 29.25px;
+      max-width: 448px; margin-bottom: 48px;
+    }
+    .stats-row { display: flex; gap: 16px; }
+    .stat-box {
+      flex: 1; border: 1px solid rgba(247,250,248,0.2);
+      padding: 25px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .stat-number {
+      font-family: 'Public Sans', sans-serif; font-weight: 900;
+      font-size: 30px; color: #4fd48f; line-height: 36px;
+    }
+    .stat-label {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #f7faf8; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px;
+    }
+
+    /* ── Spotlights ── */
+    .spotlights {
+      background: #fff;
+      padding: 128px 48px;
+      display: flex; flex-direction: column; gap: 80px;
+    }
+    .spotlights-header { display: flex; flex-direction: column; gap: 16px; }
+    .section-eyebrow {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 14px; color: #006d41; letter-spacing: 2.8px; text-transform: uppercase;
+      line-height: 20px;
+    }
+    .section-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 48px; color: #002110; letter-spacing: -1.2px; text-transform: uppercase;
+      line-height: 48px;
+    }
+    .spotlights-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-template-rows: 600px 298px;
+    }
+    /* Card 1 */
+    .card1 {
+      grid-column: 1 / span 7; grid-row: 1;
+      border: 1px solid #bccabe;
+      display: flex;
+    }
+    .card1-photo {
+      flex: 1; position: relative; overflow: hidden;
+    }
+    .card1-photo img {
+      position: absolute; height: 100%; left: -22.6%; width: 145.21%;
+      object-fit: cover; filter: saturate(0);
+    }
+    .card1-photo-overlay {
+      position: absolute; inset: 0;
+      background: #fff; mix-blend-mode: saturation;
+    }
+    .card1-content {
+      flex: 1; padding: 48px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .card-role {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #006d41; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px; margin-bottom: 16px;
+    }
+    .card-name {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 30px; color: #002110; text-transform: uppercase; line-height: 36px;
+      margin-bottom: 24px;
+    }
+    .card-quote-border {
+      border-left: 2px solid #006d41; padding-left: 18px; margin-bottom: 32px;
+    }
+    .card-quote {
+      font-family: 'Public Sans', sans-serif; font-weight: 400;
+      font-size: 16px; color: rgba(0,33,16,0.6); line-height: 24px;
+    }
+    .card-link {
+      display: inline-block;
+      border-bottom: 2px solid #4fd48f; padding-bottom: 6px;
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #002110; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px; text-decoration: none;
+    }
+    /* Card 2 */
+    .card2 {
+      grid-column: 9 / span 4; grid-row: 1;
+      border: 1px solid #bccabe;
+      position: relative; overflow: hidden;
+      display: flex; align-items: flex-end;
+      padding: 28px 33px;
+    }
+    .card2-bg {
+      position: absolute; inset: 0;
+    }
+    .card2-bg img {
+      position: absolute; height: 100%; left: -26.15%; width: 152.29%;
+      object-fit: cover; filter: saturate(0);
+    }
+    .card2-bg-overlay {
+      position: absolute; inset: 0;
+      background: #fff; mix-blend-mode: saturation;
+    }
+    .card2-content { position: relative; z-index: 1; }
+    .card2-role {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #4fd48f; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px; margin-bottom: 8px;
+    }
+    .card2-name {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 30px; color: #fff; text-transform: uppercase; line-height: 36px;
+      margin-bottom: 8px;
+    }
+    .card2-desc {
+      font-family: 'Public Sans', sans-serif; font-weight: 400;
+      font-size: 14px; color: rgba(255,255,255,0.8); line-height: 20px;
+      margin-bottom: 25px;
+    }
+    .card2-link {
+      display: inline-block;
+      border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 4px;
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #fff; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px; text-decoration: none;
+    }
+    /* Card 3 */
+    .card3-wrap {
+      grid-column: 1 / span 5; grid-row: 2;
+      position: relative;
+    }
+    .card3 {
+      position: absolute; top: -100px; left: 0; right: 0;
+      background: #f7faf8; border: 1px solid #bccabe;
+      padding: 49px;
+      display: flex; flex-direction: column;
+    }
+    .card3-quote-mark { margin-bottom: 32px; }
+    .card3-quote-mark img { width: 24px; height: 24px; }
+    .card3-text {
+      font-family: 'Public Sans', sans-serif; font-weight: 300;
+      font-size: 24px; color: #002110; line-height: 39px;
+      margin-bottom: 48px;
+    }
+    .card3-text strong { font-weight: 700; color: #006d41; }
+    .card3-source {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .card3-divider {
+      width: 48px; height: 2px; background: #006d41; flex-shrink: 0;
+    }
+    .card3-label {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #002110; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px;
+    }
+
+    /* ── Benefits ── */
+    .benefits {
+      background: #f0f3f1; border-top: 1px solid #bccabe; border-bottom: 1px solid #bccabe;
+      padding: 129px 48px;
+    }
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 64px;
+    }
+    .benefits-left {
+      grid-column: 1 / span 4;
+      display: flex; flex-direction: column; gap: 32px;
+    }
+    .benefits-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 48px; color: #002110; text-transform: uppercase; line-height: 43.2px;
+    }
+    .benefits-heading span { color: #006d41; }
+    .benefits-desc {
+      font-family: 'Public Sans', sans-serif; font-weight: 400;
+      font-size: 18px; color: rgba(0,33,16,0.6); line-height: 28px;
+    }
+    .benefits-icon-box {
+      background: #fff; border: 1px solid #bccabe;
+      height: 176px; display: flex; align-items: center; justify-content: center;
+    }
+    .benefits-icon-box img { width: 50px; height: 50px; }
+    .benefits-cards {
+      grid-column: 5 / span 8;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, 256.25px);
+      gap: 1px; background: #bccabe; border: 1px solid #bccabe;
+    }
+    .benefit-card {
+      background: #f0f3f1; position: relative;
+    }
+    .benefit-icon {
+      position: absolute; left: 49px; top: 51px;
+    }
+    .benefit-icon img { width: 22px; height: 18px; }
+    .benefit-title {
+      position: absolute; left: 48px; right: 48px; top: 96px;
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 20px; color: #002110; text-transform: uppercase; line-height: 28px;
+    }
+    .benefit-desc {
+      position: absolute; left: 48px; right: 48px; top: 139.25px;
+      font-family: 'Public Sans', sans-serif; font-weight: 400;
+      font-size: 14px; color: rgba(0,33,16,0.6); line-height: 22.75px;
+    }
+
+    /* ── CTA ── */
+    .cta {
+      background: #fff;
+      padding: 160px 192px;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .cta-bg-text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; opacity: 0.05; overflow: hidden; pointer-events: none;
+    }
+    .cta-bg-text p {
+      font-family: 'Public Sans', sans-serif; font-weight: 900;
+      font-size: 96px; color: #002110; text-transform: uppercase; line-height: 96px;
+      text-align: center;
+    }
+    .cta-content {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 48px; max-width: 896px; width: 100%;
+    }
+    .cta-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 128px; color: #002110; text-transform: uppercase;
+      letter-spacing: -6.4px; line-height: 128px; text-align: center;
+    }
+    .cta-heading span {
+      color: #006d41; text-decoration: underline;
+      text-decoration-color: #4fd48f; text-decoration-style: solid;
+    }
+    .cta-desc {
+      font-family: 'Public Sans', sans-serif; font-weight: 300;
+      font-size: 20px; color: rgba(0,33,16,0.6); line-height: 28px; text-align: center;
+    }
+    .cta-btns {
+      display: flex; gap: 24px; align-items: center;
+      padding-top: 16px;
+    }
+    .cta-btn-primary {
+      display: flex; align-items: center; gap: 16px;
+      background: #006d41; padding: 25.5px 48px; border: none; cursor: pointer;
+    }
+    .cta-btn-primary span {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 16px; color: #fff; letter-spacing: 1.6px; text-transform: uppercase;
+    }
+    .cta-btn-primary img { width: 18px; height: 18px; }
+    .cta-btn-secondary {
+      border: 2px solid #002110; padding: 26px 50px;
+      background: transparent; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 16px; color: #002110; letter-spacing: 1.6px; text-transform: uppercase;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      background: #002110;
+      border-top: 1px solid rgba(79,212,143,0.3);
+    }
+    .footer-main {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 48px;
+      padding: 96px 48px 48px;
+    }
+    .footer-brand {}
+    .footer-logo {
+      font-family: 'Public Sans', sans-serif; font-weight: 900;
+      font-size: 36px; color: #f7faf8; letter-spacing: -1.8px; text-transform: uppercase;
+      line-height: 40px; margin-bottom: 32px;
+    }
+    .footer-tagline {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400;
+      font-size: 18px; color: rgba(224,227,225,0.6); line-height: 29.25px;
+    }
+    .footer-col-heading {
+      font-family: 'Public Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: #fff; letter-spacing: 1.2px; text-transform: uppercase;
+      line-height: 16px; margin-bottom: 16px;
+    }
+    .footer-col a {
+      display: block;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400;
+      font-size: 18px; color: rgba(224,227,225,0.6); line-height: 29.25px;
+      text-decoration: none; margin-top: 16px;
+    }
+    .footer-col p {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400;
+      font-size: 18px; color: rgba(224,227,225,0.6); line-height: 29.25px;
+      margin-top: 16px;
+    }
+    .footer-bottom {
+      border-top: 1px solid rgba(79,212,143,0.1);
+      padding: 33px 48px 32px;
+    }
+    .footer-copyright {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 12px; color: rgba(224,227,225,0.4); letter-spacing: 1.2px;
+      text-transform: uppercase; line-height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">Lumina Wholesale</div>
+      <nav class="nav-links">
+        <a href="#">Portfolio</a>
+        <a href="#">Governance</a>
+        <a href="#">Investors</a>
+        <a href="#">Logistics</a>
+        <a href="#">Sustainability</a>
+        <a href="#">Contact</a>
+      </nav>
+      <button class="nav-btn">Inquiry</button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-left">
+          <div class="hero-eyebrow">Careers at Lumina</div>
+          <div class="hero-heading">
+            Diverse People,<br>Shared<br>Mission.
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-border">
+            <p class="hero-desc">Architecting the future of global nutrition through premium wholesale logistics and a human-centric approach to supply chain integrity.</p>
+          </div>
+          <button class="hero-btn">
+            <span class="hero-btn-text">Join Our Team</span>
+            <img src="https://www.figma.com/api/mcp/asset/0d21ebe3-045b-429c-8823-71451fd1d877" alt="" />
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Image Block -->
+    <section class="image-block">
+      <div class="image-block-photo">
+        <img src="vegetables.jpg" alt="Fresh produce" />
+        <div class="image-block-photo-overlay"></div>
+      </div>
+      <div class="image-block-content">
+        <h2 class="image-block-heading">Rooted in<br><span>Excellence.</span></h2>
+        <p class="image-block-desc">We don't just move produce; we cultivate careers. Our global ecosystem thrives on the unique perspectives brought by every individual in our logistics hubs, boardrooms, and testing facilities.</p>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-number">42+</div>
+            <div class="stat-label">Nationalities</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Global Hubs</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Employee Spotlights -->
+    <section class="spotlights">
+      <div class="spotlights-header">
+        <div class="section-eyebrow">The Faces Behind the Harvest</div>
+        <h2 class="section-heading">Employee Spotlights</h2>
+      </div>
+
+      <div class="spotlights-grid">
+        <!-- Card 1: Marcus Chen -->
+        <div class="card1">
+          <div class="card1-photo">
+            <img src="vegetables.jpg" alt="Fresh produce" />
+            <div class="card1-photo-overlay"></div>
+          </div>
+          <div class="card1-content">
+            <div class="card-role">Operations Lead</div>
+            <div class="card-name">Marcus Chen</div>
+            <div class="card-quote-border">
+              <p class="card-quote">"At Lumina, my background in sustainable tech met the agricultural world. We are redefining how the world eats."</p>
+            </div>
+            <a href="#" class="card-link">Read Story</a>
+          </div>
+        </div>
+
+        <!-- Card 2: Elena Rodriguez -->
+        <div class="card2">
+          <div class="card2-bg">
+            <img src="vegetables.jpg" alt="Fresh produce" />
+            <div class="card2-bg-overlay"></div>
+          </div>
+          <div class="card2-content">
+            <div class="card2-role">Quality Assurance</div>
+            <div class="card2-name">Elena Rodriguez</div>
+            <p class="card2-desc">Pioneering molecular traceability in wholesale citrus distribution.</p>
+            <a href="#" class="card2-link">Explore Career Path</a>
+          </div>
+        </div>
+
+        <!-- Card 3: Quote -->
+        <div class="card3-wrap">
+          <div class="card3">
+            <div class="card3-quote-mark">
+              <img src="https://www.figma.com/api/mcp/asset/38e15aef-2f9a-4c71-8660-06eb3313e143" alt="" />
+            </div>
+            <p class="card3-text">Our culture is built on <strong>radical transparency</strong> and the belief that a diversity of thought is our most valuable asset.</p>
+            <div class="card3-source">
+              <div class="card3-divider"></div>
+              <span class="card3-label">Human Resources Council</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Career Benefits -->
+    <section class="benefits">
+      <div class="benefits-grid">
+        <div class="benefits-left">
+          <h2 class="benefits-heading">Nurturing<br>Your<br><span>Growth.</span></h2>
+          <p class="benefits-desc">We provide the framework; you provide the vision. Our benefits are designed for high-performance longevity.</p>
+          <div class="benefits-icon-box">
+            <img src="https://www.figma.com/api/mcp/asset/1e38261d-c6ee-422a-814e-abbda24481a7" alt="" />
+          </div>
+        </div>
+        <div class="benefits-cards">
+          <!-- Equity Participation -->
+          <div class="benefit-card">
+            <div class="benefit-icon" style="width:22px;height:16px;top:52px;left:49px;">
+              <img src="https://www.figma.com/api/mcp/asset/409dabe0-9779-486d-8d45-bdadc8ebbdb2" alt="" style="width:100%;height:100%;" />
+            </div>
+            <div class="benefit-title">Equity Participation</div>
+            <p class="benefit-desc">Shared success through our annual holding-wide stock grant program for all full-time associates.</p>
+          </div>
+          <!-- Global Mobility -->
+          <div class="benefit-card">
+            <div class="benefit-icon" style="width:20px;height:20px;top:50px;left:50px;">
+              <img src="https://www.figma.com/api/mcp/asset/de3651fd-c111-4e06-9832-2efa3aa56cfa" alt="" style="width:100%;height:100%;" />
+            </div>
+            <div class="benefit-title">Global Mobility</div>
+            <p class="benefit-desc">Opportunities for secondment across our 12 international hubs from Tokyo to Rotterdam.</p>
+          </div>
+          <!-- Lumina Academy -->
+          <div class="benefit-card">
+            <div class="benefit-icon" style="width:22px;height:18px;top:51px;left:49px;">
+              <img src="https://www.figma.com/api/mcp/asset/a2586654-5e50-4740-aff6-63169dfe0118" alt="" style="width:100%;height:100%;" />
+            </div>
+            <div class="benefit-title">Lumina Academy</div>
+            <p class="benefit-desc">Fully funded executive education and technical certification tracks for career progression.</p>
+          </div>
+          <!-- Holistic Wellness -->
+          <div class="benefit-card">
+            <div class="benefit-icon" style="width:16px;height:20px;top:50px;left:52px;">
+              <img src="https://www.figma.com/api/mcp/asset/2ab292b2-c2a1-4fe0-923b-82accd48eb84" alt="" style="width:100%;height:100%;" />
+            </div>
+            <div class="benefit-title">Holistic Wellness</div>
+            <p class="benefit-desc">Comprehensive health coverage including mental health support and nutritional coaching.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="cta">
+      <div class="cta-bg-text">
+        <p>GROW GROW GROW<br>GROW GROW GROW<br>GROW GROW GROW<br>GROW GROW GROW<br>GROW GROW GROW<br>GROW GROW GROW<br>GROW GROW GROW<br>GROW GROW GROW</p>
+      </div>
+      <div class="cta-content">
+        <h2 class="cta-heading">Seed Your<br><span>Future.</span></h2>
+        <p class="cta-desc">We are currently seeking visionaries in Logistics, Data Science, and Sustainable Agriculture. Explore our open positions worldwide.</p>
+        <div class="cta-btns">
+          <button class="cta-btn-primary">
+            <span>View Openings</span>
+            <img src="https://www.figma.com/api/mcp/asset/33a4b581-dc6e-4721-bac5-2610d3e708fe" alt="" />
+          </button>
+          <button class="cta-btn-secondary">Talent Community</button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /.main -->
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <div class="footer-logo">Lumina</div>
+        <p class="footer-tagline">Architectural Integrity in Wholesale. Sustaining the global food chain with precision.</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-heading">Resources</div>
+        <a href="#">Terms of Service</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Global Compliance</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-heading">Portals</div>
+        <a href="#">Wholesale Portal</a>
+        <a href="#">Press Kit</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-heading">Contact</div>
+        <p>HQ: Rotterdam, NL</p>
+        <p>careers@lumina-wholesale.com</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copyright">© 2024 LUMINA HOLDINGS. ARCHITECTURAL INTEGRITY IN WHOLESALE.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

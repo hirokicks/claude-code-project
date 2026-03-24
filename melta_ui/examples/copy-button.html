@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copy Button — pop animation</title>
+  <meta name="description" content="melta UI コピーボタンのポップアニメーションデモ。">
+  <meta property="og:title" content="Copy Button — pop animation">
+  <meta property="og:description" content="melta UI コピーボタンのポップアニメーションデモ。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/copy-button.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Copy Button — pop animation">
+  <meta name="twitter:description" content="melta UI コピーボタンのポップアニメーションデモ。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      font-family: 'Inter', 'Hiragino Sans', sans-serif;
+    }
+
+    /* ボタン本体 */
+    .pop-button {
+      background-color: #ffffff;
+      border: 2px solid #f0f0f0;
+      border-radius: 28px;
+      padding: 24px;
+      cursor: pointer;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 96px;
+      height: 96px;
+      line-height: 0;
+
+      /* バネ感のあるイージング */
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* hover: 少し拡大 */
+    .pop-button:hover {
+      transform: scale(1.05);
+    }
+
+    /* active: 押し込み感 */
+    .pop-button:active {
+      transform: scale(0.9);
+      transition: transform 0.1s ease-out;
+    }
+
+    /* アイコン共通：absolute で重ねる */
+    .icon {
+      position: absolute;
+      transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* デフォルト: コピーアイコン表示、チェック非表示 */
+    .icon-copy  { opacity: 1; transform: scale(1); }
+    .icon-check { opacity: 0; transform: scale(0.5); }
+
+    /* .copied クラス付与時: コピー非表示、チェック表示 */
+    .pop-button.copied .icon-copy  { opacity: 0; transform: scale(0.5); }
+    .pop-button.copied .icon-check { opacity: 1; transform: scale(1); }
+  </style>
+</head>
+<body>
+
+  <button class="pop-button" id="copyBtn">
+    <!-- コピーアイコン -->
+    <svg class="icon icon-copy" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="13" height="13" rx="2.5" ry="2.5"></rect>
+      <path d="M8 21h11a2 2 0 0 0 2-2v-11"></path>
+    </svg>
+    <!-- チェックアイコン：塗り円＋白チェック -->
+    <svg class="icon icon-check" width="48" height="48" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="11" fill="#999"/>
+      <polyline points="7 12.5 10.5 16 17 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script>
+    const btn = document.getElementById('copyBtn');
+    const textToCopy = 'コピーしたいコードをここに';
+    let timer;
+
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(textToCopy).catch(() => {});
+      btn.classList.add('copied');
+      clearTimeout(timer);
+      timer = setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <title>melta UI — Sample Sites</title>
+  <meta name="description" content="melta UI デザインシステムの実装例一覧。12業種のサンプルページを収録。">
+  <meta property="og:title" content="melta UI — Sample Sites">
+  <meta property="og:description" content="melta UI デザインシステムの実装例一覧。12業種のサンプルページを収録。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="melta UI — Sample Sites">
+  <meta name="twitter:description" content="melta UI デザインシステムの実装例一覧。12業種のサンプルページを収録。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: {
+            50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+            400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+            800:'#13318d',900:'#0e266a',950:'#07194e'
+          },
+          body: '#3d4b5f',
+        },
+        fontFamily: {
+          sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif'],
+        },
+        fontSize: {
+          xs: ['0.8125rem', { lineHeight: '1.4' }],
+          sm: ['0.9375rem', { lineHeight: '1.7' }],
+          base: ['1.125rem', { lineHeight: '2.0' }],
+          lg: ['1.25rem', { lineHeight: '1.5' }],
+          xl: ['1.375rem', { lineHeight: '1.4' }],
+          '2xl': ['1.625rem', { lineHeight: '1.4' }],
+          '3xl': ['2rem', { lineHeight: '1.4' }],
+        },
+      },
+    },
+  }
+  </script>
+  <style>
+    body { font-family: 'Inter', 'Hiragino Sans', sans-serif; }
+    .card-hover { transition: transform 200ms ease, box-shadow 200ms ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.12); }
+    .color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .variant-links { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+    .variant-link { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; background: #f1f5f9; color: #475569; text-decoration: none; transition: background 150ms, color 150ms; }
+    .variant-link:hover { background: #e0e7ff; color: #4338ca; }
+    .variant-link svg { width: 12px; height: 12px; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../docs/index.html" class="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          Showcase
+        </a>
+        <span class="text-slate-300">/</span>
+        <span class="text-sm font-semibold text-slate-900">Sample Sites</span>
+      </div>
+      <a href="https://github.com/tsubotax/melta-ui" target="_blank" rel="noopener noreferrer" class="w-9 h-9 inline-flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors" aria-label="GitHub">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-12">
+
+    <!-- Hero -->
+    <div class="text-center mb-12">
+      <h1 class="text-3xl font-bold text-slate-900">Sample Sites</h1>
+      <p class="mt-3 text-base text-body max-w-2xl mx-auto">
+        melta UI の汎用性を示す12のサンプルページ。ToB / ToC / EC / SaaS / 公共サービスなど幅広い業種をカバーし、各サイトで異なるプライマリーカラーを使用しています。
+      </p>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="flex flex-wrap gap-2 justify-center mb-10">
+      <button onclick="filterCards('all')" class="filter-chip active inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer" data-filter="all">All</button>
+      <button onclick="filterCards('saas')" class="filter-chip inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer" data-filter="saas">SaaS</button>
+      <button onclick="filterCards('toc')" class="filter-chip inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer" data-filter="toc">ToC</button>
+      <button onclick="filterCards('tob')" class="filter-chip inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer" data-filter="tob">ToB</button>
+      <button onclick="filterCards('public')" class="filter-chip inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer" data-filter="public">Public</button>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cards-grid">
+
+      <!-- 1. melta store (EC Home) -->
+      <a href="ec-home.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="toc">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#2250df;"></div>
+            <span class="text-xs font-medium text-slate-500">Blue &middot; EC/ToC</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">melta store</h2>
+          <p class="text-sm text-body mt-1">総合ECホームページ</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Badge</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Progress</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Select</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 2. Kintsugi -->
+      <a href="kintsugi.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="saas tob">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#2250df;"></div>
+            <span class="text-xs font-medium text-slate-500">Blue &middot; SaaS/ToB</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Kintsugi</h2>
+          <p class="text-sm text-body mt-1">プロジェクト分析ダッシュボード</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Sidebar</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Table</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Progress</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 3. IRODORI Store -->
+      <a href="irodori-store.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="toc">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#e11d48;"></div>
+            <span class="text-xs font-medium text-slate-500">Rose &middot; EC/ToC</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">IRODORI Store</h2>
+          <p class="text-sm text-body mt-1">セレクトショップ 商品一覧</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Tag</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Pagination</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Select</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 4. Bunraku CMS -->
+      <a href="bunraku-cms.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="saas">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#7c3aed;"></div>
+            <span class="text-xs font-medium text-slate-500">Violet &middot; Media/SaaS</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">文楽CMS</h2>
+          <p class="text-sm text-body mt-1">記事管理CMS</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Sidebar</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Table</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Tabs</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Pagination</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 5. Sorano Medical -->
+      <a href="sorano-medical.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="toc public">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#0d9488;"></div>
+            <span class="text-xs font-medium text-slate-500">Teal &middot; ToC/Public</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">ソラノ医院</h2>
+          <p class="text-sm text-body mt-1">クリニック予約フロー</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Stepper</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Radio</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Calendar</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Alert</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 6. Nagomi HR -->
+      <a href="nagomi-hr.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="saas tob">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#059669;"></div>
+            <span class="text-xs font-medium text-slate-500">Emerald &middot; ToB/SaaS</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">なごみHR</h2>
+          <p class="text-sm text-body mt-1">人事チーム設定画面</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Sidebar</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Toggle</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Accordion</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Checkbox</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 7. Hayate Logistics -->
+      <a href="hayate-logistics.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="tob">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#ea580c;"></div>
+            <span class="text-xs font-medium text-slate-500">Orange &middot; ToB/Logistics</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">疾風ロジスティクス</h2>
+          <p class="text-sm text-body mt-1">配送追跡ダッシュボード</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Table</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Progress</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Badge</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Alert</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 8. Manabi Learn -->
+      <a href="manabi-learn.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="toc">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#4f46e5;"></div>
+            <span class="text-xs font-medium text-slate-500">Indigo &middot; EdTech/ToC</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">学びLearn</h2>
+          <p class="text-sm text-body mt-1">オンライン学習プラットフォーム</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Tabs</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Progress</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Avatar</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 9. Kanade Finance -->
+      <a href="kanade-finance.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="toc">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#0891b2;"></div>
+            <span class="text-xs font-medium text-slate-500">Cyan &middot; FinTech/ToC</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Kanade</h2>
+          <p class="text-sm text-body mt-1">個人資産管理ダッシュボード</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Sidebar</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">List</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Progress</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 10. Tasuki Gov -->
+      <a href="tasuki-gov.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="public">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#475569;"></div>
+            <span class="text-xs font-medium text-slate-500">Slate &middot; Public/Gov</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">たすき行政窓口</h2>
+          <p class="text-sm text-body mt-1">オンライン申請フォーム</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Stepper</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">TextField</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Select</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Breadcrumb</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 11. Aozora Booking -->
+      <a href="aozora-booking.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="toc">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#d97706;"></div>
+            <span class="text-xs font-medium text-slate-500">Amber &middot; Gourmet/ToC</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">青空Booking</h2>
+          <p class="text-sm text-body mt-1">レストラン検索・予約</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Badge</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Select</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Toast</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 12. Shirokane Wireframe -->
+      <a href="shirokane-wireframe.html" class="sample-card card-hover bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden block" data-category="saas tob">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="color-dot" style="background:#666666;"></div>
+            <span class="text-xs font-medium text-slate-500">Gray &middot; Wireframe/ToB</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Shirokane</h2>
+          <p class="text-sm text-body mt-1">タスクボード（ワイヤーフレーム）</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Sidebar</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Card</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Badge</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Avatar</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Color Palette Overview -->
+    <div class="mt-16 bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+      <h2 class="text-xl font-bold text-slate-900 mb-6">Primary Color Palette</h2>
+      <p class="text-sm text-body mb-6">1つの DS から12のブランド表現。プライマリーカラーを差し替えるだけで、異なる業種のサービスに対応できます。</p>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#2250df;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Blue</p><p class="text-xs text-slate-500">#2250df</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#e11d48;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Rose</p><p class="text-xs text-slate-500">#e11d48</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#0d9488;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Teal</p><p class="text-xs text-slate-500">#0d9488</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#7c3aed;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Violet</p><p class="text-xs text-slate-500">#7c3aed</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#059669;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Emerald</p><p class="text-xs text-slate-500">#059669</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#ea580c;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Orange</p><p class="text-xs text-slate-500">#ea580c</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#4f46e5;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Indigo</p><p class="text-xs text-slate-500">#4f46e5</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#475569;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Slate</p><p class="text-xs text-slate-500">#475569</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#0891b2;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Cyan</p><p class="text-xs text-slate-500">#0891b2</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#d97706;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Amber</p><p class="text-xs text-slate-500">#d97706</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg shadow-sm" style="background:#666666;"></div>
+          <div><p class="text-sm font-medium text-slate-900">Gray</p><p class="text-xs text-slate-500">#666666</p></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 mt-16">
+    <div class="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
+      <p class="text-xs text-slate-500">melta UI &middot; MIT License</p>
+      <a href="../docs/index.html" class="text-xs text-primary-500 hover:text-primary-700 font-medium transition-colors">Showcase に戻る</a>
+    </div>
+  </footer>
+
+  <script>
+    // Filter chips
+    function filterCards(category) {
+      var cards = document.querySelectorAll('.sample-card');
+      var chips = document.querySelectorAll('.filter-chip');
+      chips.forEach(function(chip) {
+        var isActive = chip.getAttribute('data-filter') === category;
+        chip.className = isActive
+          ? 'filter-chip active inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border border-primary-500 bg-primary-50 text-primary-700 transition-colors'
+          : 'filter-chip inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors';
+      });
+      cards.forEach(function(card) {
+        if (category === 'all') {
+          card.style.display = '';
+        } else {
+          var cats = card.getAttribute('data-category') || '';
+          card.style.display = cats.indexOf(category) !== -1 ? '' : 'none';
+        }
+      });
+    }
+    // Init: set "All" as active
+    filterCards('all');
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <title>なごみHR - 組織設定</title>
+  <meta name="description" content="melta UI で構築した人事管理システムサンプル。">
+  <meta property="og:title" content="なごみHR - 組織設定">
+  <meta property="og:description" content="melta UI で構築した人事管理システムサンプル。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/nagomi-hr.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="なごみHR - 組織設定">
+  <meta name="twitter:description" content="melta UI で構築した人事管理システムサンプル。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',
+              400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',
+              800:'#065f46',900:'#064e3b',950:'#022c22'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+    body { line-height: 2.0; letter-spacing: 0.02em; }
+    h1, h2, h3, h4, h5, h6 { line-height: 1.4; letter-spacing: 0.01em; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-body">
+  <div class="flex h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col h-screen">
+      <!-- Logo -->
+      <div class="px-6 py-5 border-b border-slate-200">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <span class="text-lg font-bold text-slate-900">なごみHR</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-3 py-4 overflow-y-auto" aria-label="メインナビゲーション">
+        <!-- メイン -->
+        <p class="px-4 mb-2 text-xs font-medium text-slate-500 uppercase tracking-wider">メイン</p>
+        <ul class="space-y-1 mb-6">
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+              <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+              </svg>
+              ダッシュボード
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+              <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              メンバー
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+              <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              勤怠管理
+            </a>
+          </li>
+        </ul>
+
+        <!-- 管理 -->
+        <p class="px-4 mb-2 text-xs font-medium text-slate-500 uppercase tracking-wider">管理</p>
+        <ul class="space-y-1">
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg" aria-current="page">
+              <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              組織設定
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+              <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              通知設定
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+              <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              権限管理
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- User Footer -->
+      <div class="mt-auto px-4 py-4 border-t border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-50 text-primary-500 font-medium inline-flex items-center justify-center text-sm" role="img" aria-label="田中 美咲">田</div>
+          <div class="leading-normal">
+            <p class="text-sm font-medium text-slate-900">田中 美咲</p>
+            <p class="text-xs text-slate-500">管理者</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-3xl px-8 py-12">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="パンくずリスト" class="mb-6">
+          <ol class="flex items-center gap-2 text-sm">
+            <li><a href="#" class="text-slate-500 hover:text-slate-700 transition-colors">管理</a></li>
+            <li class="text-slate-400">/</li>
+            <li><span class="text-slate-900 font-medium" aria-current="page">組織設定</span></li>
+          </ol>
+        </nav>
+
+        <!-- Page Title -->
+        <h1 class="text-3xl font-bold text-slate-900">組織設定</h1>
+        <p class="mt-2 text-base text-body">会社の基本情報や勤怠ルール、通知・データ管理に関する設定を行います。</p>
+
+        <!-- Accordion Sections -->
+        <div class="mt-10 space-y-6">
+
+          <!-- Section 1: 基本情報 (open) -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <button type="button" class="w-full flex items-center justify-between py-4 px-6 text-left text-base font-medium text-slate-900 cursor-pointer" aria-expanded="true" onclick="toggleAccordion(this)">
+              <span class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                基本情報
+              </span>
+              <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div class="px-6 pb-6">
+              <div class="space-y-6">
+                <!-- Company Name -->
+                <div class="leading-normal">
+                  <label for="company-name" class="block text-sm font-medium text-slate-900 mb-1.5">会社名</label>
+                  <input type="text" id="company-name" value="株式会社なごみテクノロジーズ" class="w-full px-3 py-2 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500/50 caret-primary-500">
+                </div>
+
+                <!-- Department Select -->
+                <div class="leading-normal">
+                  <label for="department" class="block text-sm font-medium text-slate-900 mb-1.5">管理対象部署</label>
+                  <div class="relative">
+                    <select id="department" class="appearance-none w-full pl-3 pr-10 py-2 text-base border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500/50 cursor-pointer">
+                      <option>全部署</option>
+                      <option>開発部</option>
+                      <option>営業部</option>
+                      <option>人事部</option>
+                      <option>総務部</option>
+                    </select>
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                  <p class="mt-1.5 text-xs text-slate-500">この設定画面で管理する対象部署を選択します。</p>
+                </div>
+
+                <!-- Timezone Select -->
+                <div class="leading-normal">
+                  <label for="timezone" class="block text-sm font-medium text-slate-900 mb-1.5">タイムゾーン</label>
+                  <div class="relative">
+                    <select id="timezone" class="appearance-none w-full pl-3 pr-10 py-2 text-base border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500/50 cursor-pointer">
+                      <option selected>Asia/Tokyo (UTC+9)</option>
+                      <option>Asia/Shanghai (UTC+8)</option>
+                      <option>Asia/Singapore (UTC+8)</option>
+                      <option>America/Los_Angeles (UTC-8)</option>
+                      <option>America/New_York (UTC-5)</option>
+                      <option>Europe/London (UTC+0)</option>
+                    </select>
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                  <p class="mt-1.5 text-xs text-slate-500">勤怠計算や通知送信に使用されるタイムゾーンです。</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 2: 勤怠ルール (open) -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <button type="button" class="w-full flex items-center justify-between py-4 px-6 text-left text-base font-medium text-slate-900 cursor-pointer" aria-expanded="true" onclick="toggleAccordion(this)">
+              <span class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                勤怠ルール
+              </span>
+              <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div class="px-6 pb-6">
+              <div class="space-y-6">
+
+                <!-- Toggle: フレックスタイム制 -->
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900">フレックスタイム制</p>
+                    <p class="mt-1 text-sm text-slate-500">コアタイム（10:00-15:00）を設け、それ以外の時間帯は従業員が自由に勤務開始・終了時刻を選択できます。</p>
+                  </div>
+                  <button type="button" class="w-11 h-6 rounded-full bg-primary-500 relative transition-colors duration-200 cursor-pointer flex-shrink-0 mt-0.5" role="switch" aria-checked="true" aria-label="フレックスタイム制" onclick="toggleSwitch(this)">
+                    <span class="block w-5 h-5 rounded-full bg-white shadow-sm transform translate-x-5 transition-transform duration-200"></span>
+                  </button>
+                </div>
+
+                <hr class="border-slate-200" role="separator">
+
+                <!-- Toggle: リモートワーク許可 -->
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900">リモートワーク許可</p>
+                    <p class="mt-1 text-sm text-slate-500">メンバーがリモートワークを申請できるようにします。申請には上長の事前承認が必要です。</p>
+                  </div>
+                  <button type="button" class="w-11 h-6 rounded-full bg-primary-500 relative transition-colors duration-200 cursor-pointer flex-shrink-0 mt-0.5" role="switch" aria-checked="true" aria-label="リモートワーク許可" onclick="toggleSwitch(this)">
+                    <span class="block w-5 h-5 rounded-full bg-white shadow-sm transform translate-x-5 transition-transform duration-200"></span>
+                  </button>
+                </div>
+
+                <hr class="border-slate-200" role="separator">
+
+                <!-- Toggle: 時間外労働の自動アラート -->
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900">時間外労働の自動アラート</p>
+                    <p class="mt-1 text-sm text-slate-500">月間の時間外労働が上限に近づいた場合、該当メンバーと管理者に自動で通知を送信します。労働基準法に基づく36協定の遵守に役立ちます。</p>
+                  </div>
+                  <button type="button" class="w-11 h-6 rounded-full bg-slate-200 relative transition-colors duration-200 cursor-pointer flex-shrink-0 mt-0.5" role="switch" aria-checked="false" aria-label="時間外労働の自動アラート" onclick="toggleSwitch(this)">
+                    <span class="block w-5 h-5 rounded-full bg-white shadow-sm transform translate-x-0.5 transition-transform duration-200"></span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 3: 通知設定 (open) -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <button type="button" class="w-full flex items-center justify-between py-4 px-6 text-left text-base font-medium text-slate-900 cursor-pointer" aria-expanded="true" onclick="toggleAccordion(this)">
+              <span class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                通知設定
+              </span>
+              <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div class="px-6 pb-6">
+              <fieldset>
+                <legend class="text-sm font-medium text-slate-900 mb-1">メール通知の種類</legend>
+                <p class="text-sm text-slate-500 mb-4">組織全体に適用するメール通知を選択してください。</p>
+                <div class="space-y-4">
+                  <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="mt-0.5 rounded border-slate-300 text-primary-500 focus:ring-2 focus:ring-primary-500/50 cursor-pointer" style="width: 1.125rem; height: 1.125rem;">
+                    <div class="leading-normal">
+                      <span class="text-sm font-medium text-slate-900">勤怠提出リマインド</span>
+                      <p class="text-sm text-slate-500 mt-0.5">未提出のメンバーに対して毎日18:00にリマインドメールを送信します。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="mt-0.5 rounded border-slate-300 text-primary-500 focus:ring-2 focus:ring-primary-500/50 cursor-pointer" style="width: 1.125rem; height: 1.125rem;">
+                    <div class="leading-normal">
+                      <span class="text-sm font-medium text-slate-900">承認リクエスト</span>
+                      <p class="text-sm text-slate-500 mt-0.5">休暇申請や経費精算の承認待ちがある場合に管理者へ通知します。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" class="mt-0.5 rounded border-slate-300 text-primary-500 focus:ring-2 focus:ring-primary-500/50 cursor-pointer" style="width: 1.125rem; height: 1.125rem;">
+                    <div class="leading-normal">
+                      <span class="text-sm font-medium text-slate-900">月次レポート</span>
+                      <p class="text-sm text-slate-500 mt-0.5">毎月初に前月の勤怠サマリーレポートをメールで配信します。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="mt-0.5 rounded border-slate-300 text-primary-500 focus:ring-2 focus:ring-primary-500/50 cursor-pointer" style="width: 1.125rem; height: 1.125rem;">
+                    <div class="leading-normal">
+                      <span class="text-sm font-medium text-slate-900">異常検知アラート</span>
+                      <p class="text-sm text-slate-500 mt-0.5">打刻漏れや長時間労働など異常なパターンを検知した場合に即時通知します。</p>
+                    </div>
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+          </section>
+
+          <!-- Section 4: データ管理 (closed) -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <button type="button" class="w-full flex items-center justify-between py-4 px-6 text-left text-base font-medium text-slate-900 cursor-pointer" aria-expanded="false" onclick="toggleAccordion(this)">
+              <span class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                </svg>
+                データ管理
+              </span>
+              <svg class="w-5 h-5 text-slate-400 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div class="px-6 pb-6 hidden">
+              <div class="space-y-6">
+                <p class="text-sm text-slate-500">勤怠データや組織情報のエクスポート・インポートを行えます。</p>
+
+                <!-- Export -->
+                <div class="leading-normal">
+                  <label for="export-format" class="block text-sm font-medium text-slate-900 mb-1.5">エクスポート形式</label>
+                  <div class="relative">
+                    <select id="export-format" class="appearance-none w-full pl-3 pr-10 py-2 text-base border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500/50 cursor-pointer">
+                      <option>CSV</option>
+                      <option>Excel (.xlsx)</option>
+                      <option>JSON</option>
+                    </select>
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <button type="button" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    データをエクスポート
+                  </button>
+                  <button type="button" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    データをインポート
+                  </button>
+                </div>
+
+                <!-- Warning Alert -->
+                <div role="alert" class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg">
+                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                  </svg>
+                  <p class="text-sm">インポートを実行すると既存データが上書きされる場合があります。事前にエクスポートでバックアップを取得してください。</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Divider -->
+        <hr class="border-slate-200 mt-10 mb-8" role="separator">
+
+        <!-- Bottom Buttons -->
+        <div class="flex items-center justify-end gap-3">
+          <button type="button" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            キャンセル
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
+            変更を保存
+          </button>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    function toggleAccordion(btn) {
+      const content = btn.nextElementSibling;
+      const chevron = btn.querySelector('svg:last-child');
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+      if (isExpanded) {
+        content.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        content.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function toggleSwitch(btn) {
+      const knob = btn.querySelector('span');
+      const isOn = btn.getAttribute('aria-checked') === 'true';
+
+      if (isOn) {
+        btn.classList.remove('bg-primary-500');
+        btn.classList.add('bg-slate-200');
+        knob.classList.remove('translate-x-5');
+        knob.classList.add('translate-x-0.5');
+        btn.setAttribute('aria-checked', 'false');
+      } else {
+        btn.classList.remove('bg-slate-200');
+        btn.classList.add('bg-primary-500');
+        knob.classList.remove('translate-x-0.5');
+        knob.classList.add('translate-x-5');
+        btn.setAttribute('aria-checked', 'true');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,479 @@
+/* ==========================================================================
+   melta UI — Showcase Styles (ds-showcase.css)
+   ds-preview, ds-stage-*, ds-section-*, ds-code-*, melt-*, meltan-*,
+   motion-demo, copy-button, etc.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. ds-preview / ds-stage-* — プレビューコンテナ
+   ========================================================================== */
+.ds-preview {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-default, #e2e8f0);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+.ds-stage-gradient {
+  background-image: radial-gradient(circle at 20% 50%, rgba(34,80,223,0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 50%, rgba(96,165,250,0.03) 0%, transparent 50%);
+}
+.ds-stage-grid { /* form-like vertical layout — no extra styles beyond ds-preview */ }
+.ds-stage-device {
+  overflow: hidden;
+  padding: 0;
+}
+.ds-stage-device-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-default, #e2e8f0);
+}
+.ds-stage-device-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #e2e8f0;
+}
+.ds-stage-device-url {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  color: var(--text-muted, #64748b);
+  font-family: 'JetBrains Mono','SF Mono',monospace;
+}
+.ds-stage-device-content {
+  padding: 1.5rem;
+}
+
+/* ==========================================================================
+   2. ds-code-* — コードブロック
+   ========================================================================== */
+.ds-code-block { }
+.ds-code-block[data-collapsed="true"] pre { display: none; }
+.ds-code-header {
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+.ds-code-block[data-collapsed="true"] .ds-code-header { border-radius: 0.5rem; }
+.ds-code-block:not([data-collapsed="true"]) .ds-code-header { border-radius: 0.5rem 0.5rem 0 0; }
+.ds-code-toggle { transition: transform 200ms ease; }
+.ds-code-block:not([data-collapsed="true"]) .ds-code-toggle { transform: rotate(180deg); }
+.ds-code-lang {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+.ds-copy-btn { cursor: pointer; }
+
+/* ==========================================================================
+   3. ds-section-* — セクションヘッダー・アンカー・ディバイダー
+   ========================================================================== */
+.ds-section-header {
+  margin-bottom: 0.5rem;
+}
+.ds-section-anchor {
+  margin-left: 0.5rem;
+  color: var(--text-muted, #64748b);
+  opacity: 0;
+  transition: opacity 150ms ease;
+  text-decoration: none;
+  font-weight: 400;
+}
+.ds-section-header:hover .ds-section-anchor,
+.ds-section-anchor:focus { opacity: 1; }
+.ds-section-desc { }
+.ds-section-animate { padding-top: 4rem; }
+.ds-divider { border-top: 1px solid var(--border-default, #e2e8f0); margin-top: 4rem; margin-bottom: 4rem; }
+.ds-divider-fade {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border-default, #e2e8f0) 20%, var(--border-default, #e2e8f0) 80%, transparent 100%);
+  margin-top: 4rem;
+  margin-bottom: 0;
+}
+/*
+ * Showcase 余白ルール（セクション内サブセクション）:
+ *   - 各サブセクションのコンテナ div に mb-8 を付与（次の h3 との間隔確保）
+ *   - h3 は mb-4 のみ（mt は前のコンテナの mb-8 で担保）
+ *   - セクション間は ds-divider-fade (mt-4rem) + ds-section-animate (pt-4rem) で確保
+ *   - 末尾のサブセクションでも mb-8 を省略しない（後から追加される場合に備える）
+ */
+
+/* ==========================================================================
+   4. ds-typo-* — タイポグラフィウォーターフォール
+   ========================================================================== */
+.ds-typo-waterfall { }
+.ds-typo-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 160px;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-default, #e2e8f0);
+}
+.ds-typo-row:last-child { border-bottom: none; }
+.ds-typo-size {
+  font-family: 'JetBrains Mono','SF Mono',monospace;
+  color: var(--text-muted, #64748b);
+  font-size: 0.75rem;
+}
+.ds-typo-sample { color: var(--text-heading, #0f172a); }
+.ds-typo-meta {
+  font-size: 0.6875rem;
+  font-family: 'JetBrains Mono','SF Mono',monospace;
+  color: var(--text-muted, #64748b);
+  line-height: 1.5;
+  text-align: right;
+}
+
+/* ==========================================================================
+   5. ds-color-* — カラーストリップ
+   ========================================================================== */
+.ds-color-strip {
+  display: flex;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+.ds-color-strip > div {
+  flex: 1;
+  padding: 1.5rem 0.75rem;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+.ds-color-strip > div:hover { transform: scaleY(1.06); }
+.ds-status-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.color-swatch { border-radius: 0.5rem; border: 1px solid rgba(0,0,0,0.06); }
+
+/* ==========================================================================
+   6. ds-dodont-* — Do/Don't カード (外枠のみ)
+   ========================================================================== */
+.ds-dodont-dont {
+  border: 2px solid #fecaca;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.ds-dodont-do {
+  border: 2px solid #a7f3d0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.dodont-btn-slow, .dodont-btn-fast {
+  background: #2250df;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+.dodont-btn-slow { transition: background 0.5s ease; }
+.dodont-btn-fast { transition: background 0.15s ease; }
+.dodont-btn-slow:hover, .dodont-btn-fast:hover { background: #1a40b5; }
+
+/* ==========================================================================
+   7. ds-category-badge — カテゴリバッジ
+   ========================================================================== */
+.ds-category-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.ds-category-badge[data-category="foundation"] { background: #f0f5ff; color: #2250df; }
+.ds-category-badge[data-category="component"]  { background: #f1f5f9; color: #64748b; }
+.ds-category-badge[data-category="pattern"]     { background: #fefce8; color: #ca8a04; }
+.ds-category-badge[data-category="reference"]   { background: #faf5ff; color: #9333ea; }
+
+/* ==========================================================================
+   8. MELT — Hero アニメーション
+   ========================================================================== */
+@keyframes meltMorph1 {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: scale(1) rotate(0deg); }
+  25%      { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: scale(1.05) rotate(2deg); }
+  50%      { border-radius: 50% 60% 30% 60% / 30% 70% 50% 60%; transform: scale(0.97) rotate(-1deg); }
+  75%      { border-radius: 60% 30% 60% 40% / 70% 40% 60% 30%; transform: scale(1.03) rotate(1deg); }
+}
+@keyframes meltMorph2 {
+  0%, 100% { border-radius: 40% 60% 60% 40% / 40% 60% 40% 60%; transform: scale(1); }
+  33%      { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: scale(1.08); }
+  66%      { border-radius: 30% 70% 60% 40% / 40% 60% 30% 70%; transform: scale(0.95); }
+}
+.melt-mesh { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.melt-mesh > div { position: absolute; will-change: border-radius, transform; }
+.melt-blob-1 { animation: meltMorph1 10s ease-in-out infinite; filter: blur(40px); }
+.melt-blob-2 { animation: meltMorph2 14s ease-in-out infinite; filter: blur(50px); }
+.melt-blob-3 { animation: meltMorph1 18s ease-in-out infinite; filter: blur(70px); }
+
+.melt-text-gradient {
+  background: linear-gradient(135deg, #2250df 0%, #6492ff 40%, #95b6ff 70%, #2250df 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: meltTextShift 6s ease-in-out infinite;
+}
+@keyframes meltTextShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes meltGlow {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(34, 80, 223, 0.12), 0 0 20px rgba(34, 80, 223, 0.08); }
+  50%      { box-shadow: 0 0 0 6px rgba(34, 80, 223, 0.18), 0 0 30px rgba(34, 80, 223, 0.15); }
+}
+.melt-glow { animation: meltGlow 3s ease-in-out infinite; }
+.melt-shadow-lg {
+  box-shadow: 0 8px 32px -8px rgba(34, 80, 223, 0.25), 0 4px 12px -4px rgba(34, 80, 223, 0.12), 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Meltan bounce */
+.meltan-hero { width: 48px; height: 48px; animation: meltanBounce 2.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.meltan-hero-shadow { width: 28px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.12); margin-top: 4px; animation: meltanShadowBounce 2.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+@keyframes meltanBounce {
+  0%, 5% { transform: translateY(0) scaleX(1) scaleY(1); }
+  8% { transform: translateY(4px) scaleX(1.12) scaleY(0.88); }
+  18% { transform: translateY(-24px) scaleX(0.92) scaleY(1.08); }
+  22% { transform: translateY(-26px) scaleX(1) scaleY(1); }
+  32% { transform: translateY(2px) scaleX(1.08) scaleY(0.92); }
+  38%, 100% { transform: translateY(0) scaleX(1) scaleY(1); }
+}
+@keyframes meltanShadowBounce {
+  0%, 5% { transform: scaleX(1); opacity: 0.8; }
+  8% { transform: scaleX(1.3); opacity: 0.9; }
+  18%, 22% { transform: scaleX(0.5); opacity: 0.3; }
+  32% { transform: scaleX(1.2); opacity: 0.85; }
+  38%, 100% { transform: scaleX(1); opacity: 0.8; }
+}
+/* Meltan excited (footer) */
+.meltan-footer { width: 28px; height: 28px; animation: meltanExcited 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.meltan-footer-shadow { width: 18px; height: 3px; border-radius: 50%; background: var(--text-muted, #94a3b8); opacity: 0.2; margin-top: 3px; animation: meltanShadowExcited 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+@keyframes meltanExcited {
+  0%, 100% { transform: translateY(0) scaleY(1) scaleX(1); }
+  10% { transform: translateY(2px) scaleY(0.85) scaleX(1.15); }
+  35% { transform: translateY(-12px) scaleY(1.1) scaleX(0.9); }
+  50% { transform: translateY(0) scaleY(0.9) scaleX(1.1); }
+  65% { transform: translateY(-6px) scaleY(1.05) scaleX(0.95); }
+  80% { transform: translateY(1px) scaleY(0.93) scaleX(1.07); }
+}
+@keyframes meltanShadowExcited {
+  0%, 100% { transform: scaleX(1); opacity: 0.2; }
+  10% { transform: scaleX(1.3); opacity: 0.25; }
+  35% { transform: scaleX(0.45); opacity: 0.08; }
+  50% { transform: scaleX(1.2); opacity: 0.22; }
+  65% { transform: scaleX(0.6); opacity: 0.12; }
+  80% { transform: scaleX(1.15); opacity: 0.22; }
+}
+/* Meltan hop (section dividers) */
+.meltan-hop { width: 20px; height: 20px; animation: meltanHop 2s ease-in-out infinite; }
+.meltan-hop-shadow { width: 12px; height: 3px; border-radius: 50%; background: var(--sidebar-active-color, #2b70ef); opacity: 0.15; margin-top: 2px; animation: meltanShadowHop 2s ease-in-out infinite; }
+@keyframes meltanHop {
+  0%, 100% { transform: translateY(0) scaleY(1) scaleX(1); }
+  15% { transform: translateY(1px) scaleY(0.95) scaleX(1.05); }
+  40% { transform: translateY(-8px) scaleY(1.04) scaleX(0.96); }
+  55% { transform: translateY(-8px) scaleY(1) scaleX(1) rotate(5deg); }
+  70% { transform: translateY(1px) scaleY(0.94) scaleX(1.06) rotate(0deg); }
+  85%, 100% { transform: translateY(0) scaleY(1) scaleX(1); }
+}
+@keyframes meltanShadowHop {
+  0%, 100% { transform: scaleX(1); opacity: 0.15; }
+  15% { transform: scaleX(1.15); opacity: 0.18; }
+  40%, 55% { transform: scaleX(0.5); opacity: 0.06; }
+  70% { transform: scaleX(1.1); opacity: 0.16; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meltan-hero, .meltan-hero-shadow, .meltan-footer, .meltan-footer-shadow, .meltan-hop, .meltan-hop-shadow { animation: none; }
+}
+.melt-divider-wave { display: block; width: 100%; overflow: visible; }
+@keyframes drip {
+  0%   { transform: translateY(-4px) scaleY(0.8); opacity: 0; }
+  20%  { transform: translateY(0) scaleY(1); opacity: 1; }
+  80%  { transform: translateY(0) scaleY(1); opacity: 1; }
+  100% { transform: translateY(8px) scaleY(1.3); opacity: 0; }
+}
+.melt-drip {
+  position: absolute; bottom: -8px; width: 6px; height: 12px;
+  border-radius: 0 0 50% 50%; animation: drip 4s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   9. Syntax highlighting
+   ========================================================================== */
+.ds-source { position: relative; }
+.ds-source code .hl-tag { color: #6ee7b7; }
+.ds-source code .hl-attr { color: #fbbf24; }
+.ds-source code .hl-val { color: #95b6ff; }
+.ds-source code .hl-str { color: #a5b4fc; }
+
+/* ==========================================================================
+   10. Misc helpers
+   ========================================================================== */
+/* Dark mode preview panel (静的リファレンスとして残す) */
+.dark-preview { background: #0f172a; color: #f1f5f9; border-radius: 0.75rem; padding: 1.5rem; }
+.dark-preview .dp-surface { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 1rem; }
+
+/* Motion demo */
+.motion-demo-box { width: 48px; height: 48px; background: #2250df; border-radius: 0.5rem; transition-property: transform; }
+
+/* Nav dot */
+.ds-nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+/* Token table */
+.ds-token-table { border-collapse: collapse; }
+
+/* Source reference */
+.ds-source-ref { margin-top: 0.75rem; }
+
+/* Interactive demo */
+.ds-interactive-demo { }
+
+/* Showcase variant wrapper */
+.ds-showcase-variant { }
+
+/* Showcase chrome (sidebar) */
+.ds-showcase-chrome { background: var(--bg-surface, #ffffff); }
+
+/* Sidebar premium */
+.ds-sidebar-premium { }
+.ds-sidebar-header-gradient {
+  background: linear-gradient(180deg, var(--bg-surface, #ffffff) 0%, var(--bg-surface-alt, #f9fafb) 100%);
+}
+.ds-logo-ring {
+  box-shadow: 0 0 0 3px rgba(34, 80, 223, 0.12);
+}
+
+/* Premium surface & hover card */
+.ds-premium-surface { }
+.ds-hover-card {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.ds-hover-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 1px 2px 0 rgb(0 0 0 / 0.04);
+}
+
+/* Nav link (overview) */
+.ds-nav-link { }
+
+@media (prefers-reduced-motion: reduce) {
+  .melt-blob-1, .melt-blob-2, .melt-blob-3,
+  .melt-drip, .melt-glow { animation: none !important; }
+  .melt-text-gradient { animation: none; background-position: 0% 50%; }
+  .ds-hover-card:hover { transform: none; }
+}
+
+/* ==========================================================================
+   11. Copy Button — アニメーション
+   ========================================================================== */
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.copy-button:hover { transform: scale(1.05); background-color: #f8fafc; }
+.copy-button:active { transform: scale(0.9); transition: transform 0.1s ease-out; }
+.copy-button:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
+.copy-button .cb-icon {
+  position: absolute;
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.copy-button .cb-icon-copy  { opacity: 1; transform: scale(1); }
+.copy-button .cb-icon-check { opacity: 0; transform: scale(0.5); }
+.copy-button.copied .cb-icon-copy  { opacity: 0; transform: scale(0.5); }
+.copy-button.copied .cb-icon-check { opacity: 1; transform: scale(1); }
+.copy-button--subtle { border: none; background: transparent; }
+.copy-button--subtle:hover { background: rgba(0,0,0,0.05); }
+.copy-button--sm { width: 32px; height: 32px; border-radius: 0.5rem; }
+.copy-button--lg { width: 48px; height: 48px; border-radius: 1rem; }
+@media (prefers-reduced-motion: reduce) {
+  .copy-button, .copy-button .cb-icon { transition-duration: 0.01ms; }
+  .copy-button:hover, .copy-button:active { transform: none; }
+}
+
+/* ==========================================================================
+   レスポンシブ — モバイル対応（< 768px）
+   ========================================================================== */
+
+/* デスクトップではモバイルメニューボタン非表示 */
+.ds-mobile-menu-btn { display: none; }
+
+/* モバイルサイドバーオーバーレイ */
+.ds-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 29;
+}
+.ds-sidebar-overlay.active { display: block; }
+
+@media (max-width: 767px) {
+  /* モバイルメニューボタン表示 */
+  .ds-mobile-menu-btn { display: inline-flex; }
+
+  /* ヘッダーのパンくず・Sample Sites 非表示 */
+  .ds-breadcrumb-chevron { display: none; }
+  header .flex.items-center.gap-3 a[href*="examples"] { display: none; }
+
+  /* サイドバー: デフォルト非表示、トグルで表示 */
+  .ds-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .ds-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* メインコンテンツのマージン解除 */
+  main.ml-64 { margin-left: 0 !important; }
+
+  /* パディング縮小 */
+  .max-w-5xl.px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+  /* タイポグラフィグリッドをスタック */
+  .ds-typo-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  /* 固定グリッドをモバイル対応 */
+  .grid.grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid.grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid.grid-cols-2 { grid-template-columns: 1fr !important; }
+
+  /* コードブロックの横スクロール */
+  .ds-code-block, pre { overflow-x: auto; }
+
+  /* テーブルの横スクロール */
+  .ds-preview { overflow-x: auto; }
+
+  /* whitespace-nowrap 解除 */
+  .whitespace-nowrap { white-space: normal !important; }
+
+  /* ヒーローセクションのパディング調整 */
+  section[data-section="overview"] h2.text-3xl { font-size: 1.5rem; }
+}

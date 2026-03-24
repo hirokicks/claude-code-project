@@ -1,0 +1,19 @@
+.DS_Store
+.claude/
+.vscode/
+.netlify/
+node_modules/
+.env
+.env.*
+dist/
+verification/
+.agents/
+skills-lock.json
+
+# 内部開発ファイル
+internal/
+commands/
+skills/skill-improver/
+skills/design-review/iterations/
+skills/design-review/tasks/
+docs/phase1-2-diff-report.html

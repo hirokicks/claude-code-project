@@ -1,0 +1,68 @@
+[build]
+  publish = "."
+  command = "echo 'Static site — no build needed'"
+
+# Root → showcase（200 プロキシ: Slack 等の OGP クローラーがリダイレクトを追わない問題を回避）
+[[redirects]]
+  from = "/"
+  to = "/docs/index.html"
+  status = 200
+
+# Pretty URLs for docs
+[[redirects]]
+  from = "/docs"
+  to = "/docs/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/icons"
+  to = "/docs/icons.html"
+  status = 200
+
+# OGP image / favicon
+[[redirects]]
+  from = "/og-image.png"
+  to = "/docs/og-image.png"
+  status = 200
+
+[[redirects]]
+  from = "/Meltan_favicon.svg"
+  to = "/docs/Meltan_favicon.svg"
+  status = 200
+
+# ルート 200 プロキシ時の相対パス解決
+[[redirects]]
+  from = "/Meltan.svg"
+  to = "/docs/Meltan.svg"
+  status = 200
+
+# Cache static assets
+[[headers]]
+  for = "/scripts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, s-maxage=86400"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, s-maxage=604800"
+
+[[headers]]
+  for = "/docs/Meltan.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# OGP 画像はクローラーに制限なしで配信
+[[headers]]
+  for = "/og-image.png"
+  [headers.values]
+    X-Frame-Options = "ALLOWALL"
+    Cache-Control = "public, max-age=86400"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

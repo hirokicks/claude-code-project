@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brand Style Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 264px;
+      --header-h: 56px;
+      --sidebar-bg: #ffffff;
+      --sidebar-hover: #f5f5f5;
+      --sidebar-active: #eeeeee;
+      --sidebar-text: #666666;
+      --sidebar-text-hi: #333333;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-light: #eef2ff;
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --border: #e2e8f0;
+      --border-focus: #6366f1;
+      --text: #0f172a;
+      --text-2: #475569;
+      --text-3: #94a3b8;
+      --radius: 8px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --shadow: 0 4px 12px rgba(0,0,0,.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+      height: var(--header-h);
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px 0 28px;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .header-logo {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 15px;
+      flex-shrink: 0;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .header-logo:hover { opacity: .85; }
+    .brand-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      border-radius: 5px;
+      padding: 3px 6px;
+      min-width: 80px;
+      cursor: text;
+    }
+    .brand-name:hover { background: var(--bg); }
+    .brand-name:focus { background: var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+
+    .header-tag {
+      font-size: 11px;
+      color: var(--text-3);
+      background: var(--bg);
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background .15s, box-shadow .15s;
+      line-height: 1.4;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .save-indicator {
+      font-size: 12px;
+      color: #22c55e;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .save-indicator.show { opacity: 1; }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Content ── */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 44px 56px 80px;
+    }
+    .content-area::-webkit-scrollbar { width: 6px; }
+    .content-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+
+    .page-header {
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-breadcrumb {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-bottom: 8px;
+      font-weight: 500;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .page-title {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--text);
+      outline: none;
+      padding: 2px 6px;
+      border-radius: 5px;
+      margin-left: -6px;
+      line-height: 1.2;
+    }
+    .page-title:hover { background: var(--bg); }
+    .page-title:focus { background: var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+    .page-title:empty::before { content: attr(data-placeholder); color: var(--text-3); pointer-events: none; }
+
+    /* ── Blocks ── */
+    .blocks-container { display: flex; flex-direction: column; gap: 4px; }
+
+    .block {
+      position: relative;
+      border-radius: var(--radius);
+      border: 2px solid transparent;
+      transition: border-color .15s;
+    }
+    .block:hover { border-color: var(--border); }
+    .block:hover .block-tools { opacity: 1; pointer-events: auto; }
+    .block:focus-within { border-color: #c7d2fe; }
+    .block:focus-within .block-tools { opacity: 1; pointer-events: auto; }
+
+    .block-tools {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 3px;
+      box-shadow: var(--shadow-sm);
+      z-index: 20;
+    }
+    .tool-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--text-3);
+      transition: background .1s, color .1s;
+    }
+    .tool-btn:hover { background: var(--bg); color: var(--text); }
+    .tool-btn.del:hover { background: #fee2e2; color: #dc2626; }
+
+    /* Editable fields shared */
+    [contenteditable] { outline: none; }
+    [contenteditable]:empty::before { content: attr(data-placeholder); color: var(--text-3); pointer-events: none; }
+    [contenteditable]:focus {
+      background: var(--bg);
+      border-radius: 4px;
+    }
+
+    /* Heading block */
+    .block-heading { padding: 6px 10px; }
+    .block-heading .ce {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    /* Subheading block */
+    .block-subheading { padding: 6px 10px; }
+    .block-subheading .ce {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-2);
+      line-height: 1.4;
+    }
+
+    /* Text block */
+    .block-text { padding: 6px 10px; }
+    .block-text .ce {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #334155;
+      min-height: 1.8em;
+    }
+
+    /* Note block */
+    .block-note { padding: 6px 10px; }
+    .note-inner {
+      background: #fefce8;
+      border-left: 3px solid #f59e0b;
+      padding: 12px 16px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .note-inner .ce {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #78350f;
+    }
+
+    /* Divider block */
+    .block-divider { padding: 14px 10px; }
+    .block-divider hr { border: none; border-top: 1px solid var(--border); }
+
+    /* Image block */
+    .block-image { padding: 6px 10px; }
+    .img-upload {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .img-upload:hover { border-color: var(--accent); background: var(--accent-light); }
+    .img-upload.filled { border-style: solid; border-color: var(--border); background: transparent; }
+    .img-upload.filled:hover { border-color: var(--accent); }
+    .img-upload input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 2;
+    }
+    .img-upload img { width: 100%; height: auto; display: block; max-height: 500px; object-fit: contain; }
+    .img-placeholder { text-align: center; color: var(--text-3); pointer-events: none; }
+    .img-placeholder svg { display: block; margin: 0 auto 10px; }
+    .img-placeholder p { font-size: 14px; }
+    .img-placeholder small { font-size: 12px; color: #cbd5e1; margin-top: 4px; display: block; }
+    .img-replace {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,.55);
+      color: white;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 3;
+      border: none;
+      pointer-events: none;
+    }
+    .img-upload.filled:hover .img-replace { opacity: 1; pointer-events: auto; }
+    .img-caption {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-3);
+      text-align: center;
+      padding: 3px 6px;
+      border-radius: 4px;
+      line-height: 1.5;
+    }
+
+    /* Colors block */
+    .block-colors { padding: 6px 10px; }
+    .colors-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 4px 0;
+      align-items: flex-start;
+    }
+    .color-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+    .color-swatch {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,.08);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+    .color-swatch input[type=color] {
+      position: absolute;
+      inset: -10px;
+      width: calc(100% + 20px);
+      height: calc(100% + 20px);
+      opacity: 0;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .color-del {
+      position: absolute;
+      top: -4px; right: -4px;
+      width: 20px; height: 20px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 11px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      line-height: 1;
+    }
+    .color-item:hover .color-del { display: flex; }
+    .color-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      min-width: 88px;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .color-hex {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: 'SF Mono', 'Consolas', monospace;
+      text-align: center;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .add-color {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 2px dashed var(--border);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: var(--text-3);
+      transition: border-color .15s, color .15s, background .15s;
+      align-self: flex-start;
+    }
+    .add-color:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+    /* Add block */
+    .add-block-wrap { margin-top: 28px; }
+    .add-block-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 11px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-3);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .add-block-trigger:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+    .block-picker {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 14px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .block-picker.open { display: flex; }
+    .picker-opt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--white);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-2);
+      transition: border-color .15s, background .15s, color .15s;
+      min-width: 72px;
+    }
+    .picker-opt:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+    .picker-opt .ico { font-size: 22px; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      color: var(--text-3);
+      text-align: center;
+    }
+    .empty-state-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 24px;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+    .empty-state-inner svg { opacity: .25; }
+    .empty-state-inner p { font-size: 12px; color: var(--text-3); }
+
+    /* Cover image zone */
+    .cover-zone {
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .cover-upload-placeholder {
+      aspect-ratio: 16 / 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px;
+      cursor: pointer;
+      color: var(--text-3);
+      transition: background .15s;
+    }
+    .cover-upload-placeholder:hover { background: #f1f5f9; }
+    .cover-upload-placeholder svg { opacity: .45; }
+    .cover-upload-placeholder span { font-size: 13px; font-weight: 500; }
+    .cover-upload-hint { font-size: 11px !important; font-weight: 400 !important; opacity: .7; }
+    .cover-img-el {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      display: block;
+    }
+    .cover-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .cover-zone:hover .cover-img-overlay { opacity: 1; }
+    .cover-overlay-btn {
+      background: rgba(255,255,255,.92);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .cover-overlay-btn:hover { background: #fff; }
+    .cover-overlay-btn.danger { color: #dc2626; }
+    html[data-published] .cover-upload-placeholder { display: none !important; }
+    html[data-published] .cover-img-overlay { display: none !important; }
+    html[data-published] .cover-zone { cursor: default; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .sidebar-head {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid #dddddd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sidebar-head-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #666666;
+      text-transform: uppercase;
+      letter-spacing: .10em;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: #cccccc; border-radius: 2px; }
+
+    .nav-section {}
+    .nav-sec-head {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      cursor: pointer;
+      color: var(--sidebar-text);
+      font-size: 13px;
+      font-weight: 600;
+      gap: 8px;
+      transition: background .1s, color .1s;
+      user-select: none;
+      position: relative;
+    }
+    .nav-sec-head:hover { background: var(--sidebar-hover); color: var(--sidebar-text-hi); }
+    .nav-sec-head:hover .sec-del { display: flex; }
+    .nav-sec-head.has-active { color: var(--sidebar-text-hi); }
+    .nav-sec-ico { font-size: 14px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-sec-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-arrow {
+      font-size: 9px;
+      color: #cccccc;
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .nav-section.open .nav-arrow { transform: rotate(90deg); }
+
+    .nav-divider {
+      margin: 8px 16px;
+      border: none;
+      border-top: 1px solid #dddddd;
+    }
+
+    .sec-del {
+      display: none;
+      position: absolute;
+      right: 32px;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: #e5e7eb;
+      color: #666666;
+      border: none;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+      z-index: 1;
+      transition: background .1s, color .1s;
+    }
+    .sec-del:hover { background: #fecaca; color: #dc2626; }
+
+    .nav-pages { display: none; padding-bottom: 4px; }
+    .nav-section.open .nav-pages { display: block; }
+
+    .nav-page {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px 6px 46px;
+      cursor: pointer;
+      color: #666666;
+      font-size: 13px;
+      gap: 6px;
+      transition: background .1s, color .1s;
+      user-select: none;
+      position: relative;
+    }
+    .nav-page:hover { background: var(--sidebar-hover); color: #333333; }
+    .nav-page:hover .page-del { display: flex; }
+    .nav-page.active { background: var(--sidebar-active); color: var(--sidebar-text-hi); }
+    .nav-page-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+      opacity: .6;
+    }
+    .nav-page.active .nav-page-dot { opacity: 1; background: var(--accent); }
+    .nav-page-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .page-del {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      background: #e5e7eb;
+      color: #666666;
+      border: none;
+      border-radius: 3px;
+      font-size: 9px;
+      cursor: pointer;
+      transition: background .1s, color .1s;
+    }
+    .page-del:hover { background: #fecaca; color: #dc2626; }
+
+    .nav-add-page {
+      padding: 4px 16px 4px 46px;
+    }
+    .nav-add-page button {
+      background: transparent;
+      border: none;
+      color: #999999;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 3px 0;
+      transition: color .1s;
+    }
+    .nav-add-page button:hover { color: #666666; }
+
+    .sidebar-foot {
+      padding: 12px 16px;
+      border-top: 1px solid #dddddd;
+    }
+    .btn-add-section {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed #dddddd;
+      color: #666666;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-add-section:hover { border-color: #aaaaaa; color: #333333; }
+
+    /* ── Responsive utilities ── */
+    .hamburger-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-2);
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+    .hamburger-btn:hover { color: var(--text); }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      top: var(--header-h);
+      background: rgba(0,0,0,.3);
+      z-index: 149;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      .hamburger-btn { display: flex; }
+      .header-tag { display: none; }
+      .save-indicator { display: none; }
+      /* データ管理グループを非表示 */
+      .header-right .header-data-group,
+      .header-right .header-divider { display: none; }
+
+      .sidebar {
+        position: fixed;
+        top: var(--header-h);
+        left: 0;
+        height: calc(100vh - var(--header-h));
+        z-index: 150;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        box-shadow: 4px 0 20px rgba(0,0,0,.12);
+        border-right: 1px solid var(--border);
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      .content-area { padding: 28px 24px 60px; }
+
+      .csv-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .csv-table { min-width: 480px; }
+    }
+
+    @media (max-width: 375px) {
+      .content-area { padding: 20px 16px 60px; }
+      .page-title { font-size: 24px; }
+      .btn { font-size: 12px; padding: 5px 9px; }
+      /* 書き出しグループも非表示 */
+      .header-right .header-btn-group { display: none; }
+    }
+
+    /* ── Modal ── */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      width: 360px;
+      max-width: 90vw;
+      box-shadow: var(--shadow);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .modal-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+    .modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #e0e7ff; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      z-index: 9999;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── CSS Vars block ── */
+    .csv-wrap { padding: 4px 8px; }
+    .csv-table { width: 100%; border-collapse: collapse; }
+    .csv-table th {
+      text-align: left;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      border-bottom: 2px solid var(--border);
+      background: var(--bg);
+    }
+    .csv-table td {
+      padding: 0;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .csv-table tr:last-child td { border-bottom: none; }
+    .csv-cell {
+      display: block;
+      width: 100%;
+      padding: 8px 10px;
+      outline: none;
+      font-size: 13px;
+      line-height: 1.4;
+      border-radius: 4px;
+    }
+    .csv-cell:focus { background: var(--accent-light); }
+    .csv-cell.name { font-family: 'SF Mono', Consolas, monospace; color: #7c3aed; }
+    .csv-cell.value { font-family: 'SF Mono', Consolas, monospace; color: #0369a1; }
+    .csv-cell.desc { color: var(--text-2); }
+    .csv-del-btn {
+      width: 28px; height: 28px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      border-radius: 4px;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 4px;
+      transition: background .1s, color .1s;
+    }
+    .csv-del-btn:hover { background: #fee2e2; color: #dc2626; }
+    .csv-add-row {
+      margin-top: 8px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-3);
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+      width: 100%;
+    }
+    .csv-add-row:hover { border-color: var(--accent); color: var(--accent); }
+    .csv-preview-wrap { margin-top: 16px; }
+    .csv-preview-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 6px;
+    }
+    .csv-preview-code {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .csv-preview-code .cv-prop { color: #93c5fd; }
+    .csv-preview-code .cv-val { color: #86efac; }
+    .csv-preview-code .cv-cmt { color: #64748b; }
+
+    /* ── Published (read-only) mode ── */
+    html[data-published] [contenteditable] {
+      pointer-events: none; cursor: default; user-select: text;
+    }
+    html[data-published] [contenteditable]:focus {
+      background: transparent !important; box-shadow: none !important;
+    }
+    html[data-published] .block-tools,
+    html[data-published] .add-block-wrap,
+    html[data-published] .nav-add-page,
+    html[data-published] .sidebar-foot,
+    html[data-published] .sec-del,
+    html[data-published] .page-del,
+    html[data-published] .save-indicator,
+    html[data-published] .csv-del-btn,
+    html[data-published] .csv-add-row,
+    html[data-published] .add-color,
+    html[data-published] .color-del { display: none !important; }
+    html[data-published] .block { border-color: transparent !important; }
+    html[data-published] .block:hover { border-color: transparent !important; }
+    html[data-published] .header-right .btn-ghost,
+    html[data-published] .header-right .btn-primary,
+    html[data-published] .header-right .btn-css { display: none !important; }
+    html[data-published] .header-right::after {
+      content: '閲覧専用';
+      font-size: 12px;
+      color: var(--text-3);
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    html[data-published] .img-replace { display: none !important; }
+    html[data-published] .img-upload { cursor: default; pointer-events: none; }
+    html[data-published] .img-upload.filled { border-color: transparent; }
+    html[data-published] .color-swatch input[type=color] { display: none; }
+
+    /* CSS export btn */
+    .btn-css {
+      background: #0f172a;
+      color: #e2e8f0;
+      border: none;
+    }
+    .btn-css:hover { background: #1e293b; }
+
+    /* Header button groups */
+    .header-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .header-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .btn-group-label {
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-right: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-logo" onclick="goHome()" title="表紙に戻る">B</div>
+  <div contenteditable="true" class="brand-name" id="brandName" spellcheck="false" data-placeholder="ブランド名">Brand Name</div>
+  <div class="header-tag">Style Guide</div>
+  <div class="header-right">
+    <div class="save-indicator" id="saveIndicator">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <circle cx="6" cy="6" r="5" stroke="#22c55e" stroke-width="1.5"/>
+        <path d="M3.5 6l1.8 1.8L8.5 4.5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      保存済み
+    </div>
+    <!-- データ管理グループ -->
+    <div class="header-btn-group header-data-group">
+      <button class="btn btn-ghost" onclick="doExport()" title="現在のデータをJSONで保存">バックアップ</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()" title="バックアップJSONを読み込む">復元</button>
+    </div>
+
+    <div class="header-divider"></div>
+
+    <!-- 書き出しグループ -->
+    <div class="header-btn-group">
+      <button class="btn btn-css" onclick="exportCSS()" title="CSS変数ファイルを書き出す">CSS変数</button>
+      <button class="btn btn-ghost" style="border-color:#a5b4fc;color:#6366f1" onclick="exportHTML()" title="編集機能つきのHTMLを書き出す（作業継続用）">作業用HTML</button>
+      <button class="btn btn-primary" onclick="exportPublished()" title="編集機能なしの閲覧専用HTMLを書き出す">公開用HTMLを書き出し</button>
+    </div>
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="メニュー">
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <path d="M0 1h16M0 6h16M0 11h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar (left) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-head-label">コレクション</span>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-foot">
+      <button class="btn-add-section" onclick="promptAddSection()">＋ セクションを追加</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Content (right) -->
+  <main class="content-area" id="contentArea">
+    <div class="empty-state" id="emptyState">
+      <!-- Cover image zone -->
+      <div class="cover-zone" id="coverZone">
+        <div class="cover-upload-placeholder" id="coverPlaceholder" onclick="document.getElementById('coverImgInput').click()">
+          <svg width="44" height="44" fill="none" viewBox="0 0 44 44">
+            <rect x="4" y="8" width="36" height="28" rx="4" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="15" cy="18" r="3.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M4 30l11-9 8 7 6-5 11 9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          <span>表紙画像をアップロード</span>
+          <span class="cover-upload-hint">クリックして画像を選択（JPG・PNG・SVG）</span>
+        </div>
+        <img id="coverImgEl" class="cover-img-el" style="display:none" alt="カバー画像"/>
+        <div class="cover-img-overlay" id="coverImgOverlay" style="display:none">
+          <button class="cover-overlay-btn" onclick="document.getElementById('coverImgInput').click();event.stopPropagation()">画像を変更</button>
+          <button class="cover-overlay-btn danger" onclick="removeCoverImg();event.stopPropagation()">削除</button>
+        </div>
+      </div>
+      <input type="file" id="coverImgInput" accept="image/*" style="display:none" onchange="onCoverImgSelect(this)">
+      <!-- Info text -->
+      <div class="empty-state-inner">
+        <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
+          <path d="M8 3v5l3 3" stroke="#cccccc" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="8" r="6.5" stroke="#cccccc" stroke-width="1.2"/>
+        </svg>
+        <p>左のナビゲーションからページを選択してください</p>
+      </div>
+    </div>
+
+    <div id="pageContent" style="display:none">
+      <div class="page-header">
+        <div class="page-breadcrumb" id="breadcrumb"></div>
+        <div contenteditable="true" class="page-title" id="pageTitle" spellcheck="false" data-placeholder="ページタイトル"></div>
+      </div>
+      <div class="blocks-container" id="blocksContainer"></div>
+      <div class="add-block-wrap">
+        <button class="add-block-trigger" id="addBlockTrigger" onclick="togglePicker()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          ブロックを追加
+        </button>
+        <div class="block-picker" id="blockPicker">
+          <button class="picker-opt" onclick="addBlock('heading')"><span class="ico">H</span>見出し</button>
+          <button class="picker-opt" onclick="addBlock('subheading')"><span class="ico">h</span>小見出し</button>
+          <button class="picker-opt" onclick="addBlock('text')"><span class="ico">¶</span>テキスト</button>
+          <button class="picker-opt" onclick="addBlock('note')"><span class="ico">💡</span>ノート</button>
+          <button class="picker-opt" onclick="addBlock('image')"><span class="ico">🖼</span>画像</button>
+          <button class="picker-opt" onclick="addBlock('colors')"><span class="ico">🎨</span>カラー</button>
+          <button class="picker-opt" onclick="addBlock('divider')"><span class="ico">—</span>区切り線</button>
+          <button class="picker-opt" onclick="addBlock('css-vars')"><span class="ico">{;}</span>CSS変数</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="onModalBgClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">名前を入力</div>
+    <input type="text" class="modal-input" id="modalInput" placeholder="">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" id="modalOk">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Hidden inputs -->
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
+
+<script>
+// ============================================================
+// Data Model & Default
+// ============================================================
+// @@EMBEDDED_DATA_START@@
+const DEFAULT = {
+  brandName: 'Brand Name',
+  coverImage: null,
+  sections: [
+    {
+      id: 'logo', title: 'ロゴ', icon: '◉', open: true,
+      pages: [
+        { id: 'logo-1', title: 'ロゴの使い方', blocks: [
+          { id: 'b1', type: 'heading', content: 'ロゴの使い方' },
+          { id: 'b2', type: 'text', content: 'ブランドロゴはアイデンティティの中核を担う最も重要な要素です。正しい使い方を守ることで、ブランドの一貫性と信頼性を保つことができます。' }
+        ]},
+        { id: 'logo-2', title: 'バリエーション', blocks: [] },
+        { id: 'logo-3', title: '禁止事項', blocks: [
+          { id: 'b3', type: 'note', content: 'ロゴを変形・変色・回転させないでください。最小使用サイズ（24px 以上）を守ってください。' }
+        ]}
+      ]
+    },
+    {
+      id: 'color', title: 'カラー', icon: '◐', open: false,
+      pages: [
+        { id: 'col-1', title: 'プライマリーカラー', blocks: [
+          { id: 'c1', type: 'heading', content: 'プライマリーカラー' },
+          { id: 'c2', type: 'text', content: 'ブランドのメインカラーです。すべての主要なタッチポイントで一貫して使用してください。' },
+          { id: 'c3', type: 'colors', colors: [
+            { id: 'col1', name: 'Brand Blue', hex: '#6366f1' },
+            { id: 'col2', name: 'Deep Blue', hex: '#4338ca' },
+            { id: 'col3', name: 'Light Blue', hex: '#a5b4fc' }
+          ]}
+        ]},
+        { id: 'col-2', title: 'セカンダリーカラー', blocks: [] },
+        { id: 'col-3', title: 'ニュートラルカラー', blocks: [] }
+      ]
+    },
+    {
+      id: 'typo', title: 'タイポグラフィー', icon: 'Aa', open: false,
+      pages: [
+        { id: 'typo-1', title: 'フォントファミリー', blocks: [] },
+        { id: 'typo-2', title: 'フォントサイズ', blocks: [] },
+        { id: 'typo-3', title: 'テキストスタイル', blocks: [] }
+      ]
+    },
+    {
+      id: 'photo', title: 'フォトスタイル', icon: '🖼', open: false,
+      pages: [
+        { id: 'ph-1', title: 'スタイルガイド', blocks: [] },
+        { id: 'ph-2', title: 'NGパターン', blocks: [] }
+      ]
+    },
+    {
+      id: 'icon', title: 'アイコン', icon: '◇', open: false,
+      pages: [
+        { id: 'ic-1', title: 'アイコンセット', blocks: [] },
+        { id: 'ic-2', title: '使用ルール', blocks: [] }
+      ]
+    },
+    {
+      id: 'other', title: 'その他のルール', icon: '≡', open: false,
+      pages: [
+        { id: 'ot-1', title: 'トーン＆マナー', blocks: [] },
+        { id: 'ot-2', title: '適用ルール', blocks: [] }
+      ]
+    },
+    {
+      id: 'css', title: 'CSSスタイル', icon: '{;}', open: false, separator: true,
+      pages: [
+        { id: 'css-1', title: 'カラー変数', blocks: [
+          { id: 'cs1', type: 'heading', content: 'カラー変数' },
+          { id: 'cs2', type: 'text', content: 'デザイントークンをCSS変数として定義します。「CSS書き出し」ボタンからそのままウェブ実装へ受け渡せます。' },
+          { id: 'cs3', type: 'css-vars', vars: [
+            { id: 'v1', name: '--color-primary', value: '#6366f1', desc: 'ブランドメインカラー' },
+            { id: 'v2', name: '--color-primary-dark', value: '#4338ca', desc: 'ダークバリエーション' },
+            { id: 'v3', name: '--color-primary-light', value: '#a5b4fc', desc: 'ライトバリエーション' },
+            { id: 'v4', name: '--color-text', value: '#0f172a', desc: 'テキストカラー' },
+            { id: 'v5', name: '--color-bg', value: '#f8fafc', desc: '背景カラー' }
+          ]}
+        ]},
+        { id: 'css-2', title: 'タイポグラフィー変数', blocks: [
+          { id: 'ct1', type: 'heading', content: 'タイポグラフィー変数' },
+          { id: 'ct2', type: 'css-vars', vars: [
+            { id: 'vt1', name: '--font-family-base', value: "'Helvetica Neue', sans-serif", desc: 'ベースフォント' },
+            { id: 'vt2', name: '--font-size-xs', value: '12px', desc: '最小フォントサイズ' },
+            { id: 'vt3', name: '--font-size-sm', value: '14px', desc: '小フォントサイズ' },
+            { id: 'vt4', name: '--font-size-base', value: '16px', desc: 'ベースフォントサイズ' },
+            { id: 'vt5', name: '--font-size-lg', value: '20px', desc: '大フォントサイズ' },
+            { id: 'vt6', name: '--font-size-xl', value: '28px', desc: '見出しフォントサイズ' },
+            { id: 'vt7', name: '--line-height-base', value: '1.6', desc: 'ベース行間' },
+            { id: 'vt8', name: '--font-weight-normal', value: '400', desc: '通常ウェイト' },
+            { id: 'vt9', name: '--font-weight-bold', value: '700', desc: '太字ウェイト' }
+          ]}
+        ]},
+        { id: 'css-3', title: 'スペーシング変数', blocks: [
+          { id: 'csp1', type: 'heading', content: 'スペーシング変数' },
+          { id: 'csp2', type: 'css-vars', vars: [
+            { id: 'vs1', name: '--spacing-xs', value: '4px', desc: '最小スペーシング' },
+            { id: 'vs2', name: '--spacing-sm', value: '8px', desc: '小スペーシング' },
+            { id: 'vs3', name: '--spacing-md', value: '16px', desc: '中スペーシング' },
+            { id: 'vs4', name: '--spacing-lg', value: '24px', desc: '大スペーシング' },
+            { id: 'vs5', name: '--spacing-xl', value: '40px', desc: '特大スペーシング' },
+            { id: 'vs6', name: '--border-radius', value: '8px', desc: '標準角丸' },
+            { id: 'vs7', name: '--border-radius-lg', value: '16px', desc: '大角丸' },
+            { id: 'vs8', name: '--shadow', value: '0 4px 12px rgba(0,0,0,.10)', desc: '標準シャドウ' }
+          ]}
+        ]}
+      ]
+    }
+  ]
+};
+// @@EMBEDDED_DATA_END@@
+
+// ============================================================
+// State
+// ============================================================
+let D = null;
+let currentPageId = null;
+let saveTimer = null;
+let saveIndicatorTimer = null;
+
+// ============================================================
+// Storage
+// ============================================================
+function loadData() {
+  try {
+    const raw = localStorage.getItem('bsg_v1');
+    if (raw) {
+      D = JSON.parse(raw);
+      // migrate: apply separator from DEFAULT to matching sections
+      DEFAULT.sections.forEach(def => {
+        if (def.separator) {
+          const sec = D.sections.find(s => s.id === def.id);
+          if (sec) sec.separator = true;
+        }
+      });
+      return;
+    }
+  } catch(e) {}
+  D = JSON.parse(JSON.stringify(DEFAULT));
+}
+
+function saveData() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    localStorage.setItem('bsg_v1', JSON.stringify(D));
+    flashSave();
+  }, 400);
+}
+
+function flashSave() {
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  clearTimeout(saveIndicatorTimer);
+  saveIndicatorTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ============================================================
+// Cover Image
+// ============================================================
+function onCoverImgSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    D.coverImage = e.target.result;
+    saveData();
+    renderCoverImg();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function removeCoverImg() {
+  D.coverImage = null;
+  saveData();
+  renderCoverImg();
+}
+
+function renderCoverImg() {
+  const img = document.getElementById('coverImgEl');
+  const placeholder = document.getElementById('coverPlaceholder');
+  const overlay = document.getElementById('coverImgOverlay');
+  if (!img) return;
+  if (D.coverImage) {
+    img.src = D.coverImage;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    overlay.style.display = 'flex';
+  } else {
+    img.style.display = 'none';
+    img.src = '';
+    placeholder.style.display = 'flex';
+    overlay.style.display = 'none';
+  }
+}
+
+// ============================================================
+// Utils
+// ============================================================
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function findPage(pageId) {
+  for (const sec of D.sections) {
+    const p = sec.pages.find(x => x.id === pageId);
+    if (p) return { sec, page: p };
+  }
+  return null;
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// Sidebar
+// ============================================================
+function renderSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  D.sections.forEach(sec => {
+    const hasActive = sec.pages.some(p => p.id === currentPageId);
+    const div = document.createElement('div');
+    if (sec.separator) {
+      const hr = document.createElement('hr');
+      hr.className = 'nav-divider';
+      nav.appendChild(hr);
+    }
+    div.className = 'nav-section' + (sec.open ? ' open' : '');
+    div.id = 'sec-' + sec.id;
+    div.innerHTML = `
+      <div class="nav-sec-head${hasActive ? ' has-active' : ''}" onclick="toggleSec('${sec.id}')">
+        <span class="nav-sec-title" ondblclick="promptRenameSection(event,'${sec.id}')" title="ダブルクリックで名前変更">${esc(sec.title)}</span>
+        <button class="sec-del" onclick="deleteSection(event,'${sec.id}')" title="セクションを削除">✕</button>
+        <span class="nav-arrow">▶</span>
+      </div>
+      <div class="nav-pages">
+        ${sec.pages.map(p => `
+          <div class="nav-page${p.id === currentPageId ? ' active' : ''}"
+               id="navp-${p.id}"
+               onclick="goPage('${p.id}')"
+               ondblclick="promptRenamePage(event,'${sec.id}','${p.id}')">
+            <div class="nav-page-dot"></div>
+            <span class="nav-page-name" title="ダブルクリックで名前変更">${esc(p.title)}</span>
+            <button class="page-del" onclick="deletePage(event,'${sec.id}','${p.id}')" title="ページを削除">✕</button>
+          </div>
+        `).join('')}
+        <div class="nav-add-page">
+          <button onclick="promptAddPage('${sec.id}')">＋ ページを追加</button>
+        </div>
+      </div>
+    `;
+    nav.appendChild(div);
+  });
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+function toggleSec(secId) {
+  const sec = D.sections.find(s => s.id === secId);
+  if (sec) { sec.open = !sec.open; saveData(); renderSidebar(); }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function goHome() {
+  commitPageTitle();
+  currentPageId = null;
+  renderSidebar();
+  document.getElementById('pageContent').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  renderCoverImg();
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+function goPage(pageId) {
+  commitPageTitle();
+  currentPageId = pageId;
+  renderSidebar();
+  renderPage();
+  saveData();
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+function commitPageTitle() {
+  if (!currentPageId) return;
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const el = document.getElementById('pageTitle');
+  if (el) found.page.title = el.innerText.trim() || found.page.title;
+}
+
+// ============================================================
+// Page
+// ============================================================
+function renderPage() {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const { sec, page } = found;
+
+  document.getElementById('emptyState').style.display = 'none';
+  const pc = document.getElementById('pageContent');
+  pc.style.display = 'block';
+
+  document.getElementById('breadcrumb').textContent = sec.title;
+
+  const titleEl = document.getElementById('pageTitle');
+  titleEl.innerText = page.title;
+  titleEl.oninput = () => {
+    page.title = titleEl.innerText.trim() || page.title;
+    // update sidebar label live
+    const span = document.querySelector(`#navp-${page.id} .nav-page-name`);
+    if (span) span.textContent = page.title;
+    saveData();
+  };
+
+  renderBlocks();
+}
+
+// ============================================================
+// Blocks
+// ============================================================
+function renderBlocks() {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const { page } = found;
+  const container = document.getElementById('blocksContainer');
+  container.innerHTML = '';
+  page.blocks.forEach((block, i) => {
+    container.appendChild(buildBlock(block, i, page.blocks.length));
+  });
+}
+
+function buildBlock(block, idx, total) {
+  const div = document.createElement('div');
+  div.className = `block block-${block.type}`;
+  div.dataset.id = block.id;
+
+  // Toolbar
+  const tools = `<div class="block-tools">
+    ${idx > 0 ? `<button class="tool-btn" title="上へ移動" onclick="moveBlock('${block.id}',-1)">↑</button>` : ''}
+    ${idx < total - 1 ? `<button class="tool-btn" title="下へ移動" onclick="moveBlock('${block.id}',1)">↓</button>` : ''}
+    <button class="tool-btn del" title="削除" onclick="deleteBlock('${block.id}')">✕</button>
+  </div>`;
+
+  if (block.type === 'heading') {
+    div.innerHTML = tools + `<div contenteditable="true" spellcheck="false" class="ce"
+      style="font-size:22px;font-weight:700;line-height:1.3;padding:4px 8px;border-radius:4px;"
+      data-placeholder="見出しを入力..."
+      oninput="onCeInput('${block.id}',this)"
+    >${esc(block.content)}</div>`;
+  }
+  else if (block.type === 'subheading') {
+    div.innerHTML = tools + `<div contenteditable="true" spellcheck="false" class="ce"
+      style="font-size:16px;font-weight:600;color:#475569;padding:4px 8px;border-radius:4px;line-height:1.4;"
+      data-placeholder="小見出しを入力..."
+      oninput="onCeInput('${block.id}',this)"
+    >${esc(block.content)}</div>`;
+  }
+  else if (block.type === 'text') {
+    div.innerHTML = tools + `<div contenteditable="true" spellcheck="false" class="ce"
+      style="font-size:15px;line-height:1.8;color:#334155;padding:4px 8px;border-radius:4px;min-height:1.8em;"
+      data-placeholder="テキストを入力..."
+      oninput="onCeInput('${block.id}',this)"
+    >${esc(block.content)}</div>`;
+  }
+  else if (block.type === 'note') {
+    div.innerHTML = tools + `<div style="padding:4px 8px;">
+      <div style="background:#fefce8;border-left:3px solid #f59e0b;padding:12px 16px;border-radius:0 8px 8px 0;">
+        <div contenteditable="true" spellcheck="false" class="ce"
+          style="font-size:14px;line-height:1.7;color:#78350f;outline:none;"
+          data-placeholder="ノート・ルールを入力..."
+          oninput="onCeInput('${block.id}',this)"
+        >${esc(block.content)}</div>
+      </div>
+    </div>`;
+  }
+  else if (block.type === 'image') {
+    const fileId = 'f-' + block.id;
+    const filled = block.src ? ' filled' : '';
+    div.innerHTML = tools + `<div style="padding:4px 8px;">
+      <label class="img-upload${filled}" for="${fileId}">
+        <input type="file" id="${fileId}" accept="image/*" onchange="onImgUpload('${block.id}',this)" onclick="event.stopPropagation()">
+        ${block.src
+          ? `<img src="${block.src}" alt="">
+             <button class="img-replace" onclick="event.preventDefault();document.getElementById('${fileId}').click()">画像を変更</button>`
+          : `<div class="img-placeholder">
+               <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                 <rect x="4" y="8" width="40" height="32" rx="4" stroke="#cbd5e1" stroke-width="2"/>
+                 <circle cx="15" cy="18" r="4" stroke="#cbd5e1" stroke-width="2"/>
+                 <path d="M4 34l10-10 8 8 6-6 16 16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+               </svg>
+               <p>クリックして画像をアップロード</p>
+               <small>PNG, JPG, SVG, GIF, WebP</small>
+             </div>`
+        }
+      </label>
+      <div contenteditable="true" spellcheck="false" class="img-caption"
+        style="margin-top:8px;font-size:13px;color:#94a3b8;text-align:center;padding:3px 6px;border-radius:4px;outline:none;"
+        data-placeholder="キャプション（任意）"
+        oninput="onCapInput('${block.id}',this)"
+      >${esc(block.caption || '')}</div>
+    </div>`;
+  }
+  else if (block.type === 'colors') {
+    div.innerHTML = tools + buildColorsHtml(block);
+  }
+  else if (block.type === 'divider') {
+    div.innerHTML = tools + `<div style="padding:16px 8px;"><hr style="border:none;border-top:1px solid #e2e8f0;"></div>`;
+  }
+  else if (block.type === 'css-vars') {
+    div.innerHTML = tools + buildCssVarsHtml(block);
+  }
+
+  return div;
+}
+
+function buildColorsHtml(block) {
+  const swatches = (block.colors || []).map(c => `
+    <div class="color-item">
+      <div class="color-swatch" style="background:${esc(c.hex)}">
+        <input type="color" value="${esc(c.hex)}"
+          oninput="onColorPick('${block.id}','${c.id}','hex',this.value)"
+          onchange="onColorPick('${block.id}','${c.id}','hex',this.value)">
+      </div>
+      <button class="color-del" onclick="deleteColor('${block.id}','${c.id}')" title="削除">✕</button>
+      <div contenteditable="true" spellcheck="false" class="color-name"
+        data-placeholder="色名"
+        oninput="onColorEdit('${block.id}','${c.id}','name',this)"
+      >${esc(c.name)}</div>
+      <div contenteditable="true" spellcheck="false" class="color-hex"
+        data-placeholder="#000000"
+        oninput="onColorHexEdit('${block.id}','${c.id}',this)"
+        onblur="onColorHexBlur('${block.id}','${c.id}',this)"
+      >${esc(c.hex)}</div>
+    </div>
+  `).join('');
+
+  return `<div style="padding:4px 8px;">
+    <div class="colors-grid">
+      ${swatches}
+      <button class="add-color" onclick="addColor('${block.id}')" title="カラーを追加">+</button>
+    </div>
+  </div>`;
+}
+
+function buildCssVarsHtml(block) {
+  const vars = block.vars || [];
+  const rows = vars.map(v => `
+    <tr>
+      <td><div contenteditable="true" spellcheck="false" class="csv-cell name"
+        data-placeholder="--variable-name"
+        oninput="onCssVarInput('${block.id}','${v.id}','name',this)"
+      >${esc(v.name)}</div></td>
+      <td><div contenteditable="true" spellcheck="false" class="csv-cell value"
+        data-placeholder="value"
+        oninput="onCssVarInput('${block.id}','${v.id}','value',this)"
+      >${esc(v.value)}</div></td>
+      <td><div contenteditable="true" spellcheck="false" class="csv-cell desc"
+        data-placeholder="説明"
+        oninput="onCssVarInput('${block.id}','${v.id}','desc',this)"
+      >${esc(v.desc)}</div></td>
+      <td><button class="csv-del-btn" onclick="deleteCssVar('${block.id}','${v.id}')" title="削除">✕</button></td>
+    </tr>
+  `).join('');
+
+  const preview = vars.map(v =>
+    `  <span class="cv-prop">${esc(v.name)}</span>: <span class="cv-val">${esc(v.value)}</span>;<span class="cv-cmt">${v.desc ? '  /* ' + esc(v.desc) + ' */' : ''}</span>`
+  ).join('\n');
+
+  return `<div class="csv-wrap">
+    <table class="csv-table">
+      <thead><tr>
+        <th style="width:32%">変数名</th>
+        <th style="width:28%">値</th>
+        <th>説明</th>
+        <th style="width:36px"></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <button class="csv-add-row" onclick="addCssVar('${block.id}')">＋ 変数を追加</button>
+    ${vars.length > 0 ? `
+    <div class="csv-preview-wrap">
+      <div class="csv-preview-label">CSS プレビュー</div>
+      <div class="csv-preview-code">:root {\n${preview}\n}</div>
+    </div>` : ''}
+  </div>`;
+}
+
+// ── Block event handlers ──
+
+function onCeInput(blockId, el) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (b) { b.content = el.innerText; saveData(); }
+}
+
+function onCapInput(blockId, el) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (b) { b.caption = el.innerText; saveData(); }
+}
+
+function onImgUpload(blockId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const found = findPage(currentPageId);
+    if (!found) return;
+    const b = found.page.blocks.find(x => x.id === blockId);
+    if (b) { b.src = e.target.result; saveData(); renderBlocks(); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function onColorPick(blockId, colorId, field, value) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  const c = (b.colors || []).find(x => x.id === colorId);
+  if (!c) return;
+  c[field] = value;
+  // Update swatch bg and hex text without full re-render
+  const blockEl = document.querySelector(`[data-id="${blockId}"]`);
+  if (blockEl) {
+    const items = blockEl.querySelectorAll('.color-item');
+    items.forEach(item => {
+      const hexEl = item.querySelector('.color-hex');
+      const swatch = item.querySelector('.color-swatch');
+      if (!hexEl || !swatch) return;
+      const colorInput = swatch.querySelector('input[type=color]');
+      if (colorInput && colorInput.value === value) {
+        swatch.style.background = value;
+        if (document.activeElement !== hexEl) hexEl.textContent = value;
+      }
+    });
+  }
+  saveData();
+}
+
+function onColorEdit(blockId, colorId, field, el) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  const c = (b.colors || []).find(x => x.id === colorId);
+  if (c) { c[field] = el.innerText.trim(); saveData(); }
+}
+
+function onColorHexEdit(blockId, colorId, el) {
+  const val = el.innerText.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    onColorEdit(blockId, colorId, 'hex', { innerText: val });
+    // update swatch
+    const blockEl = document.querySelector(`[data-id="${blockId}"]`);
+    if (blockEl) {
+      blockEl.querySelectorAll('.color-item').forEach(item => {
+        const hexEl = item.querySelector('.color-hex');
+        if (hexEl === el) {
+          const swatch = item.querySelector('.color-swatch');
+          if (swatch) {
+            swatch.style.background = val;
+            const ci = swatch.querySelector('input[type=color]');
+            if (ci) ci.value = val;
+          }
+        }
+      });
+    }
+  }
+}
+
+function onColorHexBlur(blockId, colorId, el) {
+  const val = el.innerText.trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(val)) {
+    // revert
+    const found = findPage(currentPageId);
+    if (!found) return;
+    const b = found.page.blocks.find(x => x.id === blockId);
+    if (!b) return;
+    const c = (b.colors || []).find(x => x.id === colorId);
+    if (c) el.textContent = c.hex;
+  }
+}
+
+// ── Block CRUD ──
+
+function togglePicker() {
+  document.getElementById('blockPicker').classList.toggle('open');
+}
+
+function addBlock(type) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const block = { id: uid(), type };
+  if (['heading','subheading','text','note'].includes(type)) block.content = '';
+  if (type === 'image') { block.src = null; block.caption = ''; }
+  if (type === 'colors') block.colors = [{ id: uid(), name: 'Color 1', hex: '#6366f1' }];
+  if (type === 'css-vars') block.vars = [{ id: uid(), name: '', value: '', desc: '' }];
+
+  found.page.blocks.push(block);
+  document.getElementById('blockPicker').classList.remove('open');
+  saveData();
+  renderBlocks();
+
+  // focus new block
+  setTimeout(() => {
+    const last = document.getElementById('blocksContainer').lastElementChild;
+    if (last) {
+      const ce = last.querySelector('[contenteditable]');
+      if (ce) {
+        ce.focus();
+        const r = document.createRange();
+        const s = window.getSelection();
+        r.selectNodeContents(ce);
+        r.collapse(false);
+        s.removeAllRanges();
+        s.addRange(r);
+      }
+    }
+  }, 30);
+}
+
+function deleteBlock(blockId) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  found.page.blocks = found.page.blocks.filter(b => b.id !== blockId);
+  saveData();
+  renderBlocks();
+}
+
+function moveBlock(blockId, dir) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const arr = found.page.blocks;
+  const i = arr.findIndex(b => b.id === blockId);
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  saveData();
+  renderBlocks();
+}
+
+function addColor(blockId) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  b.colors = b.colors || [];
+  const hex = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6,'0');
+  b.colors.push({ id: uid(), name: 'New Color', hex });
+  saveData();
+  renderBlocks();
+}
+
+function onCssVarInput(blockId, varId, field, el) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  const v = (b.vars || []).find(x => x.id === varId);
+  if (v) { v[field] = el.innerText.trim(); saveData(); }
+  // refresh preview without full re-render
+  updateCssPreview(blockId, b);
+}
+
+function updateCssPreview(blockId, block) {
+  const blockEl = document.querySelector(`[data-id="${blockId}"]`);
+  if (!blockEl) return;
+  const pre = blockEl.querySelector('.csv-preview-code');
+  if (!pre) return;
+  const vars = block.vars || [];
+  pre.innerHTML = ':root {\n' + vars.map(v =>
+    `  <span class="cv-prop">${esc(v.name)}</span>: <span class="cv-val">${esc(v.value)}</span>;<span class="cv-cmt">${v.desc ? '  /* ' + esc(v.desc) + ' */' : ''}</span>`
+  ).join('\n') + '\n}';
+}
+
+function addCssVar(blockId) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  b.vars = b.vars || [];
+  b.vars.push({ id: uid(), name: '', value: '', desc: '' });
+  saveData();
+  renderBlocks();
+}
+
+function deleteCssVar(blockId, varId) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  b.vars = b.vars.filter(v => v.id !== varId);
+  saveData();
+  renderBlocks();
+}
+
+function deleteColor(blockId, colorId) {
+  const found = findPage(currentPageId);
+  if (!found) return;
+  const b = found.page.blocks.find(x => x.id === blockId);
+  if (!b) return;
+  b.colors = b.colors.filter(c => c.id !== colorId);
+  saveData();
+  renderBlocks();
+}
+
+// ============================================================
+// Sections & Pages CRUD
+// ============================================================
+let modalCb = null;
+
+function showModal(title, placeholder, defaultVal, cb) {
+  document.getElementById('modalTitle').textContent = title;
+  const inp = document.getElementById('modalInput');
+  inp.placeholder = placeholder;
+  inp.value = defaultVal || '';
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('modalOk').onclick = () => {
+    const v = inp.value.trim();
+    if (v) { cb(v); closeModal(); }
+  };
+  inp.onkeydown = e => {
+    if (e.key === 'Enter') document.getElementById('modalOk').click();
+    if (e.key === 'Escape') closeModal();
+  };
+  setTimeout(() => inp.focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('open');
+}
+
+function onModalBgClick(e) {
+  if (e.target === document.getElementById('modalBg')) closeModal();
+}
+
+function promptAddSection() {
+  showModal('新しいセクションを追加', 'セクション名...', '', name => {
+    const id = uid();
+    D.sections.push({
+      id, title: name, icon: '○', open: true,
+      pages: [{ id: uid(), title: name, blocks: [] }]
+    });
+    saveData(); renderSidebar();
+  });
+}
+
+function promptAddPage(secId) {
+  showModal('新しいページを追加', 'ページ名...', '', name => {
+    const sec = D.sections.find(s => s.id === secId);
+    if (!sec) return;
+    const page = { id: uid(), title: name, blocks: [] };
+    sec.pages.push(page);
+    saveData(); renderSidebar();
+    goPage(page.id);
+  });
+}
+
+function promptRenameSection(e, secId) {
+  e.stopPropagation();
+  const sec = D.sections.find(s => s.id === secId);
+  if (!sec) return;
+  showModal('セクション名を変更', '新しい名前...', sec.title, name => {
+    sec.title = name; saveData(); renderSidebar();
+  });
+}
+
+function promptRenamePage(e, secId, pageId) {
+  e.stopPropagation();
+  const sec = D.sections.find(s => s.id === secId);
+  if (!sec) return;
+  const page = sec.pages.find(p => p.id === pageId);
+  if (!page) return;
+  showModal('ページ名を変更', '新しい名前...', page.title, name => {
+    page.title = name;
+    if (currentPageId === pageId) {
+      document.getElementById('pageTitle').innerText = name;
+    }
+    saveData(); renderSidebar();
+  });
+}
+
+function deleteSection(e, secId) {
+  e.stopPropagation();
+  const sec = D.sections.find(s => s.id === secId);
+  if (!sec) return;
+  if (!confirm(`「${sec.title}」セクションをすべてのページごと削除しますか？`)) return;
+  D.sections = D.sections.filter(s => s.id !== secId);
+  if (sec.pages.some(p => p.id === currentPageId)) {
+    currentPageId = null;
+    document.getElementById('emptyState').style.display = '';
+    document.getElementById('pageContent').style.display = 'none';
+  }
+  saveData(); renderSidebar();
+}
+
+function deletePage(e, secId, pageId) {
+  e.stopPropagation();
+  const sec = D.sections.find(s => s.id === secId);
+  if (!sec) return;
+  const page = sec.pages.find(p => p.id === pageId);
+  if (!page) return;
+  if (sec.pages.length === 1) {
+    alert('セクションには最低1つのページが必要です。セクションごと削除する場合はセクションの×ボタンをご利用ください。');
+    return;
+  }
+  if (!confirm(`「${page.title}」ページを削除しますか？`)) return;
+  sec.pages = sec.pages.filter(p => p.id !== pageId);
+  if (currentPageId === pageId) {
+    currentPageId = null;
+    document.getElementById('emptyState').style.display = '';
+    document.getElementById('pageContent').style.display = 'none';
+  }
+  saveData(); renderSidebar();
+}
+
+// ============================================================
+// Export / Import
+// ============================================================
+function doExport() {
+  commitPageTitle();
+  const json = JSON.stringify(D, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'brand-style-guide.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('エクスポートしました');
+}
+
+async function exportPublished() {
+  commitPageTitle();
+  try {
+    const resp = await fetch(location.href);
+    const html = await resp.text();
+    const dataJson = JSON.stringify(D, null, 2);
+    let newHtml = html.replace(
+      /\/\/ @@EMBEDDED_DATA_START@@[\s\S]*?\/\/ @@EMBEDDED_DATA_END@@/,
+      `// @@EMBEDDED_DATA_START@@\nconst DEFAULT = ${dataJson};\n// @@EMBEDDED_DATA_END@@`
+    );
+    // Inject data-published attribute
+    newHtml = newHtml.replace('<html lang="ja">', '<html lang="ja" data-published="true">');
+    const brand = (D.brandName || 'Brand').replace(/\s+/g, '-');
+    const blob = new Blob([newHtml], { type: 'text/html; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${brand}-style-guide.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('公開版を書き出しました（編集機能なし）');
+  } catch(e) {
+    toast('エラー: 書き出しに失敗しました');
+  }
+}
+
+async function exportHTML() {
+  commitPageTitle();
+  try {
+    const resp = await fetch(location.href);
+    const html = await resp.text();
+    const dataJson = JSON.stringify(D, null, 2);
+    const newHtml = html.replace(
+      /\/\/ @@EMBEDDED_DATA_START@@[\s\S]*?\/\/ @@EMBEDDED_DATA_END@@/,
+      `// @@EMBEDDED_DATA_START@@\nconst DEFAULT = ${dataJson};\n// @@EMBEDDED_DATA_END@@`
+    );
+    const blob = new Blob([newHtml], { type: 'text/html; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('index.html を書き出しました — GitHubにアップロードしてください');
+  } catch(e) {
+    toast('エラー: 書き出しに失敗しました');
+  }
+}
+
+function exportCSS() {
+  commitPageTitle();
+  const brand = (D.brandName || 'Brand').replace(/\s+/g, '-');
+  const date = new Date().toISOString().slice(0, 10);
+  const lines = [
+    `/* ============================================`,
+    ` * ${D.brandName || 'Brand'} - Style Guide CSS Variables`,
+    ` * Generated: ${date}`,
+    ` * ============================================ */`,
+    ``,
+    `:root {`
+  ];
+
+  // Collect from colors blocks
+  const colorLines = [];
+  for (const sec of D.sections) {
+    for (const page of sec.pages) {
+      for (const block of page.blocks) {
+        if (block.type === 'colors' && block.colors) {
+          for (const c of block.colors) {
+            if (c.hex && c.name) {
+              const varName = '--color-' + c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              colorLines.push(`  ${varName}: ${c.hex};  /* ${c.name} */`);
+            }
+          }
+        }
+      }
+    }
+  }
+  if (colorLines.length) {
+    lines.push(`  /* === カラー (colors blocks) === */`);
+    colorLines.forEach(l => lines.push(l));
+    lines.push(``);
+  }
+
+  // Collect from css-vars blocks (grouped by section)
+  for (const sec of D.sections) {
+    const secLines = [];
+    for (const page of sec.pages) {
+      for (const block of page.blocks) {
+        if (block.type === 'css-vars' && block.vars) {
+          for (const v of block.vars) {
+            if (v.name && v.value) {
+              secLines.push(`  ${v.name}: ${v.value};${v.desc ? '  /* ' + v.desc + ' */' : ''}`);
+            }
+          }
+        }
+      }
+    }
+    if (secLines.length) {
+      lines.push(`  /* === ${sec.title} === */`);
+      secLines.forEach(l => lines.push(l));
+      lines.push(``);
+    }
+  }
+
+  lines.push(`}`);
+
+  const css = lines.join('\n');
+  const blob = new Blob([css], { type: 'text/css' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${brand}-variables.css`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSSファイルを書き出しました');
+}
+
+function doImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      D = JSON.parse(ev.target.result);
+      currentPageId = null;
+      document.getElementById('brandName').innerText = D.brandName || 'Brand Name';
+      document.getElementById('emptyState').style.display = '';
+      document.getElementById('pageContent').style.display = 'none';
+      saveData(); renderSidebar();
+      toast('インポートしました');
+    } catch(err) {
+      toast('エラー: ファイルを読み込めませんでした');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ============================================================
+// Brand name
+// ============================================================
+document.getElementById('brandName').addEventListener('input', function() {
+  D.brandName = this.innerText.trim() || D.brandName;
+  saveData();
+});
+
+// ============================================================
+// Close picker on outside click
+// ============================================================
+document.addEventListener('click', e => {
+  const picker = document.getElementById('blockPicker');
+  const trigger = document.getElementById('addBlockTrigger');
+  if (picker.classList.contains('open') && !picker.contains(e.target) && e.target !== trigger) {
+    picker.classList.remove('open');
+  }
+});
+
+// ============================================================
+// Init
+// ============================================================
+loadData();
+document.getElementById('brandName').innerText = D.brandName || 'Brand Name';
+renderCoverImg();
+renderSidebar();
+</script>
+</body>
+</html>

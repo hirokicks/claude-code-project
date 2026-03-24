@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>melta store — ホーム</title>
+  <meta name="description" content="melta UI で構築した EC サイトのホーム画面サンプル。">
+  <meta property="og:title" content="melta store — ホーム">
+  <meta property="og:description" content="melta UI で構築した EC サイトのホーム画面サンプル。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/ec-home.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="melta store — ホーム">
+  <meta name="twitter:description" content="melta UI で構築した EC サイトのホーム画面サンプル。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: {
+            50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+            400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+            800:'#13318d',900:'#0e266a',950:'#07194e'
+          }
+        },
+        fontFamily: {
+          sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+        }
+      }
+    }
+  }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+    body { line-height: 2.0; letter-spacing: 0.02em; }
+    h1,h2,h3,h4,h5,h6 { line-height: 1.4; letter-spacing: 0.01em; }
+
+    /* Scroll snap for product rows */
+    .product-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .product-scroll::-webkit-scrollbar { display: none; }
+    .product-scroll > * { scroll-snap-align: start; flex-shrink: 0; }
+
+    /* Placeholder image */
+    .ph-img {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Hero banner */
+    .hero-banner {
+      background: linear-gradient(135deg, #0e266a 0%, #07194e 60%, #13318d 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(43,112,239,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Category hover */
+    .cat-card {
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    .cat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+    }
+
+    /* Product card hover */
+    .prod-card {
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    .prod-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    /* Deal timer pulse */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+    /* Nav search focus */
+    .search-wrap:focus-within {
+      box-shadow: 0 0 0 2px rgba(43,112,239,0.5);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cat-card, .prod-card { transition: none; }
+      .cat-card:hover, .prod-card:hover { transform: none; }
+      .pulse-dot { animation: none; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- ========== Header ========== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2 flex-shrink-0">
+        <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <span class="text-lg font-bold text-slate-900">melta store</span>
+      </a>
+
+      <!-- Delivery -->
+      <button class="hidden lg:flex items-center gap-1.5 text-sm text-body hover:text-slate-900 transition-colors flex-shrink-0" aria-label="配送先を変更">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span><span class="text-xs text-slate-500">お届け先</span><br><span class="font-medium text-sm leading-none">東京都 渋谷区</span></span>
+      </button>
+
+      <!-- Search -->
+      <div class="flex-1 max-w-2xl">
+        <div class="search-wrap flex items-center bg-gray-50 border border-slate-200 rounded-lg overflow-hidden transition-shadow">
+          <select class="hidden md:block bg-gray-100 border-r border-slate-200 text-sm text-body pl-3 pr-8 py-2.5 appearance-none cursor-pointer focus:outline-none" aria-label="カテゴリ選択" style="background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22%2364748b%22 viewBox=%220 0 24 24%22><path d=%22M6 9l6 6 6-6%22 stroke=%22%2364748b%22 stroke-width=%222%22 fill=%22none%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;">
+            <option>すべて</option>
+            <option>家電</option>
+            <option>ファッション</option>
+            <option>食品</option>
+            <option>本</option>
+          </select>
+          <input type="search" placeholder="何をお探しですか？" class="flex-1 px-4 py-2.5 text-sm bg-transparent focus:outline-none" aria-label="商品を検索">
+          <button class="px-4 py-2.5 bg-primary-500 hover:bg-primary-700 transition-colors" aria-label="検索">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-1">
+        <button class="hidden md:flex flex-col items-start px-3 py-1 text-sm hover:bg-gray-50 rounded-lg transition-colors" aria-label="アカウント">
+          <span class="text-xs text-slate-500">こんにちは</span>
+          <span class="font-medium text-sm text-slate-900 leading-tight">アカウント</span>
+        </button>
+        <button class="hidden md:flex flex-col items-start px-3 py-1 text-sm hover:bg-gray-50 rounded-lg transition-colors" aria-label="注文履歴">
+          <span class="text-xs text-slate-500">返品・</span>
+          <span class="font-medium text-sm text-slate-900 leading-tight">注文履歴</span>
+        </button>
+        <button class="relative px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors" aria-label="カート（3件）">
+          <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          <span class="absolute -top-0.5 -right-0.5 bg-primary-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">3</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sub nav -->
+    <div class="border-t border-slate-200 bg-gray-50">
+      <nav class="max-w-7xl mx-auto px-6 flex items-center gap-1 overflow-x-auto" aria-label="カテゴリナビゲーション" style="scrollbar-width:none;">
+        <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-body hover:text-primary-500 transition-colors whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          すべて
+        </a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">タイムセール</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">新着商品</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">ランキング</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">ファッション</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">家電・カメラ</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">食品・飲料</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">本・コミック</a>
+        <a href="#" class="px-3 py-2 text-sm text-body hover:text-primary-500 transition-colors whitespace-nowrap">ギフト券</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- ========== Hero Banner ========== -->
+    <section class="hero-banner rounded-xl p-8 md:p-12 mb-8" aria-label="プロモーション">
+      <div class="relative z-10 max-w-lg">
+        <span class="inline-flex items-center gap-1.5 bg-white/10 text-white/90 text-xs font-medium px-3 py-1 rounded-full mb-4 backdrop-blur-sm">
+          <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot"></span>
+          期間限定セール開催中
+        </span>
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">春の新生活<br>応援キャンペーン</h1>
+        <p class="text-base text-slate-300 mb-6" style="line-height:1.7;">家電・家具・キッチン用品が最大40%OFF。<br>新しい暮らしを、お得に始めよう。</p>
+        <div class="flex items-center gap-3">
+          <a href="#" class="inline-flex items-center justify-center gap-2 h-10 px-5 text-[1rem] font-medium bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+            セール会場へ
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#" class="inline-flex items-center justify-center gap-2 h-10 px-5 text-[1rem] font-medium text-white/90 rounded-lg hover:bg-white/10 transition-colors cursor-pointer" style="border:1px solid rgba(255,255,255,0.2);">
+            対象カテゴリを見る
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Categories ========== -->
+    <section class="mb-10" aria-label="カテゴリ">
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">家電</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M6.115 5.19l.319 1.913A6 6 0 0 0 8.11 10.36L9.75 12l-.387.775c-.217.433-.132.956.21 1.298l1.348 1.348c.21.21.329.497.329.795v1.089c0 .426.24.815.622 1.006l.153.076c.433.217.956.132 1.298-.21l.723-.723a8.7 8.7 0 0 0 2.288-4.042 1.087 1.087 0 0 0-.358-1.099l-1.33-1.108c-.251-.21-.582-.299-.905-.245l-1.17.195a1.125 1.125 0 0 1-.98-.314l-.295-.295a1.125 1.125 0 0 1 0-1.591l.13-.132a1.125 1.125 0 0 1 1.3-.21l.603.302a.809.809 0 0 0 1.086-1.086L14.25 7.5l1.256-.837a4.5 4.5 0 0 0 1.528-1.732l.146-.292M6.115 5.19A9 9 0 1 0 17.18 4.64M6.115 5.19A8.965 8.965 0 0 1 12 3c1.929 0 3.716.607 5.18 1.64"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">ファッション</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 8.25v-1.5m0 1.5c-1.355 0-2.697.056-4.024.166C6.845 8.51 6 9.473 6 10.608v2.513m6-4.871c1.355 0 2.697.056 4.024.166C17.155 8.51 18 9.473 18 10.608v2.513M15 8.25v-1.5m-6 1.5v-1.5m12 9.75l-1.5.75a3.354 3.354 0 0 1-3 0 3.354 3.354 0 0 0-3 0 3.354 3.354 0 0 1-3 0 3.354 3.354 0 0 0-3 0 3.354 3.354 0 0 1-3 0L3 16.5m18-2.25a3.354 3.354 0 0 1-3 0 3.354 3.354 0 0 0-3 0 3.354 3.354 0 0 1-3 0 3.354 3.354 0 0 0-3 0 3.354 3.354 0 0 1-3 0"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">食品</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">本</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">PC・周辺機器</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">ホーム</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">ビューティー</span>
+        </a>
+        <a href="#" class="cat-card flex flex-col items-center gap-2 bg-white rounded-xl border border-slate-200 p-4 cursor-pointer">
+          <div class="w-12 h-12 ph-img rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.58-5.84a14.927 14.927 0 0 1-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+          </div>
+          <span class="text-xs font-medium text-slate-900 text-center">スポーツ</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ========== Time Sale ========== -->
+    <section class="mb-10" aria-label="タイムセール">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <h2 class="text-2xl font-semibold text-slate-900">タイムセール</h2>
+          <span class="inline-flex items-center gap-1.5 bg-red-50 text-red-700 text-xs font-medium px-2.5 py-1 rounded-full border border-red-200">
+            <span class="w-1.5 h-1.5 bg-red-500 rounded-full pulse-dot"></span>
+            残り 2:34:18
+          </span>
+        </div>
+        <a href="#" class="text-sm font-medium text-primary-500 hover:text-primary-700 transition-colors">すべて見る →</a>
+      </div>
+
+      <div class="product-scroll">
+        <!-- Sale item 1 -->
+        <div class="prod-card w-56 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-44 relative" style="background-image:url('https://picsum.photos/seed/headphones/300/240');">
+            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">-35%</span>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-body line-clamp-2 mb-2" style="line-height:1.5;">ワイヤレスノイズキャンセリングヘッドホン WH-1000</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold text-slate-900">¥24,800</span>
+              <span class="text-xs text-slate-400 line-through">¥38,000</span>
+            </div>
+            <div class="mt-2 bg-slate-100 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100">
+              <div class="bg-primary-500 h-full rounded-full" style="width:72%"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">72% が購入済み</p>
+          </div>
+        </div>
+
+        <!-- Sale item 2 -->
+        <div class="prod-card w-56 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-44 relative" style="background-image:url('https://picsum.photos/seed/projector/300/240');">
+            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">-28%</span>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-body line-clamp-2 mb-2" style="line-height:1.5;">4K対応 モバイルプロジェクター コンパクト設計</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold text-slate-900">¥42,500</span>
+              <span class="text-xs text-slate-400 line-through">¥59,000</span>
+            </div>
+            <div class="mt-2 bg-slate-100 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">
+              <div class="bg-primary-500 h-full rounded-full" style="width:45%"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">45% が購入済み</p>
+          </div>
+        </div>
+
+        <!-- Sale item 3 -->
+        <div class="prod-card w-56 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-44 relative" style="background-image:url('https://picsum.photos/seed/smartwatch/300/240');">
+            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">-40%</span>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-body line-clamp-2 mb-2" style="line-height:1.5;">スマートウォッチ Pro 心拍・睡眠計測対応</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold text-slate-900">¥17,800</span>
+              <span class="text-xs text-slate-400 line-through">¥29,800</span>
+            </div>
+            <div class="mt-2 bg-slate-100 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-valuenow="88" aria-valuemin="0" aria-valuemax="100">
+              <div class="bg-primary-500 h-full rounded-full" style="width:88%"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">88% が購入済み</p>
+          </div>
+        </div>
+
+        <!-- Sale item 4 -->
+        <div class="prod-card w-56 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-44 relative" style="background-image:url('https://picsum.photos/seed/espresso/300/240');">
+            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">-22%</span>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-body line-clamp-2 mb-2" style="line-height:1.5;">エスプレッソマシン 全自動 ミルクフォーマー付き</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold text-slate-900">¥35,800</span>
+              <span class="text-xs text-slate-400 line-through">¥46,000</span>
+            </div>
+            <div class="mt-2 bg-slate-100 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-valuenow="31" aria-valuemin="0" aria-valuemax="100">
+              <div class="bg-primary-500 h-full rounded-full" style="width:31%"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">31% が購入済み</p>
+          </div>
+        </div>
+
+        <!-- Sale item 5 -->
+        <div class="prod-card w-56 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-44 relative" style="background-image:url('https://picsum.photos/seed/shoes/300/240');">
+            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">-50%</span>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-body line-clamp-2 mb-2" style="line-height:1.5;">超軽量ランニングシューズ メッシュ素材 通気性抜群</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold text-slate-900">¥6,900</span>
+              <span class="text-xs text-slate-400 line-through">¥13,800</span>
+            </div>
+            <div class="mt-2 bg-slate-100 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100">
+              <div class="bg-primary-500 h-full rounded-full" style="width:95%"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">95% が購入済み</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Recommendation Grid ========== -->
+    <section class="mb-10" aria-label="おすすめ商品">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Panel: Browsing History -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 class="text-base font-semibold text-slate-900 mb-4">閲覧履歴に基づくおすすめ</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/speaker/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">Bluetoothスピーカー</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/desklight/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">LEDデスクライト</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/usbhub/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">USBハブ 7ポート</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/charger/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">ワイヤレス充電器</p></a>
+          </div>
+          <a href="#" class="text-sm text-primary-500 hover:text-primary-700 font-medium mt-3 inline-block transition-colors">もっと見る</a>
+        </div>
+
+        <!-- Panel: Popular in Electronics -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 class="text-base font-semibold text-slate-900 mb-4">家電の人気商品</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/robot/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">ロボット掃除機</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/purifier/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">空気清浄機</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/kettle/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">電気ケトル</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/vacuum/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">コードレス掃除機</p></a>
+          </div>
+          <a href="#" class="text-sm text-primary-500 hover:text-primary-700 font-medium mt-3 inline-block transition-colors">もっと見る</a>
+        </div>
+
+        <!-- Panel: New in Fashion -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 class="text-base font-semibold text-slate-900 mb-4">ファッション新着</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/shirt/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">リネンシャツ</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/chinos/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">チノパン</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/belt/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">レザーベルト</p></a>
+            <a href="#" class="block"><div class="ph-img aspect-square rounded-lg text-xs" style="background-image:url('https://picsum.photos/seed/tote/200/200');"></div><p class="text-xs text-primary-500 mt-1.5 truncate">キャンバストート</p></a>
+          </div>
+          <a href="#" class="text-sm text-primary-500 hover:text-primary-700 font-medium mt-3 inline-block transition-colors">もっと見る</a>
+        </div>
+
+        <!-- Panel: Login CTA -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
+          <h3 class="text-base font-semibold text-slate-900 mb-2">パーソナライズされた体験</h3>
+          <p class="text-sm text-body mb-4" style="line-height:1.6;">サインインすると、あなたの好みに合わせた商品をおすすめします。</p>
+          <div class="mt-auto flex flex-col gap-2">
+            <a href="#" class="inline-flex items-center justify-center h-10 px-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer">サインイン</a>
+            <p class="text-xs text-slate-500 text-center">新規登録は<a href="#" class="text-primary-500 hover:underline">こちら</a></p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== Popular Products ========== -->
+    <section class="mb-10" aria-label="ランキング">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-slate-900">今週の売れ筋ランキング</h2>
+        <a href="#" class="text-sm font-medium text-primary-500 hover:text-primary-700 transition-colors">すべて見る →</a>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <!-- Rank 1 -->
+        <a href="#" class="prod-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-40 relative" style="background-image:url('https://picsum.photos/seed/earbuds/280/220');">
+            <span class="absolute top-2 left-2 bg-slate-900 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">1</span>
+          </div>
+          <div class="p-3">
+            <p class="text-sm text-body line-clamp-2 mb-1.5" style="line-height:1.5;">完全ワイヤレスイヤホン 防水 IPX5 最大30時間再生</p>
+            <div class="flex items-center gap-1 mb-1">
+              <div class="flex text-amber-400">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" opacity="0.3"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              </div>
+              <span class="text-xs text-slate-500">2,847</span>
+            </div>
+            <span class="text-base font-bold text-slate-900">¥4,980</span>
+          </div>
+        </a>
+
+        <!-- Rank 2-5 (simplified) -->
+        <a href="#" class="prod-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-40 relative" style="background-image:url('https://picsum.photos/seed/dock/280/220');"><span class="absolute top-2 left-2 bg-slate-900 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">2</span></div>
+          <div class="p-3">
+            <p class="text-sm text-body line-clamp-2 mb-1.5" style="line-height:1.5;">USB-C ドッキングステーション トリプルディスプレイ対応</p>
+            <span class="text-base font-bold text-slate-900">¥8,900</span>
+          </div>
+        </a>
+        <a href="#" class="prod-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-40 relative" style="background-image:url('https://picsum.photos/seed/towels/280/220');"><span class="absolute top-2 left-2 bg-slate-900 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">3</span></div>
+          <div class="p-3">
+            <p class="text-sm text-body line-clamp-2 mb-1.5" style="line-height:1.5;">オーガニックコットン タオルセット 6枚組 今治製</p>
+            <span class="text-base font-bold text-slate-900">¥3,480</span>
+          </div>
+        </a>
+        <a href="#" class="prod-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-40 relative" style="background-image:url('https://picsum.photos/seed/bottle/280/220');"><span class="absolute top-2 left-2 bg-slate-900 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">4</span></div>
+          <div class="p-3">
+            <p class="text-sm text-body line-clamp-2 mb-1.5" style="line-height:1.5;">ステンレスボトル 保冷24時間 保温12時間 500ml</p>
+            <span class="text-base font-bold text-slate-900">¥2,180</span>
+          </div>
+        </a>
+        <a href="#" class="prod-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-40 relative" style="background-image:url('https://picsum.photos/seed/mouse/280/220');"><span class="absolute top-2 left-2 bg-slate-900 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">5</span></div>
+          <div class="p-3">
+            <p class="text-sm text-body line-clamp-2 mb-1.5" style="line-height:1.5;">エルゴノミクスマウス 静音 Bluetooth 5.0 充電式</p>
+            <span class="text-base font-bold text-slate-900">¥3,280</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ========== Recently Viewed ========== -->
+    <section class="mb-10" aria-label="最近チェックした商品">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-slate-900">最近チェックした商品</h2>
+        <a href="#" class="text-sm font-medium text-primary-500 hover:text-primary-700 transition-colors">閲覧履歴 →</a>
+      </div>
+
+      <div class="product-scroll">
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/keyboard/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">メカニカルキーボード</p><span class="text-sm font-bold text-slate-900">¥12,800</span></div>
+        </a>
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/stand/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">ノートPCスタンド</p><span class="text-sm font-bold text-slate-900">¥3,980</span></div>
+        </a>
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/backpack/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">防水バックパック 30L</p><span class="text-sm font-bold text-slate-900">¥7,500</span></div>
+        </a>
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/diffuser/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">アロマディフューザー</p><span class="text-sm font-bold text-slate-900">¥4,200</span></div>
+        </a>
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/mousepad/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">ゲーミングマウスパッド</p><span class="text-sm font-bold text-slate-900">¥1,980</span></div>
+        </a>
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/umbrella/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">折りたたみ傘 超軽量</p><span class="text-sm font-bold text-slate-900">¥2,480</span></div>
+        </a>
+        <a href="#" class="prod-card w-40 bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer">
+          <div class="ph-img h-32" style="background-image:url('https://picsum.photos/seed/tumbler/220/180');"></div>
+          <div class="p-3"><p class="text-xs text-body truncate">ステンレスタンブラー</p><span class="text-sm font-bold text-slate-900">¥1,680</span></div>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-6 py-10">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">melta store について</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">会社概要</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">採用情報</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">プレスリリース</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">お買い物ガイド</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">配送について</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">返品・交換</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">お支払い方法</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">サポート</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">ヘルプセンター</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">お問い合わせ</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">よくある質問</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">アプリ</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">iOS アプリ</a></li>
+            <li><a href="#" class="text-sm text-body hover:text-primary-500 transition-colors">Android アプリ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-slate-200 pt-6 flex items-center justify-between">
+        <p class="text-xs text-slate-500">© 2026 melta store — melta UI で構築されたサンプルページ</p>
+        <div class="flex items-center gap-4">
+          <a href="#" class="text-xs text-slate-500 hover:text-primary-500 transition-colors">プライバシーポリシー</a>
+          <a href="#" class="text-xs text-slate-500 hover:text-primary-500 transition-colors">利用規約</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

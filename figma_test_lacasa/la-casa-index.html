@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1600">
+  <title>la CASA - 家は 生きかた 暮らしかた。</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Noto+Sans+JP:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #fff;
+      min-width: 1600px;
+      color: #1f1f1f;
+    }
+    img { display: block; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ─────────────────────────────
+       VIEW MORE BUTTON
+    ───────────────────────────── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 380px;
+      height: 69px;
+      padding: 17px 40px;
+      border: 1px solid #e5e5e5;
+      border-radius: 35px;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .btn-primary:hover { background: rgba(51,51,51,0.05); }
+    .btn-primary span {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 2.2;
+      color: #1f1f1f;
+      white-space: nowrap;
+    }
+    .btn-primary .arrow {
+      width: 33px;
+      height: 20px;
+    }
+
+    /* ─────────────────────────────
+       SECTION HEADING (H2)
+    ───────────────────────────── */
+    .section-h2 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 80px 0;
+    }
+    .section-h2 .title-inner {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 600;
+      font-size: 40px;
+      color: #1f1f1f;
+      text-align: center;
+      line-height: 1.5;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #1f1f1f;
+    }
+
+    /* ═══════════════════════════════════════
+       1. HERO SECTION
+    ═══════════════════════════════════════ */
+    .hero {
+      position: relative;
+      width: 1600px;
+      height: 1325px;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: -34px -18px 0;
+      width: calc(100% + 18px);
+    }
+    .hero-bg img {
+      width: 1975px;
+      height: 1374px;
+      object-fit: cover;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.60);
+    }
+
+    /* Navigation */
+    .hero-nav {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1600px;
+      height: 100px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 80px;
+    }
+    .hero-nav .main-menu {
+      display: flex;
+      gap: 40px;
+      align-items: flex-end;
+      height: 67px;
+      padding-bottom: 0;
+    }
+    .hero-nav .menu-item {
+      padding: 8px 0 42px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #f2f2f2;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .hero-nav .sub-menu {
+      display: flex;
+      gap: 40px;
+      align-items: flex-end;
+      height: 100px;
+    }
+    .hero-nav .sub-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 34px;
+      padding-top: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: #f2f2f2;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .hero-nav .sub-item .dot {
+      width: 9px;
+      height: 9px;
+    }
+    .hero-nav .btn-consult {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 70px;
+      margin-bottom: 32px;
+      cursor: pointer;
+    }
+    .hero-nav .btn-consult img {
+      width: 21px;
+      height: 15px;
+    }
+    .hero-nav .btn-consult span {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: #f2f2f2;
+      white-space: nowrap;
+    }
+
+    /* Hero logo */
+    .hero-logo {
+      position: absolute;
+      top: 179px;
+      left: 80px;
+      width: 861px;
+      height: 146px;
+    }
+    .hero-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Hero headline */
+    .hero-headline {
+      position: absolute;
+      top: 430px;
+      left: 80px;
+      width: 446px;
+      height: 286px;
+    }
+    .hero-headline img {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Hero body text */
+    .hero-body {
+      position: absolute;
+      top: 587px;
+      left: 870px;
+      width: 574px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 3.5;
+      letter-spacing: 1.76px;
+      color: #fff;
+    }
+
+    /* ═══════════════════════════════════════
+       2. LIFE DESIGN SECTION
+    ═══════════════════════════════════════ */
+    .life-design {
+      position: relative;
+      width: 1600px;
+      padding: 100px 0 120px;
+      background: #fff;
+    }
+    .life-design .section-label {
+      position: absolute;
+      right: 110px;
+      top: 100px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 24px;
+      font-weight: 500;
+      color: #000;
+      letter-spacing: 2.4px;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+    .life-design .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      row-gap: 0;
+    }
+
+    /* Card — odd (left) */
+    .life-card {
+      position: relative;
+      padding-left: 50px;
+      margin-bottom: 0;
+    }
+    .life-card.left {
+      grid-column: 1;
+      padding-left: 130px;
+    }
+    .life-card.right {
+      grid-column: 2;
+      padding-left: 80px;
+    }
+    .life-card.offset-top {
+      margin-top: 651px;
+    }
+    .life-card.offset-top-2 {
+      margin-top: 0;
+      align-self: start;
+    }
+
+    .life-card .thumb {
+      width: 600px;
+      height: 820px;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .life-card .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .life-card .card-info {
+      margin-top: 48px;
+      width: 600px;
+    }
+    .life-card .card-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 64px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #000;
+      text-transform: uppercase;
+    }
+    .life-card .card-subtitle {
+      margin-top: 40px;
+      padding-left: 50px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 2.2;
+      letter-spacing: 1.2px;
+      color: #1f1f1f;
+    }
+
+    /* Stagger layout */
+    .life-cards-container {
+      position: relative;
+      padding: 0 80px;
+      min-height: 5100px;
+    }
+    .life-card-wrap {
+      position: absolute;
+    }
+    .life-card-wrap.c1 { left: 80px;  top: 0; }
+    .life-card-wrap.c2 { left: 870px; top: 651px; }
+    .life-card-wrap.c3 { left: 80px;  top: 1322px; }
+    .life-card-wrap.c4 { left: 870px; top: 1973px; }
+    .life-card-wrap.c5 { left: 80px;  top: 2621px; }
+
+    /* VIEW MORE btn row */
+    .life-design .btn-row {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .life-design-inner {
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════
+       3. 家づくりの特徴 SECTION
+    ═══════════════════════════════════════ */
+    .features {
+      width: 1600px;
+      background-image: url('https://www.figma.com/api/mcp/asset/c49a25f6-0a46-44ce-b605-13b23f07d408');
+      background-size: cover;
+      background-position: center;
+      padding-bottom: 120px;
+    }
+
+    /* Feature row */
+    .feature-row {
+      position: relative;
+      padding: 0 80px;
+      height: 737px;
+      display: flex;
+      align-items: flex-start;
+    }
+    .feature-row .feature-content {
+      position: absolute;
+      left: 80px;
+      top: 0;
+      width: 1520px;
+    }
+    .feature-row .feature-big-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 110px;
+      font-weight: 600;
+      line-height: 130px;
+      letter-spacing: 5.5px;
+      color: #000;
+      height: 130px;
+    }
+    .feature-row .feature-number {
+      position: absolute;
+      left: 0;
+      top: 200px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.9px;
+      color: #000;
+    }
+    .feature-row .feature-label {
+      position: absolute;
+      left: 50px;
+      top: 200px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #000;
+    }
+    .feature-row .feature-heading {
+      position: absolute;
+      left: 52px;
+      top: 237px;
+      width: 499px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.8;
+      letter-spacing: 1.6px;
+      color: #000;
+    }
+    .feature-row .feature-text {
+      position: absolute;
+      left: 50px;
+      top: 426px;
+      width: 501px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 36px;
+      letter-spacing: -0.18px;
+      color: #000;
+    }
+    .feature-row .feature-btn {
+      position: absolute;
+      left: 50px;
+      top: 578px;
+    }
+    .feature-row .feature-img {
+      position: absolute;
+      right: 0;
+      top: 78px;
+      width: 870px;
+      height: 520px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .feature-row .feature-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Philosophy subsection */
+    .philosophy {
+      padding: 80px 80px 0;
+    }
+    .philosophy-divider {
+      width: 1440px;
+      height: 1px;
+      background: #888;
+      margin-bottom: 60px;
+    }
+    .philosophy-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin-bottom: 80px;
+    }
+    .philosophy-header .ph-left {
+      width: 480px;
+    }
+    .philosophy-header .ph-heading {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1.8;
+      color: #000;
+    }
+    .philosophy-header .ph-right {
+      flex: 1;
+      padding-left: 250px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 2.4;
+      color: #000;
+    }
+    .philosophy-title-bg {
+      position: relative;
+      height: 163px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 60px;
+      overflow: hidden;
+    }
+    .philosophy-title-bg span {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 210px;
+      font-weight: 500;
+      line-height: 1;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+    }
+    .philosophy-cards {
+      display: flex;
+      gap: 0;
+    }
+    .phil-card {
+      flex: 1;
+      background: #fff;
+      padding: 60px;
+    }
+    .phil-card .icon {
+      width: 131px;
+      height: 143px;
+      margin: 0 auto 60px;
+    }
+    .phil-card .icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .phil-card .phil-title {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      color: #000;
+      margin-bottom: 16px;
+    }
+    .phil-card .phil-body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #000;
+    }
+    .features-btn-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 80px;
+    }
+
+    /* ═══════════════════════════════════════
+       4. ラ・カーサについて SECTION
+    ═══════════════════════════════════════ */
+    .about {
+      width: 1600px;
+      background-image: url('https://www.figma.com/api/mcp/asset/5bf85569-bbfd-4752-bdc6-70c814d62c89');
+      background-size: cover;
+      background-position: center;
+      padding-bottom: 100px;
+    }
+
+    /* Life Design feature in about */
+    .about .feature-row .feature-img img {
+      opacity: 0.6;
+    }
+
+    /* Company info card */
+    .company-info {
+      display: flex;
+      align-items: stretch;
+      margin: 80px 0 0 0;
+      height: 391px;
+    }
+    .company-info .ci-image {
+      width: 631px;
+      background: #d9d9d9;
+      flex-shrink: 0;
+    }
+    .company-info .ci-content {
+      padding: 0 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 32px;
+    }
+    .company-info .ci-label {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      color: #000;
+    }
+    .company-info .ci-heading {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.8;
+      color: #000;
+    }
+
+    /* ═══════════════════════════════════════
+       5. お役立ち SECTION
+    ═══════════════════════════════════════ */
+    .useful {
+      width: 1600px;
+      background-image: url('https://www.figma.com/api/mcp/asset/5c5f50e3-d8ec-4282-902c-69cdb3a4667e');
+      background-size: cover;
+      background-position: center;
+      padding-bottom: 120px;
+    }
+    .useful-body {
+      display: flex;
+      padding: 0 130px;
+      gap: 140px;
+    }
+
+    /* Articles */
+    .articles-col { width: 600px; }
+    .col-title {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #000;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #111;
+      margin-bottom: 40px;
+    }
+    .article-item {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    .article-item .art-thumb {
+      width: 160px;
+      height: 90px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+    .article-item .art-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .article-item .art-text {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 2.4;
+      color: #000;
+    }
+
+    /* Categories */
+    .categories-col { flex: 1; }
+    .cat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .cat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px;
+      height: 100px;
+      border-bottom: 1px solid #e5e5e5;
+      cursor: pointer;
+    }
+    .cat-item img { width: 24px; height: 24px; }
+    .cat-item span {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 2.4;
+      color: #1f1f1f;
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════
+       6. 見学会・イベント SECTION
+    ═══════════════════════════════════════ */
+    .events {
+      width: 1600px;
+      padding: 80px 130px 120px;
+      background: #fff;
+    }
+    .events-h3 {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 36px;
+      font-weight: 600;
+      color: #000;
+      margin-bottom: 20px;
+    }
+    .events-desc {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 18px;
+      font-weight: 300;
+      line-height: 2;
+      color: #000;
+      width: 798px;
+      margin-bottom: 40px;
+    }
+    .events-row-label {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: #000;
+      margin: 40px 0 24px;
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 369px);
+      gap: 40px;
+    }
+    .event-card {
+      width: 369px;
+      height: 307px;
+      background: #e8e8e8;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .event-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ═══════════════════════════════════════
+       7. NEWS / RECRUIT SECTION
+    ═══════════════════════════════════════ */
+    .news-section {
+      width: 1600px;
+      padding: 80px 130px 120px;
+      background: #fff;
+      display: flex;
+      gap: 140px;
+    }
+    .news-col { flex: 1; }
+    .news-h3 {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 36px;
+      font-weight: 600;
+      color: #000;
+      margin-bottom: 40px;
+    }
+    .news-item {
+      padding: 30px 0;
+      border-top: 1px solid #e5e5e5;
+    }
+    .news-item:last-child { border-bottom: 1px solid #e5e5e5; }
+    .news-item .news-date {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .news-item .news-title {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #000;
+    }
+
+    /* ─────────────────────────────
+       UTILITY
+    ───────────────────────────── */
+    .btn-row-center {
+      display: flex;
+      justify-content: center;
+      margin-top: 60px;
+    }
+    .link-more {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      color: #888;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     1. HERO
+═══════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="https://www.figma.com/api/mcp/asset/dd1c1b87-6893-4130-ae05-75b4afa082bb" alt="la CASA hero background">
+  </div>
+  <div class="hero-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="hero-nav">
+    <div class="main-menu">
+      <a class="menu-item" href="#">ラ・カーサについて</a>
+      <a class="menu-item" href="#">特　徴</a>
+      <a class="menu-item" href="#">事　例</a>
+      <a class="menu-item" href="#">お役立ち</a>
+      <a class="menu-item" href="#">more</a>
+    </div>
+    <div class="sub-menu">
+      <a class="sub-item" href="#">
+        見学会・イベント
+        <img class="dot" src="https://www.figma.com/api/mcp/asset/7a842924-a138-4bb2-9be2-b6d8afc34924" alt="">
+      </a>
+      <a class="sub-item" href="#">
+        資料請求
+        <img class="dot" src="https://www.figma.com/api/mcp/asset/7a842924-a138-4bb2-9be2-b6d8afc34924" alt="">
+      </a>
+      <a class="sub-item" href="#">
+        LINE登録
+        <img class="dot" src="https://www.figma.com/api/mcp/asset/7a842924-a138-4bb2-9be2-b6d8afc34924" alt="">
+      </a>
+      <a class="btn-consult" href="#">
+        <img src="https://www.figma.com/api/mcp/asset/507ee129-0088-4653-a9c2-ee30d8fbe748" alt="">
+        <span>いえづくり相談</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Logo -->
+  <div class="hero-logo">
+    <img src="https://www.figma.com/api/mcp/asset/2b0d5f49-c68d-49c5-86fd-db2057030062" alt="la CASA">
+  </div>
+
+  <!-- Headline (SVG text) -->
+  <div class="hero-headline">
+    <img src="https://www.figma.com/api/mcp/asset/f1346801-7fae-49f0-8dcc-1ab8c74522ef" alt="家は 生きかた 暮らしかた。">
+  </div>
+
+  <!-- Body copy -->
+  <div class="hero-body">
+    注⽂住宅なのに、なんだか同じような家が建つ。<br>
+    ぜっかくイチから図⾯を描くのだから、<br>
+    もっと「これが⾃分」と誇れる家にしませんか。<br>
+    ラ・カーサのクリエイティブディレクターが、<br>
+    あなたらしさの源泉をみつけて<br>
+    最上の暮らし⽅を提案します。<br>
+    あなたは他の誰とも違うのだから、<br>
+    あなたの家も、もっと⾃由で、多様でいい。
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     2. LIFE DESIGN
+═══════════════════════════════════════ -->
+<section style="position:relative; width:1600px; background:#fff; padding-top:100px; padding-bottom:180px;">
+
+  <div class="section-h2" style="margin-bottom:0; padding:0 0 80px;">
+    <div class="title-inner">ライフデザイン事例</div>
+  </div>
+
+  <!-- LIFE DESIGN vertical label -->
+  <p style="
+    position: absolute;
+    right: 110px;
+    top: 200px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 2.4px;
+    color: #000;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+  ">LIFE DESIGN</p>
+
+  <!-- Cards Container -->
+  <div style="position:relative; min-height:4000px; padding:0 80px;">
+
+    <!-- Card 1 – Left -->
+    <div style="position:absolute; left:80px; top:0;">
+      <div style="width:600px; height:820px; border-radius:4px; overflow:hidden;">
+        <img src="https://www.figma.com/api/mcp/asset/adf6601b-640e-4d8c-ab22-ee1a5f15578e" alt="" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div style="margin-top:48px;">
+        <p style="font-family:'Montserrat',sans-serif;font-size:64px;font-weight:600;line-height:1.4;color:#000;text-transform:uppercase;">CONCEPT TITLE<br>HOUSE</p>
+        <p style="margin-top:40px;padding-left:50px;font-family:'Noto Sans JP',sans-serif;font-size:24px;font-weight:700;line-height:2.2;letter-spacing:1.2px;color:#1f1f1f;">家族をゆるやかにつなぐ<br>開放感と安心感</p>
+      </div>
+    </div>
+
+    <!-- Card 2 – Right (offset) -->
+    <div style="position:absolute; left:870px; top:651px;">
+      <div style="width:600px; height:820px; border-radius:4px; overflow:hidden;">
+        <img src="https://www.figma.com/api/mcp/asset/adf6601b-640e-4d8c-ab22-ee1a5f15578e" alt="" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div style="margin-top:48px;">
+        <p style="font-family:'Montserrat',sans-serif;font-size:64px;font-weight:600;line-height:1.4;color:#000;text-transform:uppercase;">CONCEPT TITLE<br>HOUSE</p>
+        <p style="margin-top:40px;padding-left:50px;font-family:'Noto Sans JP',sans-serif;font-size:24px;font-weight:700;line-height:2.2;letter-spacing:1.2px;color:#1f1f1f;">家族をゆるやかにつなぐ<br>開放感と安心感</p>
+      </div>
+    </div>
+
+    <!-- Card 3 – Left -->
+    <div style="position:absolute; left:80px; top:1322px;">
+      <div style="width:600px; height:820px; border-radius:4px; overflow:hidden;">
+        <img src="https://www.figma.com/api/mcp/asset/adf6601b-640e-4d8c-ab22-ee1a5f15578e" alt="" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div style="margin-top:48px;">
+        <p style="font-family:'Montserrat',sans-serif;font-size:64px;font-weight:600;line-height:1.4;color:#000;text-transform:uppercase;">CONCEPT TITLE<br>HOUSE</p>
+        <p style="margin-top:40px;padding-left:50px;font-family:'Noto Sans JP',sans-serif;font-size:24px;font-weight:700;line-height:2.2;letter-spacing:1.2px;color:#1f1f1f;">家族をゆるやかにつなぐ<br>開放感と安心感</p>
+      </div>
+    </div>
+
+    <!-- Card 4 – Right -->
+    <div style="position:absolute; left:870px; top:1973px;">
+      <div style="width:600px; height:820px; border-radius:4px; overflow:hidden;">
+        <img src="https://www.figma.com/api/mcp/asset/adf6601b-640e-4d8c-ab22-ee1a5f15578e" alt="" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div style="margin-top:48px;">
+        <p style="font-family:'Montserrat',sans-serif;font-size:64px;font-weight:600;line-height:1.4;color:#000;text-transform:uppercase;">CONCEPT TITLE<br>HOUSE</p>
+        <p style="margin-top:40px;padding-left:50px;font-family:'Noto Sans JP',sans-serif;font-size:24px;font-weight:700;line-height:2.2;letter-spacing:1.2px;color:#1f1f1f;">家族をゆるやかにつなぐ<br>開放感と安心感</p>
+      </div>
+    </div>
+
+    <!-- Card 5 – Left -->
+    <div style="position:absolute; left:80px; top:2621px;">
+      <div style="width:600px; height:820px; border-radius:4px; overflow:hidden;">
+        <img src="https://www.figma.com/api/mcp/asset/adf6601b-640e-4d8c-ab22-ee1a5f15578e" alt="" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div style="margin-top:48px;">
+        <p style="font-family:'Montserrat',sans-serif;font-size:64px;font-weight:600;line-height:1.4;color:#000;text-transform:uppercase;">CONCEPT TITLE<br>HOUSE</p>
+        <p style="margin-top:40px;padding-left:50px;font-family:'Noto Sans JP',sans-serif;font-size:24px;font-weight:700;line-height:2.2;letter-spacing:1.2px;color:#1f1f1f;">家族をゆるやかにつなぐ<br>開放感と安心感</p>
+      </div>
+    </div>
+
+  </div><!-- /cards container -->
+
+  <!-- VIEW MORE -->
+  <div class="btn-row-center" style="margin-top:0; position:absolute; bottom:60px; left:50%; transform:translateX(-50%);">
+    <a href="#" class="btn-primary">
+      <span>VIEW MORE</span>
+      <img class="arrow" src="https://www.figma.com/api/mcp/asset/bebdae6d-02c9-4b47-b5b0-40b71d119ab6" alt="">
+    </a>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     3. 家づくりの特徴
+═══════════════════════════════════════ -->
+<section class="features">
+
+  <!-- Section H2 -->
+  <div class="section-h2">
+    <div class="title-inner">家づくりの特徴</div>
+  </div>
+
+  <!-- ORIGINALITY -->
+  <div style="position:relative; width:1520px; margin:0 auto; height:737px;">
+    <p style="font-family:'Montserrat',sans-serif;font-size:110px;font-weight:600;line-height:130px;letter-spacing:5.5px;color:#000;height:130px;">ORIGINALITY</p>
+    <div style="position:absolute; right:0; top:78px; width:870px; height:520px; border-radius:4px; overflow:hidden;">
+      <img src="https://www.figma.com/api/mcp/asset/c08db34c-3ef1-46e9-80ef-fb16a3b6aa86" alt="ORIGINALITY" style="width:100%;height:100%;object-fit:cover;">
+    </div>
+    <p style="position:absolute;left:0;top:200px;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:600;letter-spacing:0.9px;color:#000;">01</p>
+    <p style="position:absolute;left:50px;top:200px;font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.8px;color:#000;">プロセスと体制</p>
+    <div style="position:absolute;left:52px;top:237px;width:499px;font-family:'Noto Sans JP',sans-serif;font-size:32px;font-weight:700;line-height:1.8;letter-spacing:1.6px;color:#000;">
+      一緒に見つける。<br>わかっているようで、<br>わかっていない自分のこと。
+    </div>
+    <p style="position:absolute;left:50px;top:440px;width:501px;font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:400;line-height:36px;letter-spacing:-0.18px;color:#000;">
+      これまでの住宅づくりのあり方を刷新し、「真の自分らしさ」を深く探求できる独自のプロセスと体制を構築しています。
+    </p>
+    <div style="position:absolute;left:50px;top:578px;">
+      <a href="#" class="btn-primary">
+        <span>VIEW MORE</span>
+        <img class="arrow" src="https://www.figma.com/api/mcp/asset/7786e655-7ccc-4bac-aad7-e04a161ceeef" alt="">
+      </a>
+    </div>
+  </div>
+
+  <!-- SUSTAINABILITY -->
+  <div style="position:relative; width:1520px; margin:0 auto; height:737px; margin-top:40px;">
+    <p style="font-family:'Montserrat',sans-serif;font-size:110px;font-weight:600;line-height:130px;letter-spacing:5.5px;color:#000;height:130px;">SUSTAINABILITY</p>
+    <div style="position:absolute; right:0; top:78px; width:870px; height:520px; border-radius:4px; overflow:hidden;">
+      <img src="https://www.figma.com/api/mcp/asset/7b48276d-3cf3-4a05-bec0-8997875c43bb" alt="SUSTAINABILITY" style="width:100%;height:100%;object-fit:cover;">
+    </div>
+    <p style="position:absolute;left:0;top:200px;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:600;letter-spacing:0.9px;color:#000;">02</p>
+    <p style="position:absolute;left:50px;top:200px;font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.8px;color:#000;">機能性</p>
+    <div style="position:absolute;left:52px;top:237px;width:499px;font-family:'Noto Sans JP',sans-serif;font-size:32px;font-weight:700;line-height:1.8;letter-spacing:1.6px;color:#000;">
+      何十年、<br>ずっと先も「住み続けたい」と<br>思えているように。
+    </div>
+    <p style="position:absolute;left:50px;top:457px;width:501px;font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:400;line-height:36px;letter-spacing:-0.18px;color:#000;">
+      耐震・断熱・素材など、安心して暮らせる必要十分な品質を担保します。その上で「自分らしい暮らし心地」を実現することが真のサステナビリティだと考えています。
+    </p>
+    <div style="position:absolute;left:50px;top:578px;">
+      <a href="#" class="btn-primary">
+        <span>VIEW MORE</span>
+        <img class="arrow" src="https://www.figma.com/api/mcp/asset/7786e655-7ccc-4bac-aad7-e04a161ceeef" alt="">
+      </a>
+    </div>
+  </div>
+
+  <!-- AESTHETIC -->
+  <div style="position:relative; width:1520px; margin:0 auto; height:737px; margin-top:40px;">
+    <p style="font-family:'Montserrat',sans-serif;font-size:110px;font-weight:600;line-height:130px;letter-spacing:5.5px;color:#000;height:130px;">AESTHETIC</p>
+    <div style="position:absolute; right:0; top:78px; width:870px; height:520px; border-radius:4px; overflow:hidden;">
+      <img src="https://www.figma.com/api/mcp/asset/81c3a8ec-0f6d-4672-999c-a2ae79638480" alt="AESTHETIC" style="width:100%;height:100%;object-fit:cover;">
+    </div>
+    <p style="position:absolute;left:0;top:200px;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:600;letter-spacing:0.9px;color:#000;">03</p>
+    <p style="position:absolute;left:50px;top:200px;font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.8px;color:#000;">意匠性</p>
+    <div style="position:absolute;left:52px;top:237px;width:499px;font-family:'Noto Sans JP',sans-serif;font-size:32px;font-weight:700;line-height:1.8;letter-spacing:1.6px;color:#000;">
+      人やまちに自然と溶けこみ、<br>愛されていく美しさ。
+    </div>
+    <p style="position:absolute;left:50px;top:420px;width:501px;font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:400;line-height:36px;letter-spacing:-0.18px;color:#000;">
+      住み手の個性や趣向を大切にしつつ、利己的になりすぎない他者や地域にも配慮した愛される造形や素材感を実現します。
+    </p>
+    <div style="position:absolute;left:50px;top:578px;">
+      <a href="#" class="btn-primary">
+        <span>VIEW MORE</span>
+        <img class="arrow" src="https://www.figma.com/api/mcp/asset/7786e655-7ccc-4bac-aad7-e04a161ceeef" alt="">
+      </a>
+    </div>
+  </div>
+
+  <!-- Philosophy -->
+  <div style="padding:80px 80px 0; margin-top:80px;">
+    <div style="width:1440px;height:1px;background:rgba(0,0,0,0.2);margin-bottom:60px;"></div>
+
+    <div style="display:flex;align-items:flex-start;margin-bottom:40px;">
+      <div style="width:480px;">
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:32px;font-weight:600;line-height:1.8;color:#000;">
+          よい家づくりのために、<br>ラ・カーサが大事だと思うこと。
+        </p>
+      </div>
+      <div style="flex:1;padding-left:250px;">
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:300;line-height:2.4;color:#000;">
+          大半の人にとって、家づくりは初めての体験です。最善の進め方や選択ができているのか分からず、不安がつきまとう家づくりはなかなか苦しいでしょう。安心して前に進めるように、自分らしい選択ができるように、私たちがパートナーとして大事にしていることをお伝えします。
+        </p>
+      </div>
+    </div>
+
+    <!-- PHILOSOPHY watermark title -->
+    <div style="position:relative;height:163px;overflow:hidden;display:flex;align-items:center;margin-bottom:0;">
+      <span style="font-family:'Montserrat',sans-serif;font-size:210px;font-weight:500;line-height:1;color:rgba(255,255,255,0.5);white-space:nowrap;position:absolute;bottom:-20px;">PHILOSOPHY</span>
+    </div>
+
+    <!-- Philosophy Cards -->
+    <div style="display:flex;gap:0;margin-top:0;">
+      <div style="flex:1;background:#fff;padding:60px;">
+        <div style="width:131px;height:143px;margin:0 auto 60px;">
+          <img src="https://www.figma.com/api/mcp/asset/b56fbf5d-8a54-407c-878b-33ae8dafc825" alt="" style="width:100%;height:100%;object-fit:contain;">
+        </div>
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:700;line-height:1;color:#000;margin-bottom:16px;">家づくりの意味を考える</p>
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:#000;">あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら。</p>
+      </div>
+      <div style="flex:1;background:#fff;padding:60px;margin-left:1px;">
+        <div style="width:131px;height:143px;margin:0 auto 60px;">
+          <img src="https://www.figma.com/api/mcp/asset/b56fbf5d-8a54-407c-878b-33ae8dafc825" alt="" style="width:100%;height:100%;object-fit:contain;">
+        </div>
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:700;line-height:1;color:#000;margin-bottom:16px;">要望を疑う</p>
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:#000;">あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら。</p>
+      </div>
+      <div style="flex:1;background:#fff;padding:60px;margin-left:1px;">
+        <div style="width:131px;height:143px;margin:0 auto 60px;">
+          <img src="https://www.figma.com/api/mcp/asset/b56fbf5d-8a54-407c-878b-33ae8dafc825" alt="" style="width:100%;height:100%;object-fit:contain;">
+        </div>
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:700;line-height:1;color:#000;margin-bottom:16px;">自分を知る</p>
+        <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:#000;">あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら。</p>
+      </div>
+    </div>
+
+    <div class="btn-row-center">
+      <a href="#" class="btn-primary">
+        <span>VIEW MORE</span>
+        <img class="arrow" src="https://www.figma.com/api/mcp/asset/7786e655-7ccc-4bac-aad7-e04a161ceeef" alt="">
+      </a>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     4. ラ・カーサについて
+═══════════════════════════════════════ -->
+<section class="about">
+
+  <div class="section-h2">
+    <div class="title-inner">ラ・カーサについて</div>
+  </div>
+
+  <!-- LIFE DESIGN feature -->
+  <div style="position:relative; width:1520px; margin:0 auto; height:737px;">
+    <p style="font-family:'Montserrat',sans-serif;font-size:110px;font-weight:600;line-height:130px;letter-spacing:5.5px;color:#000;height:130px;">LIFE DESIGN</p>
+    <div style="position:absolute; right:0; top:78px; width:870px; height:520px; border-radius:4px; overflow:hidden;">
+      <img src="https://www.figma.com/api/mcp/asset/7b1026e7-7061-4933-8732-f693476f6289" alt="LIFE DESIGN" style="width:100%;height:100%;object-fit:cover;opacity:0.85;">
+    </div>
+    <p style="position:absolute;left:0;top:200px;font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:700;letter-spacing:0.9px;color:#000;">多様なデザイン領域</p>
+    <div style="position:absolute;left:52px;top:237px;width:499px;font-family:'Noto Sans JP',sans-serif;font-size:32px;font-weight:700;line-height:1.8;letter-spacing:1.6px;color:#000;">
+      あらゆる角度から、<br>悩みや課題に応えられるように。
+    </div>
+    <p style="position:absolute;left:50px;top:420px;width:501px;font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:400;line-height:36px;letter-spacing:-0.18px;color:#000;">
+      建築に関わる多くの専門的なソリューションを持っており、一貫した考え方で伴走します。新築であれば土地から、リノベーションなら物件から、遠慮なくご相談ください。
+    </p>
+    <div style="position:absolute;left:50px;top:578px;">
+      <a href="#" class="btn-primary">
+        <span>VIEW MORE</span>
+        <img class="arrow" src="https://www.figma.com/api/mcp/asset/8affd6e3-7d5d-4ced-ac71-db8c04b4b475" alt="">
+      </a>
+    </div>
+  </div>
+
+  <!-- Company Info -->
+  <div style="display:flex;align-items:stretch;margin-top:80px;height:391px;">
+    <div style="width:631px;background:#d9d9d9;flex-shrink:0;"></div>
+    <div style="flex:1;padding:60px 80px;display:flex;flex-direction:column;justify-content:center;gap:32px;">
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:700;letter-spacing:0.9px;color:#000;">ブランド・会社情報</p>
+      <div style="font-family:'Noto Sans JP',sans-serif;font-size:32px;font-weight:700;line-height:1.8;color:#000;">
+        家づくりを起点に<br>地域の人々の豊かさと誇りをつくる<br>ライフデザインカンパニー
+      </div>
+      <a href="#" class="btn-primary" style="width:510px;">
+        <span>VIEW MORE</span>
+        <img class="arrow" src="https://www.figma.com/api/mcp/asset/8affd6e3-7d5d-4ced-ac71-db8c04b4b475" alt="">
+      </a>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     5. お役立ち
+═══════════════════════════════════════ -->
+<section class="useful">
+
+  <div class="section-h2">
+    <div class="title-inner">家づくりのお役立ち</div>
+  </div>
+
+  <div class="useful-body">
+    <!-- Articles -->
+    <div class="articles-col">
+      <p class="col-title">よく見られている記事</p>
+      <div class="article-item">
+        <div class="art-thumb">
+          <img src="https://www.figma.com/api/mcp/asset/4763a9dc-52c6-4bab-9db0-82cc222f08e5" alt="">
+        </div>
+        <p class="art-text">2022年20月から「断熱等級6・7」が登場。<br>家づくりはどう変わる？</p>
+      </div>
+      <div class="article-item">
+        <div class="art-thumb">
+          <img src="https://www.figma.com/api/mcp/asset/853bd7b5-b0c4-4e34-a37c-124e4d8547b7" alt="">
+        </div>
+        <p class="art-text">「造作洗面台」に憧れる①：<br>カウンターとミラーを選ぶコツは？</p>
+      </div>
+      <div class="article-item">
+        <div class="art-thumb">
+          <img src="https://www.figma.com/api/mcp/asset/f353ef4a-6a28-4336-bf8a-824a1bee0d64" alt="">
+        </div>
+        <p class="art-text">床の高さを下げると何が変わる？<br>「ダウンフロア」の愉しみ方</p>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories-col">
+      <p class="col-title">人気のカテゴリ</p>
+      <div class="cat-grid">
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>住まい</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>家づくり</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>建て方</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>土　地</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>構　造</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>過ごし方</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>豆知識</span>
+        </div>
+        <div class="cat-item">
+          <img src="https://www.figma.com/api/mcp/asset/1610f5b8-079d-4cf1-95ca-ef0a581b91ac" alt="">
+          <span>建　築</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row-center" style="margin-top:80px;">
+    <a href="#" class="btn-primary">
+      <span>VIEW MORE</span>
+      <img class="arrow" src="https://www.figma.com/api/mcp/asset/8affd6e3-7d5d-4ced-ac71-db8c04b4b475" alt="">
+    </a>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     6. 見学会・イベント
+═══════════════════════════════════════ -->
+<section style="width:1600px;background:#fff;padding:80px 130px 120px;">
+  <h3 style="font-family:'Noto Sans JP',sans-serif;font-size:36px;font-weight:600;color:#000;margin-bottom:20px;">見学会・イベント</h3>
+  <p style="font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:300;line-height:2;color:#000;width:798px;margin-bottom:40px;">
+    ラ・カーサの考え方やアウトプットに触れたり、スタッフと直接お話できる機会をなるべく多く設けています。
+  </p>
+
+  <p style="font-family:'Noto Sans JP',sans-serif;font-size:18px;color:#000;margin:40px 0 24px;">期間限定のイベント</p>
+  <div style="display:grid;grid-template-columns:repeat(4,369px);gap:40px;">
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+  </div>
+
+  <p style="font-family:'Noto Sans JP',sans-serif;font-size:18px;color:#000;margin:40px 0 24px;">常設のイベント</p>
+  <div style="display:grid;grid-template-columns:repeat(4,369px);gap:40px;">
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+    <div style="width:369px;height:307px;background:#e0ddd8;border-radius:4px;"></div>
+  </div>
+
+  <div class="btn-row-center">
+    <a href="#" class="btn-primary">
+      <span>VIEW MORE</span>
+      <img class="arrow" src="https://www.figma.com/api/mcp/asset/8affd6e3-7d5d-4ced-ac71-db8c04b4b475" alt="">
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     7. お知らせ / 採用情報
+═══════════════════════════════════════ -->
+<section style="width:1600px;background:#fff;padding:80px 130px 120px;display:flex;gap:140px;border-top:1px solid #e5e5e5;">
+  <!-- お知らせ -->
+  <div style="flex:1;">
+    <h3 style="font-family:'Noto Sans JP',sans-serif;font-size:36px;font-weight:600;color:#000;margin-bottom:40px;">お知らせ</h3>
+    <div style="border-top:1px solid #e5e5e5;padding:24px 0;border-bottom:1px solid #e5e5e5;">
+      <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;margin-bottom:8px;">2024.03.01</p>
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#000;">新しいショールームがオープンしました。ぜひお気軽にお越しください。</p>
+    </div>
+    <div style="border-bottom:1px solid #e5e5e5;padding:24px 0;">
+      <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;margin-bottom:8px;">2024.02.15</p>
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#000;">春の見学会のご案内。各地で開催予定です。</p>
+    </div>
+    <div style="border-bottom:1px solid #e5e5e5;padding:24px 0;">
+      <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;margin-bottom:8px;">2024.01.10</p>
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#000;">2024年度の家づくり相談会の日程を公開しました。</p>
+    </div>
+    <div style="text-align:right;margin-top:16px;">
+      <a href="#" style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;color:#888;text-decoration:underline;">もっと見る</a>
+    </div>
+  </div>
+  <!-- 採用情報 -->
+  <div style="flex:1;">
+    <h3 style="font-family:'Noto Sans JP',sans-serif;font-size:36px;font-weight:600;color:#000;margin-bottom:40px;">採用情報</h3>
+    <div style="border-top:1px solid #e5e5e5;padding:24px 0;border-bottom:1px solid #e5e5e5;">
+      <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;margin-bottom:8px;">2024.03.01</p>
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#000;">2024年度 新卒・中途採用の募集を開始しました。</p>
+    </div>
+    <div style="border-bottom:1px solid #e5e5e5;padding:24px 0;">
+      <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;margin-bottom:8px;">2024.01.20</p>
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#000;">建築デザイナー（経験者）を募集中です。</p>
+    </div>
+    <div style="border-bottom:1px solid #e5e5e5;padding:24px 0;">
+      <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;margin-bottom:8px;">2023.12.01</p>
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#000;">会社説明会を開催します。ぜひご参加ください。</p>
+    </div>
+    <div style="text-align:right;margin-top:16px;">
+      <a href="#" style="font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:300;color:#888;text-decoration:underline;">もっと見る</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FOOTER (simplified)
+═══════════════════════════════════════ -->
+<footer style="width:1600px;background:#1f1f1f;padding:80px 130px;color:#f2f2f2;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:60px;">
+    <div>
+      <img src="https://www.figma.com/api/mcp/asset/2b0d5f49-c68d-49c5-86fd-db2057030062" alt="la CASA" style="width:200px;height:auto;filter:brightness(0) invert(1);margin-bottom:20px;">
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:300;line-height:2;color:#aaa;">
+        家づくりを起点に<br>地域の人々の豊かさと誇りをつくる<br>ライフデザインカンパニー
+      </p>
+    </div>
+    <nav style="display:flex;gap:60px;">
+      <div>
+        <p style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:#f2f2f2;margin-bottom:20px;">ラ・カーサについて</p>
+        <p style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:#f2f2f2;margin-bottom:20px;">特　徴</p>
+        <p style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:#f2f2f2;margin-bottom:20px;">事　例</p>
+      </div>
+      <div>
+        <p style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:#f2f2f2;margin-bottom:20px;">お役立ち</p>
+        <p style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:#f2f2f2;margin-bottom:20px;">見学会・イベント</p>
+        <p style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:500;color:#f2f2f2;margin-bottom:20px;">採用情報</p>
+      </div>
+    </nav>
+  </div>
+  <div style="border-top:1px solid rgba(255,255,255,0.2);padding-top:30px;text-align:center;">
+    <p style="font-family:'Montserrat',sans-serif;font-size:12px;color:#888;">© la CASA All Rights Reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <title>Sidebar Component Demo — melta UI</title>
+  <meta name="description" content="melta UI サイドバーコンポーネントのデモ。">
+  <meta property="og:title" content="Sidebar Component Demo — melta UI">
+  <meta property="og:description" content="melta UI サイドバーコンポーネントのデモ。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/sidebar-demo.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sidebar Component Demo — melta UI">
+  <meta name="twitter:description" content="melta UI サイドバーコンポーネントのデモ。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: {
+            50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+            400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+            800:'#13318d',900:'#0e266a',950:'#07194e'
+          },
+          body: '#3d4b5f',
+        },
+        fontFamily: {
+          sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif'],
+          mono: ['JetBrains Mono','SF Mono','monospace'],
+        },
+        fontSize: {
+          xs: ['0.8125rem', { lineHeight: '1.4' }],
+          sm: ['0.9375rem', { lineHeight: '1.7' }],
+          base: ['1.125rem', { lineHeight: '2.0' }],
+          lg: ['1.25rem', { lineHeight: '1.5' }],
+          xl: ['1.375rem', { lineHeight: '1.4' }],
+          '2xl': ['1.625rem', { lineHeight: '1.4' }],
+          '3xl': ['2rem', { lineHeight: '1.4' }],
+        },
+      },
+    },
+  }
+  </script>
+  <link rel="stylesheet" href="../scripts/ds-theme.css">
+  <style>
+    /* Drawer transition */
+    .sidebar-drawer {
+      transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .sidebar-drawer.is-closed {
+      transform: translateX(-100%);
+    }
+    .sidebar-overlay {
+      transition: opacity 300ms ease;
+    }
+    .sidebar-overlay.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* Compact transition */
+    .sidebar-compact-transition {
+      transition: width 300ms ease-in-out;
+    }
+    .sidebar-compact-transition .nav-text {
+      transition: opacity 200ms ease;
+    }
+    .sidebar-compact-transition.is-compact .nav-text {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+    }
+    .sidebar-compact-transition.is-compact nav a,
+    .sidebar-compact-transition.is-compact nav [aria-disabled] {
+      justify-content: center;
+      gap: 0;
+      padding: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .sidebar-compact-transition.is-compact .toggle-zone button {
+      justify-content: center;
+      gap: 0;
+      padding: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    /* prefers-reduced-motion 対応 */
+    @media (prefers-reduced-motion: reduce) {
+      .sidebar-drawer,
+      .sidebar-overlay,
+      .sidebar-compact-transition,
+      .sidebar-compact-transition .nav-text,
+      #toggle-icon {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- ========================================== -->
+  <!-- Demo 1: 標準サイドバー (w-64)              -->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8 py-12">
+      <h1 class="text-3xl font-bold text-slate-900 mb-2">Sidebar Component</h1>
+      <p class="text-base text-body mb-10">melta UI デザインシステムのサイドバーコンポーネント。全バリエーションのデモ。</p>
+    </div>
+
+    <!-- Demo 1 container -->
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-1">1. 標準サイドバー（w-64）</h2>
+      <p class="text-base text-body mb-6">3ゾーン構成: Header / Navigation / Footer。ナビグループ・バッジ付き。</p>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="height: 640px;">
+        <div class="flex h-full">
+          <!-- Sidebar -->
+          <aside class="w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col h-full">
+            <!-- Header Zone -->
+            <div class="px-4 py-4 border-b border-slate-200">
+              <div class="flex items-center gap-2">
+                <svg class="w-7 h-7 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span class="text-lg font-bold text-slate-900">AppName</span>
+              </div>
+            </div>
+
+            <!-- Navigation Zone -->
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="メインナビゲーション">
+              <!-- Group: メイン -->
+              <p class="text-xs font-medium text-slate-500 uppercase tracking-wider px-4 pb-1">メイン</p>
+              <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                ダッシュボード
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                プロジェクト
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                タスク
+              </a>
+              <!-- Badge付き -->
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span class="inline-flex items-center gap-1.5">通知<span class="bg-red-50 text-red-600 text-xs font-medium rounded-full min-w-[1.25rem] h-5 inline-flex items-center justify-center px-1.5">3</span></span>
+              </a>
+
+              <!-- Separator -->
+              <div class="border-t border-slate-200 my-2 mx-1"></div>
+
+              <!-- Group: 管理 -->
+              <p class="text-xs font-medium text-slate-500 uppercase tracking-wider px-4 pt-2 pb-1">管理</p>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                チーム
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                レポート
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                設定
+              </a>
+              <!-- Disabled -->
+              <a class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-400 cursor-not-allowed rounded-lg" aria-disabled="true" tabindex="-1">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                管理者設定
+              </a>
+            </nav>
+
+            <!-- Footer Zone -->
+            <div class="mt-auto border-t border-slate-200 p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-500 font-medium text-sm flex items-center justify-center flex-shrink-0">
+                  YT
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-slate-900 truncate">山田 太郎</p>
+                  <p class="text-xs text-slate-500 truncate">taro@example.com</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Main Content -->
+          <main class="flex-1 bg-gray-50 overflow-y-auto">
+            <div class="max-w-5xl mx-auto px-6 py-8">
+              <div class="flex items-center justify-between mb-8">
+                <div>
+                  <h3 class="text-3xl font-bold text-slate-900">ダッシュボード</h3>
+                  <p class="mt-1 text-base text-body">プロジェクトの概要</p>
+                </div>
+                <button class="h-10 px-4 text-[1rem] font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-700 transition-colors">新規作成</button>
+              </div>
+              <div class="grid grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                  <p class="text-sm text-slate-500">アクティブタスク</p>
+                  <p class="text-3xl font-bold text-slate-900 mt-1">24</p>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                  <p class="text-sm text-slate-500">完了タスク</p>
+                  <p class="text-3xl font-bold text-slate-900 mt-1">156</p>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                  <p class="text-sm text-slate-500">チームメンバー</p>
+                  <p class="text-3xl font-bold text-slate-900 mt-1">8</p>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- Demo 2: コンパクトサイドバー (w-16)         -->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-1">2. コンパクトサイドバー（w-16）</h2>
+      <p class="text-base text-body mb-6">アイコンのみ表示。ツールチップでテキスト補完。タブレット幅やユーザー設定で使用。</p>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="height: 520px;">
+        <div class="flex h-full">
+          <!-- Compact Sidebar -->
+          <aside class="w-16 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col items-center h-full">
+            <!-- Header -->
+            <div class="py-4">
+              <svg class="w-7 h-7 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto py-4 space-y-1 w-full flex flex-col items-center" aria-label="メインナビゲーション">
+              <a href="#" aria-current="page" aria-label="ダッシュボード" title="ダッシュボード" class="w-10 h-10 inline-flex items-center justify-center text-primary-500 bg-primary-50 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+              </a>
+              <a href="#" aria-label="プロジェクト" title="プロジェクト" class="w-10 h-10 inline-flex items-center justify-center text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </a>
+              <a href="#" aria-label="タスク" title="タスク" class="w-10 h-10 inline-flex items-center justify-center text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </a>
+              <!-- Badge付き（ドット） -->
+              <a href="#" aria-label="通知（3件）" title="通知（3件）" class="relative w-10 h-10 inline-flex items-center justify-center text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+              </a>
+
+              <div class="border-t border-slate-200 my-2 w-8"></div>
+
+              <a href="#" aria-label="チーム" title="チーム" class="w-10 h-10 inline-flex items-center justify-center text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </a>
+              <a href="#" aria-label="設定" title="設定" class="w-10 h-10 inline-flex items-center justify-center text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </a>
+            </nav>
+
+            <!-- Footer -->
+            <div class="mt-auto border-t border-slate-200 py-4">
+              <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-500 font-medium text-sm flex items-center justify-center">
+                YT
+              </div>
+            </div>
+          </aside>
+
+          <!-- Main Content -->
+          <main class="flex-1 bg-gray-50 overflow-y-auto">
+            <div class="max-w-5xl mx-auto px-6 py-8">
+              <h3 class="text-3xl font-bold text-slate-900 mb-4">メインコンテンツ</h3>
+              <p class="text-base text-body">コンパクトサイドバーはコンテンツ領域を最大化します。各アイコンには <code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded">aria-label</code> と <code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded">title</code> が必須です。</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- Demo 3: 標準 ↔ コンパクト切り替え           -->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-1">3. 標準 / コンパクト切り替え</h2>
+      <p class="text-base text-body mb-6">トグルボタンでサイドバー幅をアニメーション切り替え。</p>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="height: 480px;">
+        <div class="flex h-full">
+          <!-- Toggleable Sidebar -->
+          <aside id="toggle-sidebar" class="sidebar-compact-transition w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col h-full">
+            <!-- Header -->
+            <div class="px-4 py-4 border-b border-slate-200 flex items-center gap-2 overflow-hidden">
+              <svg class="w-7 h-7 text-primary-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span class="nav-text text-lg font-bold text-slate-900 whitespace-nowrap">AppName</span>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="メインナビゲーション">
+              <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg overflow-hidden">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="nav-text whitespace-nowrap">ダッシュボード</span>
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors overflow-hidden">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <span class="nav-text whitespace-nowrap">プロジェクト</span>
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors overflow-hidden">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="nav-text whitespace-nowrap">設定</span>
+              </a>
+            </nav>
+
+            <!-- Toggle Button -->
+            <div class="toggle-zone border-t border-slate-200 p-3">
+              <button id="toggle-btn" onclick="toggleSidebar()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors" aria-label="サイドバーを折りたたむ">
+                <svg id="toggle-icon" class="w-5 h-5 flex-shrink-0 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7"/>
+                </svg>
+                <span class="nav-text whitespace-nowrap">折りたたむ</span>
+              </button>
+            </div>
+          </aside>
+
+          <!-- Main Content -->
+          <main class="flex-1 bg-gray-50 overflow-y-auto">
+            <div class="max-w-5xl mx-auto px-6 py-8">
+              <h3 class="text-3xl font-bold text-slate-900 mb-4">メインコンテンツ</h3>
+              <p class="text-base text-body">サイドバー下部のボタンで切り替えを試してください。<code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded">w-64</code> ↔ <code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded">w-16</code> のアニメーション遷移（300ms）。</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- Demo 4: モバイルDrawer                      -->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-1">4. モバイルDrawer</h2>
+      <p class="text-base text-body mb-6">ハンバーガーメニューからスライドイン。オーバーレイ・Escape・閉じるボタンで閉じる。</p>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="height: 520px; max-width: 420px;">
+        <div class="relative h-full">
+          <!-- Mobile Header -->
+          <div class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg class="w-6 h-6 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span class="text-lg font-bold text-slate-900">AppName</span>
+            </div>
+            <button id="drawer-trigger" onclick="openDrawer()" aria-label="メニューを開く" aria-expanded="false" aria-controls="sidebar-drawer" class="w-10 h-10 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+              <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Main Content -->
+          <div class="bg-gray-50 h-full overflow-y-auto px-4 py-6">
+            <h3 class="text-2xl font-bold text-slate-900 mb-4">ダッシュボード</h3>
+            <p class="text-base text-body mb-4">ハンバーガーボタンをクリックしてDrawerを開いてください。</p>
+            <div class="space-y-3">
+              <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                <p class="text-sm text-slate-500">アクティブタスク</p>
+                <p class="text-2xl font-bold text-slate-900 mt-1">24</p>
+              </div>
+              <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                <p class="text-sm text-slate-500">完了タスク</p>
+                <p class="text-2xl font-bold text-slate-900 mt-1">156</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overlay -->
+          <div id="sidebar-overlay" class="sidebar-overlay is-hidden absolute inset-0 bg-black/50 z-40 cursor-pointer" onclick="closeDrawer()"></div>
+
+          <!-- Drawer -->
+          <aside id="sidebar-drawer" class="sidebar-drawer is-closed absolute inset-y-0 left-0 w-64 bg-white z-50 flex flex-col shadow-xl" role="dialog" aria-modal="true" aria-label="ナビゲーションメニュー">
+            <!-- Header with close button -->
+            <div class="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg class="w-7 h-7 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span class="text-lg font-bold text-slate-900">AppName</span>
+              </div>
+              <button onclick="closeDrawer()" aria-label="メニューを閉じる" class="w-8 h-8 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-slate-500 cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="メインナビゲーション">
+              <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                ダッシュボード
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                プロジェクト
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                タスク
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                通知
+              </a>
+
+              <div class="border-t border-slate-200 my-2 mx-1"></div>
+
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                設定
+              </a>
+            </nav>
+
+            <!-- Footer -->
+            <div class="mt-auto border-t border-slate-200 p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-500 font-medium text-sm flex items-center justify-center flex-shrink-0">
+                  YT
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-slate-900 truncate">山田 太郎</p>
+                  <p class="text-xs text-slate-500 truncate">taro@example.com</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- Demo 5: ナビアイテム全状態一覧              -->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-1">5. ナビアイテム状態一覧</h2>
+      <p class="text-base text-body mb-6">Active / Default / Hover / Focus / Disabled の全状態。</p>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-sm">
+        <nav class="space-y-1" aria-label="状態デモ">
+          <!-- Active -->
+          <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Active
+          </a>
+          <!-- Default -->
+          <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Default（hover me）
+          </a>
+          <!-- Focus visible demo -->
+          <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:outline-none">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Focus（Tab key）
+          </a>
+          <!-- Disabled -->
+          <a class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-400 cursor-not-allowed rounded-lg" aria-disabled="true" tabindex="-1">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            Disabled
+          </a>
+          <!-- Badge付き -->
+          <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span class="inline-flex items-center gap-1.5">Badge付き<span class="bg-red-50 text-red-600 text-xs font-medium rounded-full min-w-[1.25rem] h-5 inline-flex items-center justify-center px-1.5">12</span></span>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- Demo 6: レスポンシブ（実際のブレークポイント）-->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-1">6. レスポンシブサイドバー（実動）</h2>
+      <p class="text-base text-body mb-6">ブラウザ幅を変えて確認。<code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded">lg:</code> 以上で固定表示、それ未満でDrawer化。</p>
+
+      <div class="bg-slate-100 rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="height: 520px;">
+        <div class="flex h-full">
+          <!-- Desktop Sidebar (lg: 以上で表示) -->
+          <aside class="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-slate-200 flex-shrink-0 h-full">
+            <div class="px-4 py-4 border-b border-slate-200">
+              <div class="flex items-center gap-2">
+                <svg class="w-7 h-7 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span class="text-lg font-bold text-slate-900">AppName</span>
+              </div>
+            </div>
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="メインナビゲーション">
+              <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                ダッシュボード
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                プロジェクト
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                設定
+              </a>
+            </nav>
+            <div class="mt-auto border-t border-slate-200 p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-500 font-medium text-sm flex items-center justify-center flex-shrink-0">YT</div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-slate-900 truncate">山田 太郎</p>
+                  <p class="text-xs text-slate-500 truncate">taro@example.com</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Mobile Header (lg: 未満で表示) -->
+          <div class="lg:hidden absolute top-0 left-0 right-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-10">
+            <div class="flex items-center gap-2">
+              <svg class="w-6 h-6 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span class="text-lg font-bold text-slate-900">AppName</span>
+            </div>
+            <button id="responsive-drawer-trigger" onclick="openResponsiveDrawer()" aria-label="メニューを開く" aria-expanded="false" aria-controls="responsive-drawer" class="w-10 h-10 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+              <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Responsive Drawer Overlay -->
+          <div id="responsive-overlay" class="sidebar-overlay is-hidden lg:hidden absolute inset-0 bg-black/50 z-40 cursor-pointer" onclick="closeResponsiveDrawer()"></div>
+
+          <!-- Responsive Drawer -->
+          <aside id="responsive-drawer" class="sidebar-drawer is-closed lg:hidden absolute inset-y-0 left-0 w-64 bg-white z-50 flex flex-col shadow-xl" role="dialog" aria-modal="true" aria-label="ナビゲーションメニュー">
+            <div class="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg class="w-7 h-7 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span class="text-lg font-bold text-slate-900">AppName</span>
+              </div>
+              <button onclick="closeResponsiveDrawer()" aria-label="メニューを閉じる" class="w-8 h-8 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-slate-500 cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="メインナビゲーション">
+              <a href="#" aria-current="page" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary-500 bg-primary-50 rounded-lg">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                ダッシュボード
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                プロジェクト
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-body hover:bg-gray-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                設定
+              </a>
+            </nav>
+            <div class="mt-auto border-t border-slate-200 p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-500 font-medium text-sm flex items-center justify-center flex-shrink-0">YT</div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-slate-900 truncate">山田 太郎</p>
+                  <p class="text-xs text-slate-500 truncate">taro@example.com</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Main -->
+          <main class="flex-1 bg-gray-50 overflow-y-auto pt-14 lg:pt-0">
+            <div class="px-4 py-6 lg:px-6 lg:py-8">
+              <h3 class="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">レスポンシブデモ</h3>
+              <p class="text-base text-body">ブラウザの幅を <code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded">1024px</code> 未満にするとモバイルヘッダー + Drawerに切り替わります。</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- 仕様サマリー                                -->
+  <!-- ========================================== -->
+  <section class="mb-16">
+    <div class="max-w-7xl mx-auto px-8">
+      <h2 class="text-2xl font-semibold text-slate-900 mb-6">仕様サマリー</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Container -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <h3 class="text-lg font-semibold text-slate-900 mb-4">Container</h3>
+          <table class="w-full text-sm">
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">幅（標準）</td>
+              <td class="py-2 font-mono text-slate-900">w-64 (256px)</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">幅（コンパクト）</td>
+              <td class="py-2 font-mono text-slate-900">w-16 (64px)</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">背景</td>
+              <td class="py-2 font-mono text-slate-900">bg-white</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">ボーダー</td>
+              <td class="py-2 font-mono text-slate-900">border-r border-slate-200</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-slate-500">構造</td>
+              <td class="py-2 font-mono text-slate-900">flex flex-col h-screen</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Nav Item -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <h3 class="text-lg font-semibold text-slate-900 mb-4">Nav Item</h3>
+          <table class="w-full text-sm">
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">レイアウト</td>
+              <td class="py-2 font-mono text-slate-900">flex items-center gap-3</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Padding</td>
+              <td class="py-2 font-mono text-slate-900">px-4 py-2.5</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">テキスト</td>
+              <td class="py-2 font-mono text-slate-900">text-sm font-medium</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">角丸</td>
+              <td class="py-2 font-mono text-slate-900">rounded-lg</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-slate-500">アイコン</td>
+              <td class="py-2 font-mono text-slate-900">w-5 h-5 flex-shrink-0</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- States -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <h3 class="text-lg font-semibold text-slate-900 mb-4">States</h3>
+          <table class="w-full text-sm">
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Active</td>
+              <td class="py-2 font-mono text-slate-900">text-primary-500 bg-primary-50</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Default</td>
+              <td class="py-2 font-mono text-slate-900">text-body hover:bg-gray-50</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Focus</td>
+              <td class="py-2 font-mono text-slate-900">focus-visible:ring-2 ring-primary-500/50</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-slate-500">Disabled</td>
+              <td class="py-2 font-mono text-slate-900">text-slate-400 cursor-not-allowed</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Responsive -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <h3 class="text-lg font-semibold text-slate-900 mb-4">Responsive</h3>
+          <table class="w-full text-sm">
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Desktop (lg:)</td>
+              <td class="py-2 text-slate-900">固定表示 w-64</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Tablet (md:)</td>
+              <td class="py-2 text-slate-900">コンパクト w-16</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-500">Mobile</td>
+              <td class="py-2 text-slate-900">Drawer（スライドイン）</td>
+            </tr>
+            <tr>
+              <td class="py-2 text-slate-500">Drawer z-index</td>
+              <td class="py-2 font-mono text-slate-900">z-50 + overlay z-40</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- JavaScript                                  -->
+  <!-- ========================================== -->
+  <script>
+    // === Demo 3: Toggle Compact ===
+    var isCompact = false;
+    function toggleSidebar() {
+      var sidebar = document.getElementById('toggle-sidebar');
+      var icon = document.getElementById('toggle-icon');
+      isCompact = !isCompact;
+
+      if (isCompact) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-16');
+        sidebar.classList.add('is-compact');
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        sidebar.classList.remove('w-16');
+        sidebar.classList.add('w-64');
+        sidebar.classList.remove('is-compact');
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // === Focus Trap Utility ===
+    function trapFocus(drawerEl) {
+      var focusable = drawerEl.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (focusable.length === 0) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+
+      drawerEl._focusTrapHandler = function(e) {
+        if (e.key !== 'Tab') return;
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      };
+      drawerEl.addEventListener('keydown', drawerEl._focusTrapHandler);
+    }
+
+    function releaseFocusTrap(drawerEl) {
+      if (drawerEl._focusTrapHandler) {
+        drawerEl.removeEventListener('keydown', drawerEl._focusTrapHandler);
+        drawerEl._focusTrapHandler = null;
+      }
+    }
+
+    // === Demo 4: Drawer ===
+    function openDrawer() {
+      var overlay = document.getElementById('sidebar-overlay');
+      var drawer = document.getElementById('sidebar-drawer');
+      var trigger = document.getElementById('drawer-trigger');
+
+      overlay.classList.remove('is-hidden');
+      drawer.classList.remove('is-closed');
+      trigger.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+
+      trapFocus(drawer);
+      var firstLink = drawer.querySelector('nav a');
+      if (firstLink) firstLink.focus();
+    }
+
+    function closeDrawer() {
+      var overlay = document.getElementById('sidebar-overlay');
+      var drawer = document.getElementById('sidebar-drawer');
+      var trigger = document.getElementById('drawer-trigger');
+
+      releaseFocusTrap(drawer);
+      drawer.classList.add('is-closed');
+      overlay.classList.add('is-hidden');
+      trigger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+      trigger.focus();
+    }
+
+    // === Demo 6: Responsive Drawer ===
+    function openResponsiveDrawer() {
+      var overlay = document.getElementById('responsive-overlay');
+      var drawer = document.getElementById('responsive-drawer');
+      var trigger = document.getElementById('responsive-drawer-trigger');
+
+      overlay.classList.remove('is-hidden');
+      drawer.classList.remove('is-closed');
+      trigger.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+
+      trapFocus(drawer);
+      var firstLink = drawer.querySelector('nav a');
+      if (firstLink) firstLink.focus();
+    }
+
+    function closeResponsiveDrawer() {
+      var overlay = document.getElementById('responsive-overlay');
+      var drawer = document.getElementById('responsive-drawer');
+      var trigger = document.getElementById('responsive-drawer-trigger');
+
+      releaseFocusTrap(drawer);
+      drawer.classList.add('is-closed');
+      overlay.classList.add('is-hidden');
+      trigger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+      trigger.focus();
+    }
+
+    // === Global: Escape key closes any open drawer ===
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        // Demo 4
+        var drawer4 = document.getElementById('sidebar-drawer');
+        if (drawer4 && !drawer4.classList.contains('is-closed')) {
+          closeDrawer();
+          return;
+        }
+        // Demo 6
+        var drawer6 = document.getElementById('responsive-drawer');
+        if (drawer6 && !drawer6.classList.contains('is-closed')) {
+          closeResponsiveDrawer();
+          return;
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

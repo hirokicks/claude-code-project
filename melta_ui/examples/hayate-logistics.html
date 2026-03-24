@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <title>疾風ロジスティクス - 配送状況</title>
+  <meta name="description" content="melta UI で構築した配送管理システムサンプル。">
+  <meta property="og:title" content="疾風ロジスティクス - 配送状況">
+  <meta property="og:description" content="melta UI で構築した配送管理システムサンプル。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/hayate-logistics.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="疾風ロジスティクス - 配送状況">
+  <meta name="twitter:description" content="melta UI で構築した配送管理システムサンプル。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',
+              400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c',
+              800:'#9a3412',900:'#7c2d12',950:'#431407'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+    body { line-height: 2.0; letter-spacing: 0.02em; }
+    h1, h2, h3, h4, h5, h6 { line-height: 1.4; letter-spacing: 0.01em; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-body">
+
+  <!-- Top Navigation -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-8 flex items-center justify-between h-16">
+      <!-- Left: Logo + Nav -->
+      <div class="flex items-center gap-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 0-.879-2.121l-2.17-2.17A3 3 0 0 0 17.426 9H15V5.25A2.25 2.25 0 0 0 12.75 3h-6A2.25 2.25 0 0 0 4.5 5.25v8.869"/>
+            </svg>
+          </div>
+          <span class="text-lg font-bold text-slate-900">疾風ロジスティクス</span>
+        </div>
+        <nav class="flex items-center gap-1" aria-label="メインナビゲーション">
+          <a href="#" class="px-3 py-4 text-sm font-semibold text-primary-500 border-b-2 border-primary-500 cursor-default" aria-current="page">配送状況</a>
+          <a href="#" class="px-3 py-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 cursor-pointer">車両管理</a>
+          <a href="#" class="px-3 py-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 cursor-pointer">倉庫</a>
+          <a href="#" class="px-3 py-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 cursor-pointer">ドライバー</a>
+          <a href="#" class="px-3 py-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 cursor-pointer">レポート</a>
+        </nav>
+      </div>
+      <!-- Right: Notification + Avatar -->
+      <div class="flex items-center gap-3">
+        <button type="button" class="w-10 h-10 inline-flex items-center justify-center rounded-lg text-slate-500 hover:bg-gray-50 hover:text-slate-700 transition-colors cursor-pointer" aria-label="通知">
+          <span class="relative">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+            </svg>
+            <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </span>
+        </button>
+        <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-sm font-medium text-primary-500" role="img" aria-label="佐藤 管理者">佐</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-8 py-12">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-10">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">配送状況</h1>
+        <p class="mt-1 text-sm text-slate-500">2026年3月13日</p>
+      </div>
+      <button type="button" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        新規配送を登録
+      </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-4 gap-6 mb-10">
+      <!-- 本日の配送 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm text-slate-500">本日の配送</p>
+          <div class="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-slate-900">156<span class="text-base font-normal text-slate-500 ml-1">件</span></p>
+        <p class="text-xs text-slate-500 mt-1">前日比 +8.3%</p>
+      </div>
+      <!-- 配送完了 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm text-slate-500">配送完了</p>
+          <div class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-slate-900">89<span class="text-base font-normal text-slate-500 ml-1">件</span></p>
+        <p class="text-xs text-emerald-600 mt-1">完了率 57%</p>
+      </div>
+      <!-- 配送中 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm text-slate-500">配送中</p>
+          <div class="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 0-.879-2.121l-2.17-2.17A3 3 0 0 0 17.426 9H15V5.25A2.25 2.25 0 0 0 12.75 3h-6A2.25 2.25 0 0 0 4.5 5.25v8.869"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-slate-900">42<span class="text-base font-normal text-slate-500 ml-1">件</span></p>
+        <p class="text-xs text-slate-500 mt-1">現在稼働中</p>
+      </div>
+      <!-- 遅延 -->
+      <div class="bg-white rounded-xl border border-red-200 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm text-red-600 font-medium">遅延</p>
+          <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-slate-900">3<span class="text-base font-normal text-slate-500 ml-1">件</span></p>
+        <p class="text-xs text-red-600 mt-1">要確認</p>
+      </div>
+    </div>
+
+    <!-- Active Deliveries Table -->
+    <section class="mb-10">
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-slate-900">配送一覧</h2>
+          <button type="button" class="inline-flex items-center justify-center gap-2 h-10 px-4 text-[1rem] font-medium bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>
+            </svg>
+            フィルター
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="border-b border-slate-200 bg-gray-50">
+              <tr>
+                <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">追跡番号</th>
+                <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">届け先</th>
+                <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">ステータス</th>
+                <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">ドライバー</th>
+                <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">出発時刻</th>
+                <th scope="col" class="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">到着予定</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-001</td>
+                <td class="py-3 px-4 text-sm text-body">東京都渋谷区神宮前 3-15-8</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">配送完了</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-primary-50 flex items-center justify-center text-xs font-medium text-primary-500" role="img" aria-label="山田 太郎">山</div>
+                    <span class="text-body">山田 太郎</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">08:15</td>
+                <td class="py-3 px-4 text-sm text-body">09:30</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-002</td>
+                <td class="py-3 px-4 text-sm text-body">東京都新宿区西新宿 2-8-1</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-xs font-medium">配送中</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center text-xs font-medium text-emerald-600" role="img" aria-label="佐藤 健一">佐</div>
+                    <span class="text-body">佐藤 健一</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">09:00</td>
+                <td class="py-3 px-4 text-sm text-body">11:15</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-003</td>
+                <td class="py-3 px-4 text-sm text-body">神奈川県横浜市中区山下町 14-2</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">配送完了</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center text-xs font-medium text-amber-600" role="img" aria-label="田中 美咲">田</div>
+                    <span class="text-body">田中 美咲</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">07:45</td>
+                <td class="py-3 px-4 text-sm text-body">10:00</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-004</td>
+                <td class="py-3 px-4 text-sm text-body">東京都港区六本木 7-22-1</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-medium">遅延</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-red-50 flex items-center justify-center text-xs font-medium text-red-600" role="img" aria-label="鈴木 一郎">鈴</div>
+                    <span class="text-body">鈴木 一郎</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">08:30</td>
+                <td class="py-3 px-4 text-sm text-red-600 font-medium">10:45 (遅延中)</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-005</td>
+                <td class="py-3 px-4 text-sm text-body">東京都品川区大崎 1-11-2</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium">集荷待ち</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-medium text-slate-600" role="img" aria-label="高橋 翔太">高</div>
+                    <span class="text-body">高橋 翔太</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-slate-500">--:--</td>
+                <td class="py-3 px-4 text-sm text-body">13:00</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-006</td>
+                <td class="py-3 px-4 text-sm text-body">千葉県千葉市中央区富士見 2-3-1</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-xs font-medium">配送中</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-primary-50 flex items-center justify-center text-xs font-medium text-primary-500" role="img" aria-label="中村 優子">中</div>
+                    <span class="text-body">中村 優子</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">09:30</td>
+                <td class="py-3 px-4 text-sm text-body">12:00</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-007</td>
+                <td class="py-3 px-4 text-sm text-body">埼玉県さいたま市大宮区桜木町 4-195</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium">配送完了</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center text-xs font-medium text-emerald-600" role="img" aria-label="伊藤 大輔">伊</div>
+                    <span class="text-body">伊藤 大輔</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">07:00</td>
+                <td class="py-3 px-4 text-sm text-body">09:15</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-008</td>
+                <td class="py-3 px-4 text-sm text-body">東京都世田谷区三軒茶屋 1-32-6</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-xs font-medium">配送中</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center text-xs font-medium text-amber-600" role="img" aria-label="渡辺 麻衣">渡</div>
+                    <span class="text-body">渡辺 麻衣</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">10:00</td>
+                <td class="py-3 px-4 text-sm text-body">12:30</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-009</td>
+                <td class="py-3 px-4 text-sm text-body">東京都中央区銀座 4-6-16</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-medium">遅延</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-red-50 flex items-center justify-center text-xs font-medium text-red-600" role="img" aria-label="小林 拓也">小</div>
+                    <span class="text-body">小林 拓也</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-body">08:45</td>
+                <td class="py-3 px-4 text-sm text-red-600 font-medium">11:00 (遅延中)</td>
+              </tr>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-sm font-medium text-slate-900">HYT-20260313-010</td>
+                <td class="py-3 px-4 text-sm text-body">東京都目黒区自由が丘 2-11-15</td>
+                <td class="py-3 px-4 text-sm">
+                  <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium">集荷待ち</span>
+                </td>
+                <td class="py-3 px-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-medium text-slate-600" role="img" aria-label="松本 直樹">松</div>
+                    <span class="text-body">松本 直樹</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-slate-500">--:--</td>
+                <td class="py-3 px-4 text-sm text-body">14:30</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Two-Column Section -->
+    <div class="grid grid-cols-2 gap-6">
+
+      <!-- Left: 地域別配送状況 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900 mb-6">地域別配送状況</h2>
+        <div class="space-y-5">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-slate-900">東京都23区</span>
+              <span class="text-sm text-body">72 / 85 件</span>
+            </div>
+            <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="東京都23区の配送完了率">
+              <div class="bg-primary-500 rounded-full h-2" style="width: 85%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-slate-900">神奈川県</span>
+              <span class="text-sm text-body">28 / 38 件</span>
+            </div>
+            <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="74" aria-valuemin="0" aria-valuemax="100" aria-label="神奈川県の配送完了率">
+              <div class="bg-primary-500 rounded-full h-2" style="width: 74%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-slate-900">千葉県</span>
+              <span class="text-sm text-body">12 / 18 件</span>
+            </div>
+            <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100" aria-label="千葉県の配送完了率">
+              <div class="bg-primary-500 rounded-full h-2" style="width: 67%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-slate-900">埼玉県</span>
+              <span class="text-sm text-body">8 / 15 件</span>
+            </div>
+            <div class="bg-slate-200 rounded-full h-2" role="progressbar" aria-valuenow="53" aria-valuemin="0" aria-valuemax="100" aria-label="埼玉県の配送完了率">
+              <div class="bg-primary-500 rounded-full h-2" style="width: 53%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: 本日のアラート -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-bold text-slate-900">本日のアラート</h2>
+          <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-medium">3件</span>
+        </div>
+        <ul class="space-y-4">
+          <li class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-red-800">HYT-004: 港区六本木で45分の遅延</p>
+              <p class="text-xs text-red-700 mt-1">首都高速の渋滞により到着が大幅に遅れています。ドライバー鈴木に連絡済み。</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-amber-800">HYT-009: 中央区銀座で20分の遅延見込み</p>
+              <p class="text-xs text-amber-700 mt-1">配送先ビルの荷受け対応待ち。担当者への連絡を試行中です。</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-3 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+            <svg class="w-5 h-5 text-primary-800 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-primary-800">車両 T-1042: 次回点検日が近づいています</p>
+              <p class="text-xs text-primary-700 mt-1">3月15日に定期点検を予定。点検後は代替車両 T-1058 を割り当て済みです。</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

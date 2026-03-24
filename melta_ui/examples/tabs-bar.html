@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabs — bar バリアント デモ</title>
+  <meta name="description" content="melta UI タブ bar バリアントのデモ。">
+  <meta property="og:title" content="Tabs — bar バリアント デモ">
+  <meta property="og:description" content="melta UI タブ bar バリアントのデモ。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://melta.tsubotax.com/examples/tabs-bar.html">
+  <meta property="og:image" content="https://melta.tsubotax.com/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tabs — bar バリアント デモ">
+  <meta name="twitter:description" content="melta UI タブ bar バリアントのデモ。">
+  <meta name="twitter:image" content="https://melta.tsubotax.com/og-image.png">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:  '#f0f5ff',
+              100: '#dde8ff',
+              200: '#c0d4ff',
+              300: '#95b6ff',
+              400: '#6492ff',
+              500: '#2b70ef',
+              600: '#2250df',
+              700: '#1a40b5',
+              800: '#13318d',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --color-primary-500: #2b70ef;
+    }
+    body {
+      font-family: 'Inter', 'Hiragino Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-8">
+  <div class="max-w-2xl mx-auto space-y-12">
+
+    <!-- デモ 1: bar バリアント（3タブ） -->
+    <section>
+      <h2 class="text-lg font-bold text-slate-900 mb-4">bar バリアント</h2>
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div role="tablist" aria-label="プロフィールタブ" class="flex border-b border-slate-200" id="bar-tablist-1">
+          <button role="tab" aria-selected="true" aria-controls="bar-panel-1" id="bar-tab-1" tabindex="0"
+            class="flex-1 relative flex items-center justify-center py-4 text-sm font-semibold text-slate-900 hover:bg-slate-100 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 transition-colors"
+            onclick="switchBarTab('bar-tablist-1', 'bar-tab-1')" onkeydown="handleTabKeydown('bar-tablist-1', event)">
+            投稿
+            <span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:56px;height:4px;background:var(--color-primary-500);border-radius:2px"></span>
+          </button>
+          <button role="tab" aria-selected="false" aria-controls="bar-panel-2" id="bar-tab-2" tabindex="-1"
+            class="flex-1 relative flex items-center justify-center py-4 text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 transition-colors"
+            onclick="switchBarTab('bar-tablist-1', 'bar-tab-2')" onkeydown="handleTabKeydown('bar-tablist-1', event)">
+            いいね
+          </button>
+          <button role="tab" aria-selected="false" aria-controls="bar-panel-3" id="bar-tab-3" tabindex="-1"
+            class="flex-1 relative flex items-center justify-center py-4 text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 transition-colors"
+            onclick="switchBarTab('bar-tablist-1', 'bar-tab-3')" onkeydown="handleTabKeydown('bar-tablist-1', event)">
+            メディア
+          </button>
+        </div>
+        <div id="bar-panel-1" role="tabpanel" aria-labelledby="bar-tab-1" tabindex="0" class="p-6">
+          <p class="text-sm text-slate-600">投稿の一覧がここに表示されます。</p>
+        </div>
+        <div id="bar-panel-2" role="tabpanel" aria-labelledby="bar-tab-2" tabindex="0" class="p-6 hidden">
+          <p class="text-sm text-slate-600">いいねした投稿がここに表示されます。</p>
+        </div>
+        <div id="bar-panel-3" role="tabpanel" aria-labelledby="bar-tab-3" tabindex="0" class="p-6 hidden">
+          <p class="text-sm text-slate-600">メディア付きの投稿がここに表示されます。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- デモ 2: underline バリアント（比較用） -->
+    <section>
+      <h2 class="text-lg font-bold text-slate-900 mb-4">underline バリアント（比較用）</h2>
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div role="tablist" aria-label="設定タブ" class="flex border-b border-slate-200" id="ul-tablist-1">
+          <button role="tab" aria-selected="true" aria-controls="ul-panel-1" id="ul-tab-1" tabindex="0"
+            class="px-4 py-2.5 text-sm font-semibold text-primary-500 border-b-2 border-primary-500 cursor-default outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 transition-colors"
+            onclick="switchUnderlineTab('ul-tablist-1', 'ul-tab-1')" onkeydown="handleTabKeydown('ul-tablist-1', event)">
+            一般
+          </button>
+          <button role="tab" aria-selected="false" aria-controls="ul-panel-2" id="ul-tab-2" tabindex="-1"
+            class="px-4 py-2.5 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 transition-colors"
+            onclick="switchUnderlineTab('ul-tablist-1', 'ul-tab-2')" onkeydown="handleTabKeydown('ul-tablist-1', event)">
+            通知
+          </button>
+          <button role="tab" aria-selected="false" aria-controls="ul-panel-3" id="ul-tab-3" tabindex="-1"
+            class="px-4 py-2.5 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 transition-colors"
+            onclick="switchUnderlineTab('ul-tablist-1', 'ul-tab-3')" onkeydown="handleTabKeydown('ul-tablist-1', event)">
+            セキュリティ
+          </button>
+        </div>
+        <div id="ul-panel-1" role="tabpanel" aria-labelledby="ul-tab-1" tabindex="0" class="p-6">
+          <p class="text-sm text-slate-600">一般設定の内容</p>
+        </div>
+        <div id="ul-panel-2" role="tabpanel" aria-labelledby="ul-tab-2" tabindex="0" class="p-6 hidden">
+          <p class="text-sm text-slate-600">通知設定の内容</p>
+        </div>
+        <div id="ul-panel-3" role="tabpanel" aria-labelledby="ul-tab-3" tabindex="0" class="p-6 hidden">
+          <p class="text-sm text-slate-600">セキュリティ設定の内容</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // bar バリアント切り替え
+    function switchBarTab(tablistId, activeTabId) {
+      var tablist = document.getElementById(tablistId);
+      var tabs = tablist.querySelectorAll('[role="tab"]');
+      var indicator = '<span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:56px;height:4px;background:var(--color-primary-500);border-radius:2px"></span>';
+      tabs.forEach(function(tab) {
+        var panelId = tab.getAttribute('aria-controls');
+        var panel = document.getElementById(panelId);
+        var bar = tab.querySelector('span[style]');
+        if (bar) bar.remove();
+        if (tab.id === activeTabId) {
+          tab.setAttribute('aria-selected', 'true');
+          tab.setAttribute('tabindex', '0');
+          tab.classList.remove('text-slate-400', 'font-medium', 'hover:text-slate-600');
+          tab.classList.add('text-slate-900', 'font-semibold');
+          tab.insertAdjacentHTML('beforeend', indicator);
+          if (panel) panel.classList.remove('hidden');
+        } else {
+          tab.setAttribute('aria-selected', 'false');
+          tab.setAttribute('tabindex', '-1');
+          tab.classList.remove('text-slate-900', 'font-semibold');
+          if (!tab.disabled) {
+            tab.classList.add('text-slate-400', 'font-medium', 'hover:text-slate-600');
+          }
+          if (panel) panel.classList.add('hidden');
+        }
+      });
+    }
+
+    // underline バリアント切り替え
+    function switchUnderlineTab(tablistId, activeTabId) {
+      var tablist = document.getElementById(tablistId);
+      var tabs = tablist.querySelectorAll('[role="tab"]');
+      tabs.forEach(function(tab) {
+        var panelId = tab.getAttribute('aria-controls');
+        var panel = document.getElementById(panelId);
+        if (tab.id === activeTabId) {
+          tab.setAttribute('aria-selected', 'true');
+          tab.setAttribute('tabindex', '0');
+          tab.classList.remove('text-slate-500', 'border-transparent', 'font-medium', 'cursor-pointer');
+          tab.classList.add('text-primary-500', 'border-primary-500', 'font-semibold', 'cursor-default');
+          if (panel) panel.classList.remove('hidden');
+        } else {
+          tab.setAttribute('aria-selected', 'false');
+          tab.setAttribute('tabindex', '-1');
+          tab.classList.remove('text-primary-500', 'border-primary-500', 'font-semibold', 'cursor-default');
+          if (!tab.disabled) {
+            tab.classList.add('text-slate-500', 'border-transparent', 'font-medium', 'cursor-pointer');
+          }
+          if (panel) panel.classList.add('hidden');
+        }
+      });
+    }
+
+    // キーボードナビゲーション（共通）
+    function handleTabKeydown(tablistId, event) {
+      var tablist = document.getElementById(tablistId);
+      var tabs = Array.from(tablist.querySelectorAll('[role="tab"]:not([disabled])'));
+      var index = tabs.indexOf(event.target);
+      var next = -1;
+      switch (event.key) {
+        case 'ArrowRight': next = (index + 1) % tabs.length; break;
+        case 'ArrowLeft': next = (index - 1 + tabs.length) % tabs.length; break;
+        case 'Home': next = 0; break;
+        case 'End': next = tabs.length - 1; break;
+        default: return;
+      }
+      event.preventDefault();
+      tabs[next].click();
+      tabs[next].focus();
+    }
+  </script>
+</body>
+</html>

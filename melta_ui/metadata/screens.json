@@ -1,0 +1,167 @@
+{
+  "version": "1.0.0",
+  "screens": [
+    {
+      "id": "kintsugi-dashboard",
+      "label": "Kintsugi \u2014 \u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u7ba1\u7406",
+      "path": "examples/kintsugi.html",
+      "category": "SaaS",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [
+        { "id": "loading", "label": "\u30ed\u30fc\u30c7\u30a3\u30f3\u30b0", "query": "_v=loading" },
+        { "id": "empty", "label": "\u30c7\u30fc\u30bf\u306a\u3057", "query": "_v=empty" }
+      ],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar", "card", "table", "badge"]
+    },
+    {
+      "id": "aozora-booking",
+      "label": "Aozora \u2014 \u4e88\u7d04\u7ba1\u7406",
+      "path": "examples/aozora-booking.html",
+      "category": "SaaS",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" },
+        { "id": "calendar-view", "label": "\u30ab\u30ec\u30f3\u30c0\u30fc\u8868\u793a", "query": "_tab=calendar" }
+      ],
+      "variants": [
+        { "id": "loading", "label": "\u30ed\u30fc\u30c7\u30a3\u30f3\u30b0", "query": "_v=loading" }
+      ],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar", "card", "table", "datepicker"]
+    },
+    {
+      "id": "index",
+      "label": "Index \u2014 \u30b3\u30f3\u30dd\u30fc\u30cd\u30f3\u30c8\u4e00\u89a7",
+      "path": "examples/index.html",
+      "category": "Documentation",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["card", "badge"]
+    },
+    {
+      "id": "bunraku-cms",
+      "label": "Bunraku \u2014 CMS",
+      "path": "examples/bunraku-cms.html",
+      "category": "SaaS",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar", "card", "table"]
+    },
+    {
+      "id": "irodori-store",
+      "label": "Irodori \u2014 EC\u30b9\u30c8\u30a2",
+      "path": "examples/irodori-store.html",
+      "category": "EC",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["card", "badge", "button"]
+    },
+    {
+      "id": "sorano-medical",
+      "label": "Sorano \u2014 \u533b\u7642\u30dd\u30fc\u30bf\u30eb",
+      "path": "examples/sorano-medical.html",
+      "category": "Healthcare",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["card", "table", "badge"]
+    },
+    {
+      "id": "sidebar-demo",
+      "label": "Sidebar \u2014 \u30c7\u30e2",
+      "path": "examples/sidebar-demo.html",
+      "category": "Documentation",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar"]
+    },
+    {
+      "id": "hayate-logistics",
+      "label": "Hayate \u2014 \u7269\u6d41\u7ba1\u7406",
+      "path": "examples/hayate-logistics.html",
+      "category": "SaaS",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar", "card", "table", "badge"]
+    },
+    {
+      "id": "nagomi-hr",
+      "label": "Nagomi \u2014 \u4eba\u4e8b\u7ba1\u7406",
+      "path": "examples/nagomi-hr.html",
+      "category": "SaaS",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar", "card", "table", "avatar"]
+    },
+    {
+      "id": "kanade-finance",
+      "label": "Kanade \u2014 \u4f1a\u8a08\u30fb\u8ca1\u52d9",
+      "path": "examples/kanade-finance.html",
+      "category": "SaaS",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["sidebar", "card", "table"]
+    },
+    {
+      "id": "manabi-learn",
+      "label": "Manabi \u2014 \u5b66\u7fd2\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0",
+      "path": "examples/manabi-learn.html",
+      "category": "EdTech",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["card", "progress", "badge"]
+    },
+    {
+      "id": "tasuki-gov",
+      "label": "Tasuki \u2014 \u884c\u653f\u30dd\u30fc\u30bf\u30eb",
+      "path": "examples/tasuki-gov.html",
+      "category": "Government",
+      "states": [
+        { "id": "default", "label": "\u30c7\u30d5\u30a9\u30eb\u30c8" }
+      ],
+      "variants": [],
+      "patterns": [],
+      "linksTo": [],
+      "components": ["card", "table", "breadcrumb"]
+    }
+  ]
+}
