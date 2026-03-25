@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ブランドスタイルガイド</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+              400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+              800:'#13318d',900:'#0e266a',950:'#07194e'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+    html { scroll-behavior: smooth; }
+
+    /* Contenteditable */
+    [contenteditable] { outline: none; }
+    .edit-on [contenteditable] { cursor: text; }
+    .edit-on [contenteditable]:hover { background: #f0f5ff; border-radius: 4px; }
+    .edit-on [contenteditable]:focus { outline: 2px solid #6492ff; outline-offset: 2px; border-radius: 4px; background: #f8fafc; }
+
+    /* Block wrapper toolbar */
+    .block-toolbar { display: none; }
+    .edit-on .block-wrap { position: relative; }
+    .edit-on .block-wrap:hover > .block-toolbar { display: flex; }
+
+    /* Nav active */
+    .nav-sub.active { color: #2b70ef; background: #f0f5ff; font-weight: 500; }
+
+    /* Color input reset */
+    input[type=color] { -webkit-appearance: none; border: none; padding: 0; cursor: pointer; border-radius: 4px; }
+    input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type=color]::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+    /* Add popover */
+    #add-popover { display: none; }
+    #add-popover.open { display: block; }
+
+    /* Fade save toast */
+    @keyframes fadeOut { 0%{opacity:1} 70%{opacity:1} 100%{opacity:0} }
+    .toast-anim { animation: fadeOut 2s forwards; }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-slate-900 min-h-screen">
+
+<!-- Top Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 gap-4">
+  <div class="flex items-center gap-3 min-w-0">
+    <div id="header-icon" class="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">B</div>
+    <h1 id="header-title" class="text-base font-semibold text-slate-900 truncate">ブランドスタイルガイド</h1>
+  </div>
+  <div class="flex items-center gap-3 flex-shrink-0">
+    <span id="save-toast" class="text-sm text-slate-400 opacity-0 select-none">保存しました</span>
+    <button onclick="confirmReset()" class="text-sm text-slate-500 hover:text-red-500 cursor-pointer px-3 h-9 rounded-lg hover:bg-red-50 transition-colors">リセット</button>
+    <button id="edit-btn" onclick="toggleEditMode()" class="inline-flex items-center gap-1.5 h-9 px-4 text-sm font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      <span id="edit-label">編集する</span>
+    </button>
+  </div>
+</header>
+
+<!-- Layout -->
+<div class="flex pt-14 h-screen">
+
+  <!-- Main Content (left, scrollable) -->
+  <main id="main" class="flex-1 min-w-0 overflow-y-auto" onscroll="onScroll()">
+    <div id="content" class="max-w-3xl mx-auto px-8 py-12 pb-32"></div>
+  </main>
+
+  <!-- Navigation Sidebar (right, sticky) -->
+  <aside class="w-60 flex-shrink-0 border-l border-slate-200 bg-white sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+    <div class="p-4">
+      <p class="text-xs font-medium text-slate-400 uppercase tracking-wider px-2 mb-2">コンテンツ</p>
+      <nav id="nav" aria-label="スタイルガイドナビゲーション"></nav>
+    </div>
+  </aside>
+</div>
+
+<!-- Add Block Popover -->
+<div id="add-popover" class="fixed z-50 bg-white rounded-xl border border-slate-200 shadow-md p-2 w-48">
+  <p class="text-xs text-slate-400 px-2 py-1 mb-1 font-medium">ブロックを追加</p>
+  <div id="popover-items"></div>
+</div>
+<div id="pop-overlay" class="fixed inset-0 z-40 hidden" onclick="closePopover()"></div>
+
+<!-- Image Upload Input (hidden, reused) -->
+<input type="file" id="img-upload" accept="image/*" class="hidden" onchange="onImageUpload(event)">
+
+<script>
+// ═══════════════════════════════════════════
+// DEFAULT STATE
+// ═══════════════════════════════════════════
+const DS = {
+  brandName: 'ブランドスタイルガイド',
+  sections: [
+    { id: 's-logo', title: 'ロゴ', subsections: [
+      { id: 'logo-overview', title: 'ロゴ概要', blocks: [
+        { id: 'b1', type: 'h2', content: 'ロゴ' },
+        { id: 'b2', type: 'text', content: 'ブランドロゴの使用ガイドラインです。ロゴはブランドの視覚的な核心であり、すべての使用において一貫性を保つことが重要です。ロゴの色・比率・余白を厳守してください。' },
+        { id: 'b3', type: 'image', imgId: null, caption: 'メインロゴ' }
+      ]},
+      { id: 'logo-vars', title: 'カラーバリエーション', blocks: [
+        { id: 'b4', type: 'h2', content: 'カラーバリエーション' },
+        { id: 'b5', type: 'text', content: '背景色に応じた複数のバリエーションを用意します。' },
+        { id: 'b6', type: 'image', imgId: null, caption: 'カラーロゴ' },
+        { id: 'b7', type: 'image', imgId: null, caption: 'モノクロロゴ' }
+      ]},
+      { id: 'logo-dont', title: '使用禁止例', blocks: [
+        { id: 'b8', type: 'h2', content: '使用禁止例' },
+        { id: 'b9', type: 'text', content: '以下の改変・誤用はブランドの信頼性を損ないます。' },
+        { id: 'b10', type: 'image', imgId: null, caption: '使用禁止例' }
+      ]}
+    ]},
+    { id: 's-color', title: 'カラー', subsections: [
+      { id: 'color-primary', title: 'プライマリカラー', blocks: [
+        { id: 'c1', type: 'h2', content: 'プライマリカラー' },
+        { id: 'c2', type: 'text', content: 'ブランドの主要カラーです。ボタン・リンク・強調要素に使用します。' },
+        { id: 'c3', type: 'colors', swatches: [
+          { id: 'sw1', name: 'Brand Primary', hex: '#2b70ef', usage: 'CTA・ボタン・主要アクセント' },
+          { id: 'sw2', name: 'Brand Dark', hex: '#1a40b5', usage: 'ホバー・フォーカス状態' }
+        ]}
+      ]},
+      { id: 'color-secondary', title: 'セカンダリカラー', blocks: [
+        { id: 'c4', type: 'h2', content: 'セカンダリカラー' },
+        { id: 'c5', type: 'text', content: 'プライマリを補完するカラーです。' },
+        { id: 'c6', type: 'colors', swatches: [
+          { id: 'sw3', name: 'Accent', hex: '#f59e0b', usage: 'ハイライト・バッジ・注目要素' }
+        ]}
+      ]},
+      { id: 'color-neutral', title: 'ニュートラルカラー', blocks: [
+        { id: 'c7', type: 'h2', content: 'ニュートラルカラー' },
+        { id: 'c8', type: 'text', content: 'テキスト・背景・ボーダーに使用するグレースケールパレットです。' },
+        { id: 'c9', type: 'colors', swatches: [
+          { id: 'sw4', name: 'Text Primary', hex: '#0f172a', usage: '主要テキスト・見出し' },
+          { id: 'sw5', name: 'Text Body', hex: '#3d4b5f', usage: '本文テキスト' },
+          { id: 'sw6', name: 'Text Sub', hex: '#64748b', usage: 'キャプション・補足' },
+          { id: 'sw7', name: 'Border', hex: '#e2e8f0', usage: 'ライン・区切り' },
+          { id: 'sw8', name: 'Surface', hex: '#f8fafc', usage: 'カード・ページ背景' }
+        ]}
+      ]}
+    ]},
+    { id: 's-typo', title: 'タイポグラフィー', subsections: [
+      { id: 'typo-family', title: 'フォントファミリー', blocks: [
+        { id: 't1', type: 'h2', content: 'フォントファミリー' },
+        { id: 't2', type: 'text', content: 'ブランドで使用するフォントです。英字・数字にはInter、日本語にはNoto Sans JPを使用します。' },
+        { id: 't3', type: 'fontspec', fontName: 'Inter', category: '英字・数字・UI', weights: 'Regular 400 / Medium 500 / SemiBold 600 / Bold 700', sample: 'The quick brown fox jumps over the lazy dog  0123456789' },
+        { id: 't4', type: 'fontspec', fontName: 'Noto Sans JP', category: '日本語テキスト', weights: 'Regular 400 / Medium 500 / Bold 700', sample: '素早い茶色のキツネが怠惰な犬を飛び越える' }
+      ]},
+      { id: 'typo-scale', title: 'タイプスケール', blocks: [
+        { id: 't5', type: 'h2', content: 'タイプスケール' },
+        { id: 't6', type: 'text', content: 'テキスト階層と各スタイルの定義です。' },
+        { id: 't7', type: 'typescale', rows: [
+          { id: 'tr1', label: 'Display', size: '48px', weight: '700', sample: 'ブランドタイトル' },
+          { id: 'tr2', label: 'H1', size: '32px', weight: '700', sample: 'ページ見出し' },
+          { id: 'tr3', label: 'H2', size: '24px', weight: '700', sample: 'セクション見出し' },
+          { id: 'tr4', label: 'H3', size: '20px', weight: '600', sample: '小見出し' },
+          { id: 'tr5', label: 'Body', size: '16px', weight: '400', sample: '本文テキスト。読みやすい行間を設定します。' },
+          { id: 'tr6', label: 'Caption', size: '12px', weight: '400', sample: 'キャプション・補足テキスト' }
+        ]}
+      ]}
+    ]},
+    { id: 's-photo', title: 'フォトスタイル', subsections: [
+      { id: 'photo-style', title: '撮影スタイル', blocks: [
+        { id: 'p1', type: 'h2', content: '撮影スタイル' },
+        { id: 'p2', type: 'text', content: 'ブランドイメージを統一するための撮影ガイドラインです。明るく自然な光を基本とし、クリーンな背景を使用します。' },
+        { id: 'p3', type: 'image', imgId: null, caption: 'スタイル例 — 人物' },
+        { id: 'p4', type: 'image', imgId: null, caption: 'スタイル例 — プロダクト' }
+      ]},
+      { id: 'photo-dont', title: '使用禁止例', blocks: [
+        { id: 'p5', type: 'h2', content: '使用禁止例' },
+        { id: 'p6', type: 'text', content: '過度なフィルター・加工、暗い写真、品質の低い素材は使用しないでください。' },
+        { id: 'p7', type: 'image', imgId: null, caption: '使用禁止例' }
+      ]}
+    ]},
+    { id: 's-icon', title: 'アイコン', subsections: [
+      { id: 'icon-set', title: 'アイコンセット', blocks: [
+        { id: 'i1', type: 'h2', content: 'アイコンセット' },
+        { id: 'i2', type: 'text', content: '使用するアイコンライブラリと基本スタイルです。線の太さ・角の丸め・サイズを統一します。' },
+        { id: 'i3', type: 'image', imgId: null, caption: 'アイコン一覧' }
+      ]},
+      { id: 'icon-rules', title: '使用ルール', blocks: [
+        { id: 'i4', type: 'h2', content: '使用ルール' },
+        { id: 'i5', type: 'text', content: 'アイコンは必ずテキストラベルと併用します。色はブランドカラーまたはテキストカラーに限定します。' }
+      ]}
+    ]},
+    { id: 's-other', title: 'その他のルール', subsections: [
+      { id: 'other-grid', title: 'グリッド・スペーシング', blocks: [
+        { id: 'o1', type: 'h2', content: 'グリッド・スペーシング' },
+        { id: 'o2', type: 'text', content: 'すべてのスペーシングは4pxを基本単位とします。主要なスペーシングは8の倍数（8, 16, 24, 32, 48, 64px）を使用します。' }
+      ]},
+      { id: 'other-voice', title: 'ボイス & トーン', blocks: [
+        { id: 'o3', type: 'h2', content: 'ボイス & トーン' },
+        { id: 'o4', type: 'text', content: 'ブランドの言語スタイルとコミュニケーションガイドラインです。' }
+      ]},
+      { id: 'other-dont', title: '禁止事項', blocks: [
+        { id: 'o5', type: 'h2', content: '禁止事項' },
+        { id: 'o6', type: 'text', content: 'ブランドの整合性を損なう使用・改変はすべて禁止します。' }
+      ]}
+    ]}
+  ],
+  images: {}
+};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let state;
+let editMode = false;
+let pendingImgBlockId = null;
+let activeSubId = null;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('brandGuide_v2');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DS));
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('brandGuide_v2', JSON.stringify(state));
+    showToast();
+  } catch(e) {
+    alert('ストレージの空き容量が不足しています。画像のサイズを小さくしてください。');
+  }
+}
+
+let saveTimer;
+function debounceSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 600);
+}
+
+function showToast() {
+  const el = document.getElementById('save-toast');
+  el.style.opacity = '1';
+  el.classList.remove('toast-anim');
+  void el.offsetWidth;
+  el.classList.add('toast-anim');
+  setTimeout(() => el.style.opacity = '0', 2000);
+}
+
+// ═══════════════════════════════════════════
+// FINDERS
+// ═══════════════════════════════════════════
+function findSub(subId) {
+  for (const sec of state.sections)
+    for (const sub of sec.subsections)
+      if (sub.id === subId) return sub;
+  return null;
+}
+
+function findBlock(blockId) {
+  for (const sec of state.sections)
+    for (const sub of sec.subsections) {
+      const idx = sub.blocks.findIndex(b => b.id === blockId);
+      if (idx !== -1) return { sub, block: sub.blocks[idx], idx };
+    }
+  return null;
+}
+
+function uid() {
+  return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function render() {
+  renderNav();
+  renderContent();
+  setupScrollSpy();
+}
+
+function renderNav() {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = state.sections.map(sec => `
+    <div class="mb-3">
+      <div class="px-2 py-1 text-xs font-semibold text-slate-700 uppercase tracking-wider">${esc(sec.title)}</div>
+      ${sec.subsections.map(sub => `
+        <a href="#${sub.id}" onclick="navClick(event,'${sub.id}')"
+           class="nav-sub block px-3 py-1.5 text-sm text-body rounded-lg hover:bg-gray-50 transition-colors cursor-pointer${activeSubId === sub.id ? ' active' : ''}"
+           data-nav-sub="${sub.id}">
+          ${esc(sub.title)}
+        </a>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderContent() {
+  const wrap = document.getElementById('content');
+  wrap.innerHTML = state.sections.map(sec => `
+    <div class="mb-16" data-section-id="${sec.id}">
+      ${sec.subsections.map((sub, si) => `
+        <div id="${sub.id}" data-sub-id="${sub.id}" class="mb-12 scroll-mt-20">
+          ${sub.blocks.map((block, bi) => renderBlock(block, sub.id, bi, sub.blocks.length)).join('')}
+          ${editMode ? addBlockBtn(sub.id) : ''}
+        </div>
+        ${si < sec.subsections.length - 1 ? '<hr class="border-t border-slate-200 my-8">' : ''}
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderBlock(block, subId, bi, total) {
+  const toolbar = editMode ? `
+    <div class="block-toolbar absolute -top-1 right-0 z-10 items-center gap-0.5 bg-white border border-slate-200 rounded-lg shadow-sm px-1 py-0.5">
+      ${bi > 0 ? `<button onclick="moveBlock('${block.id}',-1)" title="上に移動" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 rounded cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+      </button>` : ''}
+      ${bi < total - 1 ? `<button onclick="moveBlock('${block.id}',1)" title="下に移動" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 rounded cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </button>` : ''}
+      <button onclick="deleteBlock('${block.id}')" title="削除" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 rounded cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>` : '';
+
+  const wrap = (inner) => `<div class="block-wrap relative mb-4">${toolbar}${inner}</div>`;
+
+  switch (block.type) {
+    case 'h2': return wrap(`
+      <h2 ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="content" onblur="syncText(this)"` : ''}
+          class="text-2xl font-bold text-slate-900 leading-tight">${esc(block.content)}</h2>`);
+
+    case 'h3': return wrap(`
+      <h3 ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="content" onblur="syncText(this)"` : ''}
+          class="text-lg font-semibold text-slate-800 leading-tight">${esc(block.content)}</h3>`);
+
+    case 'text': return wrap(`
+      <p ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="content" onblur="syncText(this)"` : ''}
+         class="text-base text-body leading-relaxed">${esc(block.content)}</p>`);
+
+    case 'divider': return wrap(`<hr class="border-t border-slate-200">`);
+
+    case 'image': return wrap(renderImageBlock(block));
+
+    case 'colors': return wrap(renderColorsBlock(block));
+
+    case 'fontspec': return wrap(renderFontSpec(block));
+
+    case 'typescale': return wrap(renderTypeScale(block));
+
+    default: return '';
+  }
+}
+
+function renderImageBlock(block) {
+  const imgData = block.imgId ? state.images[block.imgId] : null;
+  return `
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div class="relative group">
+        ${imgData
+          ? `<img src="${imgData}" alt="${esc(block.caption)}" class="w-full max-h-80 object-contain bg-slate-50">`
+          : `<div class="w-full h-48 bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-400">
+               <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+               <span class="text-sm">画像をアップロード</span>
+             </div>`}
+        ${editMode ? `
+          <button onclick="openImageUpload('${block.id}')"
+              class="absolute inset-0 w-full h-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <div class="bg-white rounded-lg px-4 py-2 text-sm font-medium text-slate-700 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              アップロード
+            </div>
+          </button>` : ''}
+      </div>
+      <div class="px-4 py-2 border-t border-slate-100">
+        <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="caption" onblur="syncText(this)"` : ''}
+              class="text-sm text-body">${esc(block.caption)}</span>
+      </div>
+    </div>`;
+}
+
+function renderColorsBlock(block) {
+  const swatches = block.swatches.map(sw => `
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden" data-swatch-id="${sw.id}">
+      <div class="h-20 transition-colors" style="background-color:${sw.hex}" data-swatch-preview="${sw.id}"></div>
+      <div class="p-3 space-y-1">
+        <div ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-swatch-id="${sw.id}" data-field="name" onblur="syncSwatchText(this)"` : ''}
+             class="font-medium text-sm text-slate-900">${esc(sw.name)}</div>
+        <div class="flex items-center gap-2">
+          ${editMode
+            ? `<input type="color" value="${sw.hex}" data-block-id="${block.id}" data-swatch-id="${sw.id}"
+                      onchange="syncSwatchColor(this)" class="w-5 h-5 rounded flex-shrink-0">`
+            : `<span class="w-3 h-3 rounded-sm flex-shrink-0" style="background:${sw.hex}"></span>`}
+          <code ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-swatch-id="${sw.id}" data-field="hex" onblur="syncSwatchHex(this)"` : ''}
+                class="text-xs text-body font-mono">${esc(sw.hex)}</code>
+        </div>
+        <div ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-swatch-id="${sw.id}" data-field="usage" onblur="syncSwatchText(this)"` : ''}
+             class="text-xs text-body">${esc(sw.usage)}</div>
+        ${editMode ? `
+          <button onclick="deleteSwatch('${block.id}','${sw.id}')" class="mt-1 text-xs text-red-400 hover:text-red-600 cursor-pointer">削除</button>
+        ` : ''}
+      </div>
+    </div>`).join('');
+
+  return `
+    <div class="block-wrap-inner" data-block-id="${block.id}">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">${swatches}</div>
+      ${editMode ? `<button onclick="addSwatch('${block.id}')" class="mt-3 inline-flex items-center gap-1.5 text-sm text-primary-500 hover:text-primary-700 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        カラーを追加
+      </button>` : ''}
+    </div>`;
+}
+
+function renderFontSpec(block) {
+  return `
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="fontName" onblur="syncText(this)"` : ''}
+               class="text-3xl font-bold text-slate-900" style="font-family:'${esc(block.fontName)}',sans-serif">${esc(block.fontName)}</div>
+          <div class="flex items-center gap-4 mt-1">
+            <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="category" onblur="syncText(this)"` : ''}
+                  class="text-sm text-body">${esc(block.category)}</span>
+            <span class="text-slate-300">|</span>
+            <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="weights" onblur="syncText(this)"` : ''}
+                  class="text-sm text-body">${esc(block.weights)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-slate-100">
+        <p ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-field="sample" onblur="syncText(this)"` : ''}
+           class="text-base text-body leading-relaxed" style="font-family:'${esc(block.fontName)}',sans-serif">${esc(block.sample)}</p>
+      </div>
+    </div>`;
+}
+
+function renderTypeScale(block) {
+  const rows = block.rows.map(row => `
+    <tr class="border-b border-slate-100 hover:bg-gray-50 transition-colors">
+      <td class="py-3 px-4 w-20">
+        <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-row-id="${row.id}" data-field="label" onblur="syncTypeScaleRow(this)"` : ''}
+              class="text-xs font-mono text-slate-500">${esc(row.label)}</span>
+      </td>
+      <td class="py-3 px-4 w-28">
+        <div class="text-xs text-body">
+          <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-row-id="${row.id}" data-field="size" onblur="syncTypeScaleRow(this)"` : ''}
+                class="font-mono">${esc(row.size)}</span>
+          <span class="mx-1 text-slate-300">/</span>
+          <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-row-id="${row.id}" data-field="weight" onblur="syncTypeScaleRow(this)"` : ''}>${esc(row.weight)}</span>
+        </div>
+      </td>
+      <td class="py-3 px-4">
+        <span ${editMode ? `contenteditable="true" data-block-id="${block.id}" data-row-id="${row.id}" data-field="sample" onblur="syncTypeScaleRow(this)"` : ''}
+              style="font-size:${row.size};font-weight:${row.weight};line-height:1.3" class="text-slate-900">${esc(row.sample)}</span>
+      </td>
+    </tr>`).join('');
+
+  return `
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-slate-200 bg-gray-50">
+            <th scope="col" class="text-left py-2 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider w-20">Style</th>
+            <th scope="col" class="text-left py-2 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider w-28">Size / Weight</th>
+            <th scope="col" class="text-left py-2 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Sample</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function addBlockBtn(subId) {
+  return `
+    <button onclick="openPopover(event,'${subId}')"
+        class="mt-2 w-full flex items-center justify-center gap-2 h-10 border border-dashed border-slate-300 rounded-xl text-sm text-slate-400 hover:border-primary-400 hover:text-primary-500 hover:bg-primary-50/40 transition-colors cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      ブロックを追加
+    </button>`;
+}
+
+// ═══════════════════════════════════════════
+// EDIT MODE
+// ═══════════════════════════════════════════
+function toggleEditMode() {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-on', editMode);
+  document.getElementById('edit-label').textContent = editMode ? '編集を終了' : '編集する';
+  document.getElementById('edit-btn').classList.toggle('bg-slate-600', editMode);
+  document.getElementById('edit-btn').classList.toggle('hover:bg-slate-800', editMode);
+  document.getElementById('edit-btn').classList.toggle('bg-primary-500', !editMode);
+  document.getElementById('edit-btn').classList.toggle('hover:bg-primary-700', !editMode);
+  render();
+}
+
+// ─── Text sync ───
+function syncText(el) {
+  const blockId = el.dataset.blockId;
+  const field = el.dataset.field;
+  const found = findBlock(blockId);
+  if (!found) return;
+  found.block[field] = el.textContent.trim();
+  // Sync header title if brand name changes
+  if (found.block.type === 'h2' && field === 'content') {} // nothing extra
+  debounceSave();
+}
+
+function syncSwatchText(el) {
+  const { blockId, swatchId, field } = el.dataset;
+  const found = findBlock(blockId);
+  if (!found) return;
+  const sw = found.block.swatches.find(s => s.id === swatchId);
+  if (sw) { sw[field] = el.textContent.trim(); debounceSave(); }
+}
+
+function syncSwatchHex(el) {
+  const { blockId, swatchId } = el.dataset;
+  const found = findBlock(blockId);
+  if (!found) return;
+  const sw = found.block.swatches.find(s => s.id === swatchId);
+  if (!sw) return;
+  const val = el.textContent.trim();
+  if (/^#[0-9a-fA-F]{3,6}$/.test(val)) {
+    sw.hex = val;
+    // Update preview
+    const preview = document.querySelector(`[data-swatch-preview="${swatchId}"]`);
+    if (preview) preview.style.backgroundColor = val;
+    // Update color picker
+    const picker = document.querySelector(`input[type=color][data-swatch-id="${swatchId}"]`);
+    if (picker) picker.value = val;
+  }
+  debounceSave();
+}
+
+function syncSwatchColor(input) {
+  const { blockId, swatchId } = input.dataset;
+  const found = findBlock(blockId);
+  if (!found) return;
+  const sw = found.block.swatches.find(s => s.id === swatchId);
+  if (!sw) return;
+  sw.hex = input.value;
+  // Update preview
+  const preview = document.querySelector(`[data-swatch-preview="${swatchId}"]`);
+  if (preview) preview.style.backgroundColor = input.value;
+  // Update hex text
+  const hexEl = document.querySelector(`[data-swatch-id="${swatchId}"][data-field="hex"]`);
+  if (hexEl) hexEl.textContent = input.value;
+  debounceSave();
+}
+
+function syncTypeScaleRow(el) {
+  const { blockId, rowId, field } = el.dataset;
+  const found = findBlock(blockId);
+  if (!found) return;
+  const row = found.block.rows.find(r => r.id === rowId);
+  if (row) { row[field] = el.textContent.trim(); debounceSave(); }
+}
+
+// ─── Images ───
+function openImageUpload(blockId) {
+  pendingImgBlockId = blockId;
+  const input = document.getElementById('img-upload');
+  input.value = '';
+  input.click();
+}
+
+function onImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file || !pendingImgBlockId) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const imgId = 'img_' + uid();
+    state.images[imgId] = e.target.result;
+    const found = findBlock(pendingImgBlockId);
+    if (found) { found.block.imgId = imgId; }
+    saveState();
+    render();
+    pendingImgBlockId = null;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── Swatches ───
+function addSwatch(blockId) {
+  const found = findBlock(blockId);
+  if (!found) return;
+  found.block.swatches.push({ id: uid(), name: '新しいカラー', hex: '#cccccc', usage: '使用箇所を入力' });
+  saveState();
+  render();
+}
+
+function deleteSwatch(blockId, swatchId) {
+  const found = findBlock(blockId);
+  if (!found) return;
+  found.block.swatches = found.block.swatches.filter(s => s.id !== swatchId);
+  saveState();
+  render();
+}
+
+// ═══════════════════════════════════════════
+// BLOCK CRUD
+// ═══════════════════════════════════════════
+function deleteBlock(blockId) {
+  const found = findBlock(blockId);
+  if (!found) return;
+  found.sub.blocks.splice(found.idx, 1);
+  saveState();
+  render();
+}
+
+function moveBlock(blockId, dir) {
+  const found = findBlock(blockId);
+  if (!found) return;
+  const { sub, idx } = found;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= sub.blocks.length) return;
+  [sub.blocks[idx], sub.blocks[newIdx]] = [sub.blocks[newIdx], sub.blocks[idx]];
+  saveState();
+  render();
+}
+
+// ─── Add Block Popover ───
+const BLOCK_TYPES = [
+  { type: 'h2',        label: '見出し (H2)',     icon: 'H2' },
+  { type: 'h3',        label: '小見出し (H3)',    icon: 'H3' },
+  { type: 'text',      label: 'テキスト段落',     icon: '¶' },
+  { type: 'image',     label: '画像',             icon: '🖼' },
+  { type: 'colors',    label: 'カラーパレット',   icon: '🎨' },
+  { type: 'fontspec',  label: 'フォント仕様',     icon: 'Aa' },
+  { type: 'typescale', label: 'タイプスケール',   icon: 'Tℤ' },
+  { type: 'divider',   label: '区切り線',         icon: '—' }
+];
+
+let currentPopoverSubId = null;
+
+function openPopover(e, subId) {
+  e.stopPropagation();
+  currentPopoverSubId = subId;
+  const pop = document.getElementById('add-popover');
+  const items = document.getElementById('popover-items');
+  items.innerHTML = BLOCK_TYPES.map(bt => `
+    <button onclick="addBlock('${subId}','${bt.type}')"
+        class="w-full flex items-center gap-3 px-3 py-2 text-sm text-body hover:bg-gray-50 rounded-lg cursor-pointer transition-colors text-left">
+      <span class="w-7 h-7 flex items-center justify-center rounded-md bg-gray-100 text-xs font-bold text-slate-600">${bt.icon}</span>
+      ${bt.label}
+    </button>`).join('');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  pop.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+  pop.style.left = rect.left + 'px';
+  pop.classList.add('open');
+  document.getElementById('pop-overlay').classList.remove('hidden');
+}
+
+function closePopover() {
+  document.getElementById('add-popover').classList.remove('open');
+  document.getElementById('pop-overlay').classList.add('hidden');
+  currentPopoverSubId = null;
+}
+
+function addBlock(subId, type) {
+  closePopover();
+  const sub = findSub(subId);
+  if (!sub) return;
+  const id = uid();
+  const newBlock = makeBlock(type, id);
+  sub.blocks.push(newBlock);
+  saveState();
+  render();
+  // Scroll to new block
+  setTimeout(() => {
+    const el = document.querySelector(`[data-block-id="${id}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function makeBlock(type, id) {
+  switch (type) {
+    case 'h2':        return { id, type: 'h2', content: '新しい見出し' };
+    case 'h3':        return { id, type: 'h3', content: '新しい小見出し' };
+    case 'text':      return { id, type: 'text', content: 'ここにテキストを入力してください。' };
+    case 'image':     return { id, type: 'image', imgId: null, caption: 'キャプション' };
+    case 'colors':    return { id, type: 'colors', swatches: [{ id: uid(), name: '新しいカラー', hex: '#2b70ef', usage: '使用箇所' }] };
+    case 'fontspec':  return { id, type: 'fontspec', fontName: 'Font Name', category: '用途', weights: 'Regular 400 / Bold 700', sample: 'Sample text サンプルテキスト' };
+    case 'typescale': return { id, type: 'typescale', rows: [{ id: uid(), label: 'Style', size: '16px', weight: '400', sample: 'サンプル' }] };
+    case 'divider':   return { id, type: 'divider' };
+    default:          return { id, type: 'text', content: '' };
+  }
+}
+
+// ═══════════════════════════════════════════
+// NAV & SCROLL SPY
+// ═══════════════════════════════════════════
+function navClick(e, subId) {
+  e.preventDefault();
+  const el = document.getElementById(subId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveNav(subId);
+  }
+}
+
+function setActiveNav(subId) {
+  if (activeSubId === subId) return;
+  activeSubId = subId;
+  document.querySelectorAll('[data-nav-sub]').forEach(el => {
+    el.classList.toggle('active', el.dataset.navSub === subId);
+  });
+}
+
+let observer;
+function setupScrollSpy() {
+  if (observer) observer.disconnect();
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) setActiveNav(entry.target.id);
+    });
+  }, { rootMargin: '-10% 0% -80% 0%', threshold: 0 });
+  document.querySelectorAll('[data-sub-id]').forEach(el => observer.observe(el));
+}
+
+function onScroll() {} // handled by IntersectionObserver
+
+// ═══════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════
+function confirmReset() {
+  if (confirm('すべての変更をリセットして初期状態に戻しますか？この操作は取り消せません。')) {
+    localStorage.removeItem('brandGuide_v2');
+    state = JSON.parse(JSON.stringify(DS));
+    render();
+  }
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+state = loadState();
+render();
+// Set first subsection as active
+if (state.sections.length && state.sections[0].subsections.length) {
+  activeSubId = state.sections[0].subsections[0].id;
+  renderNav();
+}
+</script>
+</body>
+</html>

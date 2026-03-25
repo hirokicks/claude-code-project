@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../assets/Meltan_favicon.svg" type="image/svg+xml">
+  <title>Clock — melta UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: {
+            50:'#f0f5ff',100:'#dde8ff',200:'#c0d4ff',300:'#95b6ff',
+            400:'#6492ff',500:'#2b70ef',600:'#2250df',700:'#1a40b5',
+            800:'#13318d',900:'#0e266a',950:'#07194e'
+          },
+          wf: { bg:'#FFFFFF', surface:'#F5F5F5', border:'#E0E0E0', text:'#333333', 'text-sub':'#888888', accent:'#666666' }
+        },
+        fontFamily: {
+          sans: ['Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','sans-serif']
+        }
+      }
+    }
+  }
+  </script>
+  <style>
+    .text-body { color: #3d4b5f; }
+
+    .clock-digit {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .second-arc {
+      transition: stroke-dashoffset 0.05s linear;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .colon-blink {
+      animation: pulse-dot 1s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+
+  <div class="flex flex-col items-center gap-10">
+
+    <!-- Clock Card -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-12 flex flex-col items-center gap-8" style="min-width: 420px;">
+
+      <!-- Analog Clock -->
+      <div class="relative" style="width: 200px; height: 200px;">
+        <svg viewBox="0 0 200 200" width="200" height="200" aria-hidden="true">
+          <!-- Face -->
+          <circle cx="100" cy="100" r="96" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+
+          <!-- Hour marks -->
+          <g stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round">
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(0 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(30 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(60 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="18" transform="rotate(90 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(120 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(150 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="18" transform="rotate(180 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(210 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(240 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="18" transform="rotate(270 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(300 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="22" transform="rotate(330 100 100)"/>
+          </g>
+
+          <!-- Major hour marks (12, 3, 6, 9) -->
+          <g stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round">
+            <line x1="100" y1="12" x2="100" y2="24" transform="rotate(0 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="24" transform="rotate(90 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="24" transform="rotate(180 100 100)"/>
+            <line x1="100" y1="12" x2="100" y2="24" transform="rotate(270 100 100)"/>
+          </g>
+
+          <!-- Second arc track -->
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+
+          <!-- Second arc progress -->
+          <circle id="second-arc" cx="100" cy="100" r="88"
+            fill="none" stroke="#2b70ef" stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="552.92"
+            stroke-dashoffset="552.92"
+            transform="rotate(-90 100 100)"/>
+
+          <!-- Hour hand -->
+          <line id="hour-hand" x1="100" y1="100" x2="100" y2="46"
+            stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+
+          <!-- Minute hand -->
+          <line id="minute-hand" x1="100" y1="100" x2="100" y2="32"
+            stroke="#334155" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- Second hand -->
+          <line id="second-hand" x1="100" y1="112" x2="100" y2="28"
+            stroke="#2b70ef" stroke-width="1.5" stroke-linecap="round"/>
+
+          <!-- Center dot -->
+          <circle cx="100" cy="100" r="4" fill="#2b70ef"/>
+          <circle cx="100" cy="100" r="2" fill="white"/>
+        </svg>
+      </div>
+
+      <!-- Digital Time -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="flex items-baseline gap-0.5" role="timer" aria-live="polite" aria-label="現在時刻">
+          <span id="hours" class="clock-digit text-slate-900 font-light" style="font-size: 4rem; line-height: 1;">00</span>
+          <span class="colon-blink text-slate-300 font-light" style="font-size: 3.5rem; line-height: 1; padding: 0 2px;">:</span>
+          <span id="minutes" class="clock-digit text-slate-900 font-light" style="font-size: 4rem; line-height: 1;">00</span>
+          <span class="colon-blink text-slate-300 font-light" style="font-size: 3.5rem; line-height: 1; padding: 0 2px;">:</span>
+          <span id="seconds" class="clock-digit text-primary-500 font-light" style="font-size: 2.5rem; line-height: 1; align-self: flex-end; padding-bottom: 4px;">00</span>
+        </div>
+
+        <!-- Date -->
+        <p id="date-display" class="text-sm text-slate-500 font-medium tracking-wide"></p>
+      </div>
+
+      <!-- Timezone -->
+      <div class="flex items-center gap-1.5 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <span id="timezone" class="text-xs text-slate-500 font-medium"></span>
+      </div>
+
+    </div>
+
+    <!-- Back link -->
+    <a href="index.html" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Examples に戻る
+    </a>
+
+  </div>
+
+  <script>
+    const weekdays = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+    const circumference = 2 * Math.PI * 88; // ≈ 552.92
+
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+      const ms = now.getMilliseconds();
+
+      // Digital
+      document.getElementById('hours').textContent = pad(h);
+      document.getElementById('minutes').textContent = pad(m);
+      document.getElementById('seconds').textContent = pad(s);
+
+      // Date
+      const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+      document.getElementById('date-display').textContent = dateStr;
+
+      // Timezone
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const offset = -now.getTimezoneOffset();
+      const sign = offset >= 0 ? '+' : '-';
+      const absOffset = Math.abs(offset);
+      const offsetStr = `UTC${sign}${pad(Math.floor(absOffset / 60))}:${pad(absOffset % 60)}`;
+      document.getElementById('timezone').textContent = `${tz} (${offsetStr})`;
+
+      // Analog hands
+      const hourDeg = ((h % 12) / 12) * 360 + (m / 60) * 30;
+      const minuteDeg = (m / 60) * 360 + (s / 60) * 6;
+      const secondDeg = (s / 60) * 360 + (ms / 1000) * 6;
+
+      document.getElementById('hour-hand').setAttribute('transform', `rotate(${hourDeg} 100 100)`);
+      document.getElementById('minute-hand').setAttribute('transform', `rotate(${minuteDeg} 100 100)`);
+      document.getElementById('second-hand').setAttribute('transform', `rotate(${secondDeg} 100 100)`);
+
+      // Second arc
+      const progress = (s + ms / 1000) / 60;
+      const offset2 = circumference * (1 - progress);
+      document.getElementById('second-arc').style.strokeDashoffset = offset2;
+    }
+
+    updateClock();
+    setInterval(updateClock, 50);
+  </script>
+
+</body>
+</html>
