@@ -240,9 +240,24 @@ function Btn({ children, onClick, variant = "primary", disabled = false, style =
 
 // ===================== SCREENS =====================
 
-function Landing({ onStart }) {
+function Landing({ onStart, savedCount, savedStep }) {
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 20px" }}>
+      {savedCount > 0 && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "#eff6ff", border: "1px solid #bfdbfe",
+          borderRadius: 8, padding: "12px 16px", marginBottom: 16,
+          fontSize: 13,
+        }}>
+          <span style={{ color: "#1d4ed8" }}>
+            💾 前回の入力内容が保存されています（{savedCount}項目 / Step {savedStep + 1}まで）
+          </span>
+          <Btn onClick={onStart} variant="outline" style={{ height: 32, padding: "0 14px", fontSize: 12 }}>
+            続きから再開 →
+          </Btn>
+        </div>
+      )}
       <Card>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🔮</div>
@@ -382,7 +397,7 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
             ← 戻る
           </Btn>
           <Btn onClick={onNext} style={{ flex: 2 }}>
-            {isLast ? "AI診断へ進む ✨" : "次のステップへ →"}
+            {isLast ? "AI診断スタート ✨" : "次のステップへ →"}
           </Btn>
         </div>
       </Card>
@@ -390,7 +405,7 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
   );
 }
 
-function ApiKey({ apiKey, setApiKey, onAnalyze, onBack, isLoading, error }) {
+function ApiKey({ apiKey, setApiKey, onNext, onBack, error }) {
   const [show, setShow] = useState(false);
   const provider = detectProvider(apiKey.trim());
 
@@ -412,11 +427,11 @@ function ApiKey({ apiKey, setApiKey, onAnalyze, onBack, isLoading, error }) {
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 20px" }}>
       <Card>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontSize: 52, marginBottom: 12 }}>✨</div>
-          <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>AI診断の準備</h2>
+          <div style={{ fontSize: 52, marginBottom: 12 }}>🔑</div>
+          <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>APIキーの設定</h2>
           <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.7 }}>
-            AIがブランド情報をもとに<br />
-            12のアーキタイプへの適合度を詳細分析します
+            ワークショップを始める前にAPIキーを確認します。<br />
+            キーはブラウザ内のみで使用され、外部に送信・保存されません。
           </p>
         </div>
 
@@ -500,11 +515,11 @@ function ApiKey({ apiKey, setApiKey, onAnalyze, onBack, isLoading, error }) {
         <div style={{ display: "flex", gap: 12 }}>
           <Btn onClick={onBack} variant="outline" style={{ flex: 1 }}>← 戻る</Btn>
           <Btn
-            onClick={onAnalyze}
-            disabled={isLoading || !apiKey.trim() || provider === "unknown"}
+            onClick={onNext}
+            disabled={!apiKey.trim() || provider === "unknown"}
             style={{ flex: 2 }}
           >
-            {isLoading ? "⏳ 分析中..." : "診断スタート ✨"}
+            ワークショップへ進む →
           </Btn>
         </div>
       </Card>
@@ -1061,27 +1076,42 @@ async function runAnalysis(apiKey, formData) {
 
 function App() {
   const [screen, setScreen] = useState("landing");
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState({});
+  const [step, setStep] = useState(() => {
+    try { return parseInt(localStorage.getItem("baw_step") || "0", 10); } catch { return 0; }
+  });
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = localStorage.getItem("baw_formData");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
   const [apiKey, setApiKey] = useState("");
   const [results, setResults] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 入力内容をlocalStorageに自動保存
+  useEffect(() => {
+    try { localStorage.setItem("baw_formData", JSON.stringify(formData)); } catch {}
+  }, [formData]);
+
+  useEffect(() => {
+    try { localStorage.setItem("baw_step", String(step)); } catch {}
+  }, [step]);
 
   const handleChange = useCallback((field, val) => {
     setFormData(prev => ({ ...prev, [field]: val }));
   }, []);
 
   const handleNext = () => {
-    if (step < WORKSHOP_STEPS.length - 1) setStep(s => s + 1);
-    else setScreen("apikey");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (step < WORKSHOP_STEPS.length - 1) { setStep(s => s + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    else handleAnalyze();
   };
 
   const handleBack = () => {
-    if (screen === "apikey") { setScreen("workshop"); return; }
+    if (screen === "apikey") { setScreen("landing"); return; }
     if (step > 0) { setStep(s => s - 1); }
-    else { setScreen("landing"); }
+    else { setScreen("apikey"); }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -1104,6 +1134,10 @@ function App() {
   };
 
   const handleRestart = () => {
+    try {
+      localStorage.removeItem("baw_formData");
+      localStorage.removeItem("baw_step");
+    } catch {}
     setScreen("landing");
     setStep(0);
     setFormData({});
@@ -1139,12 +1173,18 @@ function App() {
       </nav>
 
       {/* Screens */}
-      {screen === "landing" && <Landing onStart={() => { setScreen("workshop"); setStep(0); }} />}
+      {screen === "landing" && (
+        <Landing
+          onStart={() => { setScreen("apikey"); }}
+          savedCount={Object.values(formData).filter(v => v).length}
+          savedStep={step}
+        />
+      )}
       {screen === "workshop" && (
         <Workshop stepIndex={step} formData={formData} onChange={handleChange} onNext={handleNext} onBack={handleBack} />
       )}
       {screen === "apikey" && (
-        <ApiKey apiKey={apiKey} setApiKey={setApiKey} onAnalyze={handleAnalyze} onBack={handleBack} isLoading={loading} error={error} />
+        <ApiKey apiKey={apiKey} setApiKey={setApiKey} onNext={() => { setError(""); setScreen("workshop"); }} onBack={handleBack} error={error} />
       )}
       {screen === "loading" && <Loading />}
       {screen === "results" && results && (
