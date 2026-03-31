@@ -342,8 +342,9 @@ function Landing({ onStart, savedCount, savedStep }) {
 }
 
 function Workshop({ stepIndex, formData, onChange, onNext, onBack, error }) {
-  const step = WORKSHOP_STEPS[stepIndex];
-  const isLast = stepIndex === WORKSHOP_STEPS.length - 1;
+  const safeIndex = Math.max(0, Math.min(WORKSHOP_STEPS.length - 1, stepIndex || 0));
+  const step = WORKSHOP_STEPS[safeIndex];
+  const isLast = safeIndex === WORKSHOP_STEPS.length - 1;
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 20px" }}>
@@ -1054,7 +1055,7 @@ async function callAnthropic(apiKey, prompt) {
 
 async function callGemini(apiKey, prompt) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1087,7 +1088,10 @@ async function runAnalysis(apiKey, formData) {
 function App() {
   const [screen, setScreen] = useState("landing");
   const [step, setStep] = useState(() => {
-    try { return parseInt(localStorage.getItem("baw_step") || "0", 10); } catch { return 0; }
+    try {
+      const s = parseInt(localStorage.getItem("baw_step") || "0", 10);
+      return isNaN(s) ? 0 : Math.max(0, Math.min(WORKSHOP_STEPS.length - 1, s));
+    } catch { return 0; }
   });
   const [formData, setFormData] = useState(() => {
     try {
@@ -1136,7 +1140,6 @@ function App() {
       setScreen("results");
     } catch (e) {
       setError(e.message);
-      setStep(WORKSHOP_STEPS.length - 1);
       setScreen("workshop");
     } finally {
       setLoading(false);
