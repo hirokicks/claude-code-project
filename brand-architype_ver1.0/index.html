@@ -341,7 +341,7 @@ function Landing({ onStart, savedCount, savedStep }) {
   );
 }
 
-function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
+function Workshop({ stepIndex, formData, onChange, onNext, onBack, error }) {
   const step = WORKSHOP_STEPS[stepIndex];
   const isLast = stepIndex === WORKSHOP_STEPS.length - 1;
 
@@ -349,7 +349,17 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 20px" }}>
       <ProgressSteps current={stepIndex} />
 
-      <Card style={{ marginTop: 20 }}>
+      {error && (
+        <div style={{
+          margin: "16px 0 0", padding: "12px 16px",
+          background: "#fef2f2", border: "1px solid #fca5a5",
+          borderRadius: 8, fontSize: 13, color: "#dc2626",
+        }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      <Card style={{ marginTop: 16 }}>
         {/* Step Header */}
         <div style={{ marginBottom: 28 }}>
           <div style={{
@@ -1044,7 +1054,7 @@ async function callAnthropic(apiKey, prompt) {
 
 async function callGemini(apiKey, prompt) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1126,7 +1136,8 @@ function App() {
       setScreen("results");
     } catch (e) {
       setError(e.message);
-      setScreen("apikey");
+      setStep(WORKSHOP_STEPS.length - 1);
+      setScreen("workshop");
     } finally {
       setLoading(false);
     }
@@ -1181,7 +1192,7 @@ function App() {
         />
       )}
       {screen === "workshop" && (
-        <Workshop stepIndex={step} formData={formData} onChange={handleChange} onNext={handleNext} onBack={handleBack} />
+        <Workshop stepIndex={step} formData={formData} onChange={handleChange} onNext={handleNext} onBack={handleBack} error={error} />
       )}
       {screen === "apikey" && (
         <ApiKey apiKey={apiKey} setApiKey={setApiKey} onNext={() => { setError(""); setScreen("workshop"); }} onBack={handleBack} error={error} />
