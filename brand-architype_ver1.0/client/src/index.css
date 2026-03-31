@@ -1,0 +1,20 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #faf0ff 100%);
+  min-height: 100vh;
+  color: #111827;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+input, textarea, select, button { font-family: inherit; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@media print {
+  .no-print { display: none !important; }
+  nav { display: none !important; }
+  body { background: white !important; }
+  .print-area { box-shadow: none !important; border: none !important; }
+}

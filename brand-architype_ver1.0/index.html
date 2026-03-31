@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔮 ブランドアーキタイプ ワークショップツール</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #faf0ff 100%);
+    min-height: 100vh;
+    color: #111827;
+  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f1f1; }
+  ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+  input, textarea, select, button { font-family: inherit; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @media print {
+    .no-print { display: none !important; }
+    nav { display: none !important; }
+    body { background: white !important; }
+    .print-area { box-shadow: none !important; border: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useCallback, useEffect, useRef } = React;
+const { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } = Recharts;
+
+// ===================== DATA =====================
+
+const QUADRANTS = [
+  { id: "stability", name: "安定 / 制御", subtitle: "安心感を抱く", color: "#6366f1", light: "#eef2ff", border: "#c7d2fe" },
+  { id: "belonging", name: "帰属 / 楽しみ", subtitle: "愛情やコミュニティを手に入れる", color: "#ec4899", light: "#fdf2f8", border: "#fbcfe8" },
+  { id: "mastery", name: "支配 / リスク", subtitle: "成功する・成し遂げる", color: "#f59e0b", light: "#fffbeb", border: "#fde68a" },
+  { id: "freedom", name: "自立 / 自己実現", subtitle: "幸せを見つけられる", color: "#10b981", light: "#ecfdf5", border: "#a7f3d0" },
+];
+
+const ARCHETYPES = [
+  { id: "creator", nameJa: "創造者", nameEn: "Creator", quadrant: "stability", icon: "🎨", role: "新しいものを作り出す", coreDesire: "傑出した作品・体験の創造", fear: "凡庸さ・模倣", description: "革新と表現を通じて世界に価値を生み出す。ビジョンとオリジナリティを大切にし、妥協のない品質と独創性を追求する人格。", tone: "インスピレーション的・芸術的・こだわり強め", brands: ["Apple", "LEGO", "Adobe", "Dyson"], keywords: ["革新", "創造性", "オリジナリティ", "表現", "ビジョン"] },
+  { id: "caregiver", nameJa: "援助者", nameEn: "Caregiver", quadrant: "stability", icon: "🤝", role: "他者を助ける", coreDesire: "他者の保護とケア", fear: "利己主義・不安定", description: "他者の世話をし、保護することに使命感を持つ。温かみと共感を大切にし、コミュニティの安全と幸福を守る人格。", tone: "温かみ・誠実・安心感・共感", brands: ["JOHNSON'S", "Pampers", "UNICEF", "Campbell's"], keywords: ["ケア", "共感", "サポート", "安心", "温かみ"] },
+  { id: "ruler", nameJa: "統治者", nameEn: "Ruler", quadrant: "stability", icon: "👑", role: "統制力を発揮する", coreDesire: "繁栄・秩序の維持", fear: "混乱・失墜", description: "秩序とコントロールを重視し、安定した組織・社会を構築する。権威と責任感を持ち、高い品質の基準を定める人格。", tone: "権威的・洗練・信頼感・格調", brands: ["Mercedes-Benz", "Rolex", "Microsoft", "American Express"], keywords: ["権威", "品質", "秩序", "安定", "リーダーシップ"] },
+  { id: "jester", nameJa: "道化師", nameEn: "Jester", quadrant: "belonging", icon: "🎭", role: "楽しむ", coreDesire: "今この瞬間を楽しむ", fear: "退屈・つまらなさ", description: "ユーモアと遊び心で世界を明るくする。今この瞬間を楽しむことを大切にし、人々に笑いと軽さをもたらす人格。", tone: "ユーモラス・軽快・遊び心・エネルギッシュ", brands: ["Ben&Jerry's", "Old Spice", "Skittles", "M&M's"], keywords: ["ユーモア", "遊び心", "楽しさ", "軽さ", "笑い"] },
+  { id: "everyman", nameJa: "一般大衆", nameEn: "Everyman", quadrant: "belonging", icon: "👥", role: "ありのままでいい", coreDesire: "所属感・繋がり", fear: "孤立・エリート主義", description: "等身大の親しみやすさで人々と繋がる。特別である必要はなく、共感と帰属意識を大切にする人格。", tone: "親しみやすい・誠実・等身大・フレンドリー", brands: ["IKEA", "Gap", "eBay", "Walmart"], keywords: ["親しみ", "共感", "誠実", "平等", "コミュニティ"] },
+  { id: "lover", nameJa: "恋人", nameEn: "Lover", quadrant: "belonging", icon: "❤️", role: "愛を見つけ、与える", coreDesire: "親密さ・感覚的な豊かさ", fear: "孤独・無関心", description: "官能的な美しさと情熱で人々を魅了する。親密さと豊かな体験を通じて、特別な絆と深い共鳴を育む人格。", tone: "情熱的・官能的・洗練・プレミアム感", brands: ["Chanel", "Godiva", "Alfa Romeo", "Victoria's Secret"], keywords: ["情熱", "美", "親密さ", "官能", "魅力"] },
+  { id: "hero", nameJa: "英雄", nameEn: "Hero", quadrant: "mastery", icon: "⚔️", role: "勇敢に行動する", coreDesire: "証明・世界をより良くする", fear: "弱さ・脆弱性", description: "困難に立ち向かい、世界をより良くするために戦う。強い意志と克己心で不可能を可能にする人格。", tone: "力強い・挑戦的・インスピレーション・勝利", brands: ["Nike", "FedEx", "BMW", "Gatorade"], keywords: ["勇敢", "強さ", "挑戦", "勝利", "克服"] },
+  { id: "outlaw", nameJa: "無法者", nameEn: "Outlaw", quadrant: "mastery", icon: "💥", role: "ルールを破る", coreDesire: "変革・革命", fear: "無力さ・形骸化", description: "既成概念を壊し、革命を起こす。ルールや制度に反抗し、真の自由と根本的な変革を求める人格。", tone: "反骨的・自由・挑発的・ロック", brands: ["Harley-Davidson", "Virgin", "Diesel", "Converse"], keywords: ["反抗", "自由", "破壊", "革命", "個性"] },
+  { id: "magician", nameJa: "魔術師", nameEn: "Magician", quadrant: "mastery", icon: "✨", role: "生まれ変わりを促す", coreDesire: "知識・変容・奇跡", fear: "悪い副作用・意図しない結果", description: "夢を現実に変える触媒。変容と奇跡をもたらし、人々の可能性を広げ、世界を根本から変えようとする人格。", tone: "神秘的・変革的・インスピレーション・ビジョナリー", brands: ["Disney", "Mastercard", "Dyson", "Polaroid"], keywords: ["変容", "奇跡", "ビジョン", "魔法", "可能性"] },
+  { id: "innocent", nameJa: "幼子", nameEn: "Innocent", quadrant: "freedom", icon: "🌸", role: "信じる心を保つ・取り戻す", coreDesire: "幸福・純粋さ・安全", fear: "悪い行為・懲罰", description: "純粋さと楽観主義で幸せを追求する。シンプルさの中に美しさを見出し、善意と誠実さを信じる人格。", tone: "純粋・楽観的・シンプル・温かい", brands: ["Dove", "Coca-Cola", "Nintendo", "Innocent Drinks"], keywords: ["純粋", "楽観", "シンプル", "誠実", "幸福"] },
+  { id: "explorer", nameJa: "探検家", nameEn: "Explorer", quadrant: "freedom", icon: "🧭", role: "自立を保つ", coreDesire: "自由・発見・新体験", fear: "空虚さ・束縛", description: "自由と冒険を求め、世界を探求する。自己発見の旅を通じて真の自分を見つけ、常に新しい地平を目指す人格。", tone: "冒険的・自由・独立・発見・アクティブ", brands: ["REI", "Jeep", "National Geographic", "Patagonia"], keywords: ["冒険", "自由", "発見", "探求", "独立"] },
+  { id: "sage", nameJa: "賢者", nameEn: "Sage", quadrant: "freedom", icon: "🔭", role: "世界を理解する", coreDesire: "真実・知恵・洞察", fear: "無知・欺瞞", description: "知識と知恵を通じて真実を追求する。深い分析と洞察で世界を理解し、他者に知識と啓発をもたらす人格。", tone: "知的・信頼性・分析的・教育的", brands: ["Google", "BBC", "TED", "The Economist"], keywords: ["知識", "知恵", "分析", "真実", "洞察"] },
+];
+
+const WORKSHOP_STEPS = [
+  {
+    id: "soul", title: "ブランドの魂を探る", subtitle: "創業精神・ブランドのルーツを掘り下げる", icon: "🌱", color: "#6366f1",
+    hint: "ブランドの歴史を紐解き、創業者の想いとブランドの誕生背景を探ります。",
+    questions: [
+      { id: "brandName", label: "ブランド名", required: true, type: "text", placeholder: "例：株式会社〇〇 / ブランド名" },
+      { id: "mainBusiness", label: "主な事業内容", required: true, type: "text", placeholder: "例：Webデザイン・ブランディングコンサルティング" },
+      { id: "founded", label: "創業年・従業員数（任意）", type: "text", placeholder: "例：2010年創業 / 従業員50名" },
+      { id: "founderStory", label: "創業者の想い・ブランドが生まれた背景", type: "textarea", placeholder: "誰がどういう理由でこのブランドを生み出したのか？\nブランド誕生当時の社会背景は？\n創業当初のポジショニングは？" },
+      { id: "brandCommunication", label: "最も印象的なブランドコミュニケーション", type: "textarea", placeholder: "これまで最も記憶に残るメッセージ・キャンペーン・スローガンは？" },
+      { id: "customerRelationship", label: "顧客との関係性", type: "textarea", placeholder: "顧客はこのブランドとどのように関わってきたか？現在の関係は？" },
+    ]
+  },
+  {
+    id: "reality", title: "ブランドの実体を探る", subtitle: "現代における真実味を検証する", icon: "🔍", color: "#ec4899",
+    hint: "ステップ①で見つかったアーキタイプが、現代においても真実味があるかを検証します。",
+    questions: [
+      { id: "brandRole", label: "ブランドの役割", type: "select", options: ["機能的（課題解決・利便性中心）", "価値観的（ライフスタイル・アイデンティティ表現）", "両方を兼ね備えている"] },
+      { id: "involvement", label: "製品・サービスの関与度", type: "select", options: ["高関与型（高額・長期利用・慎重な購買）", "低関与型（日常的・手軽・習慣的購買）"] },
+      { id: "coreValue", label: "ユーザーに与えるコアバリュー", required: true, type: "textarea", placeholder: "このブランドが提供する本質的な価値は？\n機能的・感情的・自己表現的にどんな意味があるか？" },
+      { id: "targetCustomer", label: "ターゲット顧客像", required: true, type: "textarea", placeholder: "誰のためのブランドか？\nターゲットの価値観・ライフスタイル・動機は？" },
+      { id: "brandAssets", label: "競合と比べて際立つ強み・独自性", type: "textarea", placeholder: "このブランドの本質的な強みと競合と比べて際立っている部分は？" },
+      { id: "usagePattern", label: "顧客の利用パターン", type: "select", options: ["専らこのブランドのみ使用", "複数ブランドの中の一つ", "状況によって使い分け"] },
+    ]
+  },
+  {
+    id: "competition", title: "競合分析", subtitle: "市場における差別化ポイントを見極める", icon: "⚡", color: "#f59e0b",
+    hint: "競合ブランドのアーキタイプを把握し、差別化の機会を探ります。",
+    questions: [
+      { id: "competitors", label: "主な競合ブランド", type: "text", placeholder: "例：〇〇社、△△社、□□社" },
+      { id: "competitorArchetypes", label: "競合ブランドのイメージ・雰囲気", type: "textarea", placeholder: "競合ブランドはどのようなイメージを持っているか？\nどんな人格・トーンを表現しているか？" },
+      { id: "differentiator", label: "差別化したい点・市場の空白", type: "textarea", placeholder: "競合とどう違いを出したいか？\n市場の中でまだ占有されていない感情的ポジションはあるか？" },
+      { id: "categoryTrend", label: "業界・カテゴリーの傾向", type: "textarea", placeholder: "この業界全体で共通するトーンやイメージはあるか？\nカテゴリー全体で新しいアーキタイプを創出できるか？" },
+    ]
+  },
+  {
+    id: "sensory", title: "感性分析", subtitle: "直感と言語からアーキタイプを探る", icon: "🎯", color: "#10b981",
+    hint: "歴史的・マーケット視点とは別に、直感的な観点からアーキタイプを探ります。",
+    questions: [
+      { id: "philosophy", label: "ブランドのステートメント・理念", type: "textarea", placeholder: "企業理念・ミッション・ビジョン・バリューなど" },
+      { id: "brandPersonality", label: "このブランドが「人」だとしたら？", type: "textarea", placeholder: "どんな人物像か？\nどんな言葉を使うか？どんな服装をしているか？\nどんな雰囲気・性格を持つか？" },
+      { id: "idealImage", label: "理想のブランドイメージ・世界観", type: "textarea", placeholder: "目指したい視覚的な世界観、感情的な印象、雰囲気を教えてください" },
+      { id: "challenges", label: "現在の課題と理想の状態", type: "textarea", placeholder: "今どんな課題がありますか？\nブランディングを通じてどうなりたいですか？" },
+    ]
+  }
+];
+
+// ===================== HELPERS =====================
+
+const getQuadrant = (id) => QUADRANTS.find(q => q.id === id);
+const getArchetypesByQuadrant = (qid) => ARCHETYPES.filter(a => a.quadrant === qid);
+
+// ===================== COMPONENTS =====================
+
+function ProgressSteps({ current }) {
+  const labels = [{ icon: "🌱", text: "魂" }, { icon: "🔍", text: "実体" }, { icon: "⚡", text: "競合" }, { icon: "🎯", text: "感性" }];
+  return (
+    <div style={{ padding: "16px 24px 0" }}>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        {labels.map((l, i) => (
+          <React.Fragment key={i}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 48 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%", fontSize: 16,
+                background: i < current ? "#6366f1" : i === current ? "#6366f1" : "#e5e7eb",
+                color: i <= current ? "white" : "#9ca3af",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: i === current ? "0 0 0 4px #c7d2fe" : "none",
+                transition: "all 0.3s",
+              }}>
+                {i < current ? "✓" : l.icon}
+              </div>
+              <div style={{ fontSize: 10, marginTop: 4, color: i <= current ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
+                {l.text}
+              </div>
+            </div>
+            {i < labels.length - 1 && (
+              <div style={{
+                flex: 1, height: 3, borderRadius: 2, margin: "0 4px",
+                background: i < current ? "#6366f1" : "#e5e7eb",
+                transition: "background 0.3s", marginBottom: 16,
+              }} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FieldInput({ q, value, onChange }) {
+  const base = {
+    width: "100%", padding: "10px 14px", border: "1.5px solid #e5e7eb",
+    borderRadius: 10, fontSize: 14, background: "white",
+    transition: "border-color 0.2s, box-shadow 0.2s",
+    outline: "none", color: "#111827",
+  };
+  const focus = (e) => { e.target.style.borderColor = "#6366f1"; e.target.style.boxShadow = "0 0 0 3px #eef2ff"; };
+  const blur = (e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; };
+
+  if (q.type === "textarea") return (
+    <textarea value={value || ""} onChange={e => onChange(q.id, e.target.value)}
+      placeholder={q.placeholder} rows={3}
+      style={{ ...base, resize: "vertical", lineHeight: 1.7 }}
+      onFocus={focus} onBlur={blur} />
+  );
+  if (q.type === "select") return (
+    <select value={value || ""} onChange={e => onChange(q.id, e.target.value)}
+      style={{ ...base, cursor: "pointer" }} onFocus={focus} onBlur={blur}>
+      <option value="">選択してください</option>
+      {q.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
+  );
+  return (
+    <input type="text" value={value || ""} onChange={e => onChange(q.id, e.target.value)}
+      placeholder={q.placeholder} style={base} onFocus={focus} onBlur={blur} />
+  );
+}
+
+function Card({ children, style = {} }) {
+  return (
+    <div style={{
+      background: "white", borderRadius: 20, padding: "28px",
+      boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+      animation: "fadeIn 0.4s ease",
+      ...style
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function Btn({ children, onClick, variant = "primary", disabled = false, style = {} }) {
+  const styles = {
+    primary: {
+      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+      color: "white", border: "none",
+      boxShadow: "0 4px 16px rgba(99,102,241,0.3)",
+    },
+    outline: {
+      background: "white", color: "#6b7280",
+      border: "2px solid #e5e7eb",
+    },
+    danger: {
+      background: "linear-gradient(135deg, #ef4444, #dc2626)",
+      color: "white", border: "none",
+    },
+  };
+  return (
+    <button
+      onClick={onClick} disabled={disabled}
+      style={{
+        padding: "13px 24px", borderRadius: 12, fontSize: 15, fontWeight: 700,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        transition: "transform 0.15s, box-shadow 0.15s",
+        ...styles[variant],
+        ...style,
+      }}
+      onMouseOver={e => { if (!disabled) e.currentTarget.style.transform = "translateY(-1px)"; }}
+      onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ===================== SCREENS =====================
+
+function Landing({ onStart }) {
+  return (
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
+      <Card>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 72, marginBottom: 16 }}>🔮</div>
+          <h1 style={{ fontSize: 30, fontWeight: 800, color: "#111827", marginBottom: 12, lineHeight: 1.3 }}>
+            ブランドアーキタイプ<br />ワークショップツール
+          </h1>
+          <p style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.8 }}>
+            企業・ブランドを12種類の「人格」になぞらえ、<br />
+            ブランドの本質とアイデンティティを発見するフレームワーク
+          </p>
+          <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>
+            Carl Gustav Jung の「元型」理論 × Brand Personality ｜ Margaret Mark & Carol S. Pearson (2001)
+          </div>
+        </div>
+
+        {/* 4 Quadrants */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#374151", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <span>🗺️</span> 12のアーキタイプ ― 4つの動機軸
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {QUADRANTS.map(q => (
+              <div key={q.id} style={{
+                background: q.light, border: `1.5px solid ${q.border}`,
+                borderRadius: 14, padding: "14px 16px"
+              }}>
+                <div style={{ fontWeight: 700, color: q.color, fontSize: 14 }}>{q.name}</div>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10 }}>{q.subtitle}</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {getArchetypesByQuadrant(q.id).map(a => (
+                    <span key={a.id} style={{
+                      fontSize: 12, background: "white", border: `1px solid ${q.border}`,
+                      borderRadius: 20, padding: "3px 9px", color: "#374151",
+                      display: "flex", alignItems: "center", gap: 3
+                    }}>{a.icon} {a.nameJa}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Workshop Flow */}
+        <div style={{
+          background: "#f9fafb", borderRadius: 16, padding: "20px",
+          marginBottom: 32
+        }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "#374151", marginBottom: 14 }}>
+            📋 ワークショップの4ステップ（Notion手引きより）
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {WORKSHOP_STEPS.map((s, i) => (
+              <div key={s.id} style={{
+                background: "white", borderRadius: 12, padding: "12px 14px",
+                border: `1.5px solid ${s.color}30`
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 20 }}>{s.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#374151" }}>
+                      Step {i + 1}｜{s.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#9ca3af" }}>{s.subtitle}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #e5e7eb", fontSize: 13, color: "#6b7280" }}>
+            ✨ <strong>AI診断</strong>：入力情報をもとにClaude AIが12アーキタイプの適合度を分析・レポート出力
+          </div>
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <Btn onClick={onStart} style={{ padding: "16px 56px", fontSize: 18 }}>
+            ワークショップを開始する →
+          </Btn>
+          <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af" }}>
+            所要時間：約15〜30分 ｜ Anthropic API キーが必要です
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
+  const step = WORKSHOP_STEPS[stepIndex];
+  const isLast = stepIndex === WORKSHOP_STEPS.length - 1;
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 20px" }}>
+      <ProgressSteps current={stepIndex} />
+
+      <Card style={{ marginTop: 20 }}>
+        {/* Step Header */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: `${step.color}18`, borderRadius: 8, padding: "4px 12px",
+            marginBottom: 10
+          }}>
+            <span style={{ fontSize: 18 }}>{step.icon}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: step.color, letterSpacing: 1 }}>
+              STEP {stepIndex + 1} / {WORKSHOP_STEPS.length}
+            </span>
+          </div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>
+            {step.title}
+          </h2>
+          <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>{step.subtitle}</p>
+          <div style={{
+            marginTop: 10, padding: "10px 14px",
+            background: `${step.color}0d`, borderLeft: `3px solid ${step.color}`,
+            borderRadius: "0 8px 8px 0", fontSize: 13, color: "#374151"
+          }}>
+            💡 {step.hint}
+          </div>
+        </div>
+
+        {/* Questions */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {step.questions.map(q => (
+            <div key={q.id}>
+              <label style={{
+                display: "block", fontWeight: 600, fontSize: 14,
+                color: "#374151", marginBottom: 6
+              }}>
+                {q.label}
+                {q.required && <span style={{ color: "#ef4444", marginLeft: 4 }}>*</span>}
+              </label>
+              <FieldInput q={q} value={formData[q.id]} onChange={onChange} />
+            </div>
+          ))}
+        </div>
+
+        {/* Nav */}
+        <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
+          <Btn onClick={onBack} variant="outline" style={{ flex: 1 }}>
+            ← 戻る
+          </Btn>
+          <Btn onClick={onNext} style={{ flex: 2 }}>
+            {isLast ? "AI診断へ進む ✨" : "次のステップへ →"}
+          </Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function ApiKey({ apiKey, setApiKey, onAnalyze, onBack, isLoading, error }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 20px" }}>
+      <Card>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 52, marginBottom: 12 }}>✨</div>
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 8 }}>AI診断の準備</h2>
+          <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.7 }}>
+            Claude AIが入力されたブランド情報をもとに<br />
+            12のアーキタイプへの適合度を詳細分析します
+          </p>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ display: "block", fontWeight: 700, fontSize: 14, color: "#374151", marginBottom: 6 }}>
+            🔑 Anthropic API キー
+          </label>
+          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 10 }}>
+            <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
+              style={{ color: "#6366f1" }}>console.anthropic.com</a> から取得できます。
+            キーはこのセッション中のみ使用され、外部に送信・保存されません。
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              type={show ? "text" : "password"}
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="sk-ant-api03-..."
+              style={{
+                flex: 1, padding: "11px 14px", border: "1.5px solid #e5e7eb",
+                borderRadius: 10, fontSize: 14, fontFamily: "monospace", outline: "none"
+              }}
+            />
+            <button onClick={() => setShow(!show)} style={{
+              padding: "11px 14px", border: "1.5px solid #e5e7eb",
+              borderRadius: 10, background: "white", cursor: "pointer", fontSize: 16
+            }}>{show ? "🙈" : "👁️"}</button>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{
+            padding: "12px 14px", background: "#fef2f2",
+            border: "1px solid #fca5a5", borderRadius: 10,
+            fontSize: 13, color: "#dc2626", marginBottom: 16
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12 }}>
+          <Btn onClick={onBack} variant="outline" style={{ flex: 1 }}>← 戻る</Btn>
+          <Btn
+            onClick={onAnalyze}
+            disabled={isLoading || !apiKey.trim()}
+            style={{ flex: 2 }}
+          >
+            {isLoading ? "⏳ 分析中..." : "診断スタート ✨"}
+          </Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Loading() {
+  const [dots, setDots] = useState(".");
+  useEffect(() => {
+    const t = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div style={{ textAlign: "center", padding: "100px 24px" }}>
+      <div style={{ fontSize: 72, marginBottom: 24, animation: "spin 3s linear infinite", display: "inline-block" }}>✨</div>
+      <h2 style={{ fontSize: 24, fontWeight: 700, color: "#374151", marginBottom: 12 }}>AI分析中{dots}</h2>
+      <p style={{ color: "#6b7280", lineHeight: 1.8, fontSize: 15 }}>
+        ブランド情報を解析して<br />
+        12のアーキタイプへの適合度を算出しています
+      </p>
+    </div>
+  );
+}
+
+function Results({ results, formData, onRestart, onReport }) {
+  const [tab, setTab] = useState("scores");
+  const [detail, setDetail] = useState(null);
+
+  const sorted = results.scores ? [...results.scores].sort((a, b) => b.score - a.score) : [];
+  const top3 = sorted.slice(0, 3);
+  const primary = top3[0] ? ARCHETYPES.find(a => a.id === top3[0].id) : null;
+  const primaryQ = primary ? getQuadrant(primary.quadrant) : null;
+
+  const radarData = ARCHETYPES.map(a => {
+    const s = results.scores?.find(x => x.id === a.id);
+    return { subject: a.nameJa, A: s?.score || 0, fullMark: 10 };
+  });
+
+  const barData = sorted.map(s => {
+    const a = ARCHETYPES.find(x => x.id === s.id);
+    return { name: a?.nameJa, icon: a?.icon, score: s.score, color: getQuadrant(a?.quadrant)?.color || "#6366f1" };
+  });
+
+  const tabs = [
+    { id: "scores", label: "📊 スコア" },
+    { id: "analysis", label: "💡 AI分析" },
+    { id: "all", label: "🗺️ 全アーキタイプ" },
+  ];
+
+  return (
+    <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px" }}>
+      {/* Hero */}
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 44, marginBottom: 8 }}>🎯</div>
+        <h2 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>診断結果</h2>
+        <p style={{ fontSize: 14, color: "#6b7280" }}>{formData.brandName || "ブランド"} のアーキタイプ分析</p>
+      </div>
+
+      {/* Primary Archetype */}
+      {primary && (
+        <div style={{
+          background: `linear-gradient(135deg, ${primaryQ.color}18, ${primaryQ.color}08)`,
+          border: `2px solid ${primaryQ.color}60`,
+          borderRadius: 20, padding: "28px",
+          marginBottom: 24, textAlign: "center",
+          animation: "fadeIn 0.5s ease"
+        }}>
+          <div style={{ fontSize: 11, color: primaryQ.color, fontWeight: 800, letterSpacing: 3, marginBottom: 10 }}>
+            PRIMARY ARCHETYPE
+          </div>
+          <div style={{ fontSize: 64, marginBottom: 10 }}>{primary.icon}</div>
+          <h3 style={{ fontSize: 36, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>{primary.nameJa}</h3>
+          <div style={{ fontSize: 18, color: primaryQ.color, marginBottom: 14, fontWeight: 600 }}>{primary.nameEn}</div>
+          <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 18px" }}>
+            {primary.description}
+          </p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            {primary.keywords.map(k => (
+              <span key={k} style={{
+                background: primaryQ.color, color: "white",
+                borderRadius: 20, padding: "5px 14px", fontSize: 13, fontWeight: 600
+              }}>{k}</span>
+            ))}
+          </div>
+          {top3[0] && (
+            <div style={{ marginTop: 12 }}>
+              <span style={{
+                background: "white", border: `2px solid ${primaryQ.color}`,
+                color: primaryQ.color, borderRadius: 20, padding: "5px 16px",
+                fontSize: 14, fontWeight: 700
+              }}>
+                適合度：{top3[0].score} / 10
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Top 3 */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "#374151", marginBottom: 12 }}>🏆 適合度ランキング TOP 3</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          {top3.map((s, i) => {
+            const a = ARCHETYPES.find(x => x.id === s.id);
+            const q = getQuadrant(a?.quadrant);
+            return (
+              <div key={s.id} style={{
+                border: `2px solid ${q?.color}50`,
+                background: i === 0 ? `${q?.color}12` : "white",
+                borderRadius: 16, padding: "18px", textAlign: "center",
+                boxShadow: i === 0 ? `0 4px 20px ${q?.color}20` : "0 2px 8px rgba(0,0,0,0.04)"
+              }}>
+                <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 4, fontWeight: 600 }}>
+                  {["🥇", "🥈", "🥉"][i]}
+                </div>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>{a?.icon}</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{a?.nameJa}</div>
+                <div style={{ fontSize: 11, color: q?.color, marginBottom: 10, fontWeight: 600 }}>{a?.nameEn}</div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: q?.color }}>
+                  {s.score}<span style={{ fontSize: 14, fontWeight: 400 }}>/10</span>
+                </div>
+                {results.scores?.find(x => x.id === s.id)?.reason && (
+                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
+                    {results.scores.find(x => x.id === s.id).reason}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ background: "#f3f4f6", borderRadius: 14, padding: 4, display: "flex", gap: 4, marginBottom: 20 }}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            flex: 1, padding: "9px 12px", border: "none", borderRadius: 10,
+            cursor: "pointer", fontSize: 13, fontWeight: 600,
+            background: tab === t.id ? "white" : "transparent",
+            color: tab === t.id ? "#6366f1" : "#6b7280",
+            boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+          }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "scores" && (
+        <Card>
+          <div style={{ height: 320, marginBottom: 28 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+                <PolarGrid stroke="#e5e7eb" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
+                <Radar dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <div style={{ height: 340 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <XAxis type="number" domain={[0, 10]} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={65} />
+                <Tooltip formatter={(v) => [`${v} / 10`, "適合度"]} />
+                <Bar dataKey="score" radius={[0, 8, 8, 0]} maxBarSize={20}>
+                  {barData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
+
+      {tab === "analysis" && (
+        <Card>
+          {results.analysis && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, color: "#374151", marginBottom: 10, fontSize: 15 }}>🔍 ブランド分析</div>
+              <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap", padding: "16px", background: "#f9fafb", borderRadius: 12 }}>
+                {results.analysis}
+              </div>
+            </div>
+          )}
+          {results.recommendations && (
+            <div>
+              <div style={{ fontWeight: 700, color: "#6366f1", marginBottom: 10, fontSize: 15 }}>💡 ブランディングアプローチの提案</div>
+              <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap", padding: "16px", background: "#eef2ff", borderRadius: 12, border: "1px solid #c7d2fe" }}>
+                {results.recommendations}
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {tab === "all" && (
+        <Card>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+            {ARCHETYPES.map(a => {
+              const s = results.scores?.find(x => x.id === a.id);
+              const q = getQuadrant(a.quadrant);
+              const isSelected = detail === a.id;
+              return (
+                <div key={a.id} onClick={() => setDetail(isSelected ? null : a.id)} style={{
+                  border: `2px solid ${isSelected ? q.color : "#e5e7eb"}`,
+                  background: isSelected ? q.light : "white",
+                  borderRadius: 14, padding: "12px", cursor: "pointer",
+                  transition: "all 0.2s", position: "relative",
+                  boxShadow: isSelected ? `0 4px 16px ${q.color}25` : "0 1px 4px rgba(0,0,0,0.04)",
+                }}>
+                  {s && (
+                    <div style={{
+                      position: "absolute", top: 8, right: 8,
+                      background: q.color, color: "white",
+                      borderRadius: 12, padding: "1px 7px", fontSize: 12, fontWeight: 700
+                    }}>{s.score}</div>
+                  )}
+                  <div style={{ fontSize: 28, marginBottom: 4 }}>{a.icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: "#111827" }}>{a.nameJa}</div>
+                  <div style={{ fontSize: 11, color: q.color, fontWeight: 600 }}>{a.nameEn}</div>
+                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{a.role}</div>
+                </div>
+              );
+            })}
+          </div>
+          {detail && (() => {
+            const a = ARCHETYPES.find(x => x.id === detail);
+            const q = getQuadrant(a.quadrant);
+            return (
+              <div style={{
+                marginTop: 16, background: q.light,
+                border: `2px solid ${q.border}`, borderRadius: 16, padding: "20px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <span style={{ fontSize: 44 }}>{a.icon}</span>
+                  <div>
+                    <h4 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>{a.nameJa}</h4>
+                    <div style={{ fontSize: 13, color: q.color, fontWeight: 600 }}>{a.nameEn} ｜ {a.role}</div>
+                  </div>
+                </div>
+                <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.7, marginBottom: 14 }}>{a.description}</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 13 }}>
+                  {[
+                    ["💜 核心的欲求", a.coreDesire],
+                    ["🔴 恐れ", a.fear],
+                    ["🎤 トーン", a.tone],
+                    ["🏢 参照ブランド", a.brands.join("、")],
+                  ].map(([k, v]) => (
+                    <div key={k} style={{ background: "white", borderRadius: 8, padding: "8px 10px" }}>
+                      <div style={{ fontWeight: 700, color: "#374151", marginBottom: 2, fontSize: 12 }}>{k}</div>
+                      <div style={{ color: "#6b7280" }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {results.scores?.find(x => x.id === detail)?.reason && (
+                  <div style={{ marginTop: 12, background: `${q.color}15`, borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#374151" }}>
+                    <strong>AI分析：</strong>{results.scores.find(x => x.id === detail).reason}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </Card>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+        <Btn onClick={onRestart} variant="outline" style={{ flex: 1 }}>🔄 最初からやり直す</Btn>
+        <Btn onClick={onReport} style={{ flex: 2 }}>📄 レポートを出力する</Btn>
+      </div>
+    </div>
+  );
+}
+
+function Report({ results, formData, onBack }) {
+  const top3 = results.scores ? [...results.scores].sort((a, b) => b.score - a.score).slice(0, 3) : [];
+
+  return (
+    <div style={{ maxWidth: 740, margin: "0 auto", padding: "24px 20px" }}>
+      <div className="no-print" style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+        <Btn onClick={onBack} variant="outline">← 結果に戻る</Btn>
+        <Btn onClick={() => window.print()}>🖨️ 印刷 / PDF保存</Btn>
+      </div>
+
+      <div className="print-area" style={{
+        background: "white", borderRadius: 20, padding: "44px",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)"
+      }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 36, borderBottom: "3px solid #6366f1", paddingBottom: 28 }}>
+          <div style={{ fontSize: 44, marginBottom: 10 }}>🔮</div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", margin: "0 0 6px" }}>
+            ブランドアーキタイプ 診断レポート
+          </h1>
+          <p style={{ fontSize: 14, color: "#6b7280" }}>
+            {formData.brandName || "ブランド名"} ｜ {new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+
+        {/* Brand Info */}
+        <section style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>🏢 ブランド基本情報</h2>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+            <tbody>
+              {[
+                ["ブランド名", formData.brandName],
+                ["主な事業", formData.mainBusiness],
+                ["創業・規模", formData.founded],
+                ["ターゲット顧客", formData.targetCustomer],
+                ["コアバリュー", formData.coreValue],
+                ["競合ブランド", formData.competitors],
+              ].filter(([, v]) => v).map(([k, v]) => (
+                <tr key={k}>
+                  <td style={{ padding: "8px 14px", fontWeight: 600, color: "#374151", background: "#f9fafb", width: "28%", borderBottom: "1px solid #f0f0f0" }}>{k}</td>
+                  <td style={{ padding: "8px 14px", color: "#6b7280", borderBottom: "1px solid #f0f0f0" }}>{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        {/* Top 3 */}
+        <section style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 14 }}>🎯 診断結果 ― 上位アーキタイプ</h2>
+          {top3.map((s, i) => {
+            const a = ARCHETYPES.find(x => x.id === s.id);
+            const q = getQuadrant(a?.quadrant);
+            return (
+              <div key={s.id} style={{
+                border: `1.5px solid ${q?.border}`,
+                background: i === 0 ? q?.light : "white",
+                borderRadius: 14, padding: "18px", marginBottom: 12,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                  <span style={{ fontSize: 36 }}>{a?.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, fontSize: 17, color: "#111827" }}>
+                      {"#" + (i + 1)} {a?.nameJa}
+                      <span style={{ fontSize: 14, fontWeight: 400, color: "#6b7280", marginLeft: 8 }}>({a?.nameEn})</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: q?.color, fontWeight: 600 }}>
+                      {q?.name} ｜ {a?.role}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: q?.color, lineHeight: 1 }}>
+                      {s.score}
+                      <span style={{ fontSize: 14, fontWeight: 400 }}>/10</span>
+                    </div>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: "#374151", margin: "0 0 10px", lineHeight: 1.7 }}>
+                  {a?.description}
+                </p>
+                {s.reason && (
+                  <div style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic", borderTop: "1px solid #f0f0f0", paddingTop: 8 }}>
+                    📌 {s.reason}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                  {a?.keywords.map(k => (
+                    <span key={k} style={{
+                      background: q?.color, color: "white",
+                      borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 600
+                    }}>{k}</span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+
+        {/* AI Analysis */}
+        {results.analysis && (
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>🔍 AI分析コメント</h2>
+            <div style={{ background: "#f9fafb", borderRadius: 12, padding: "18px", fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
+              {results.analysis}
+            </div>
+          </section>
+        )}
+
+        {/* Recommendations */}
+        {results.recommendations && (
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>💡 ブランディングアプローチの提案</h2>
+            <div style={{ background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 12, padding: "18px", fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
+              {results.recommendations}
+            </div>
+          </section>
+        )}
+
+        {/* All Scores */}
+        <section style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>📊 全アーキタイプ 適合度一覧</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            {QUADRANTS.map(q => (
+              <div key={q.id} style={{ background: q.light, borderRadius: 12, padding: "12px" }}>
+                <div style={{ fontWeight: 700, fontSize: 12, color: q.color, marginBottom: 8 }}>{q.name}</div>
+                {getArchetypesByQuadrant(q.id).map(a => {
+                  const s = results.scores?.find(x => x.id === a.id);
+                  const score = s?.score || 0;
+                  return (
+                    <div key={a.id} style={{ marginBottom: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
+                        <span>{a.icon} {a.nameJa}</span>
+                        <strong style={{ color: q.color }}>{score}</strong>
+                      </div>
+                      <div style={{ height: 4, background: "#e5e7eb", borderRadius: 2 }}>
+                        <div style={{ width: `${score * 10}%`, height: "100%", background: q.color, borderRadius: 2 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Notes */}
+        <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "14px 16px", fontSize: 12, color: "#92400e" }}>
+          ⚠️ このレポートはAI（Claude）による分析を含みます。アーキタイプの選定はあくまで提案の立脚点であり、最終的な判断はデザイナーとクライアントで行ってください。
+        </div>
+
+        {/* Footer */}
+        <div style={{ marginTop: 28, textAlign: "center", fontSize: 11, color: "#9ca3af", borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
+          ブランドアーキタイプ ワークショップツール ｜ Powered by Claude AI ｜ Aquaring
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================== AI ANALYSIS =====================
+
+async function runAnalysis(apiKey, formData) {
+  const info = Object.entries({
+    "ブランド名": formData.brandName,
+    "主な事業": formData.mainBusiness,
+    "創業・規模": formData.founded,
+    "創業の背景・創業者の想い": formData.founderStory,
+    "ブランドコミュニケーション": formData.brandCommunication,
+    "顧客との関係性": formData.customerRelationship,
+    "ブランドの役割": formData.brandRole,
+    "コアバリュー": formData.coreValue,
+    "ターゲット顧客": formData.targetCustomer,
+    "独自性・強み": formData.brandAssets,
+    "利用パターン": formData.usagePattern,
+    "競合ブランド": formData.competitors,
+    "競合のイメージ": formData.competitorArchetypes,
+    "差別化したい点": formData.differentiator,
+    "業界傾向": formData.categoryTrend,
+    "企業理念・ステートメント": formData.philosophy,
+    "ブランドの人格像": formData.brandPersonality,
+    "理想のイメージ": formData.idealImage,
+    "課題と理想": formData.challenges,
+  }).filter(([, v]) => v).map(([k, v]) => `・${k}：${v}`).join("\n");
+
+  const prompt = `あなたはブランドマーケティングの専門家です。以下のブランド情報を深く分析し、12種類のブランドアーキタイプへの適合度を評価してください。
+
+【ブランド情報】
+${info}
+
+【12種類のブランドアーキタイプ】
+安定/制御：creator（創造者）、caregiver（援助者）、ruler（統治者）
+帰属/楽しみ：jester（道化師）、everyman（一般大衆）、lover（恋人）
+支配/リスク：hero（英雄）、outlaw（無法者）、magician（魔術師）
+自立/自己実現：innocent（幼子）、explorer（探検家）、sage（賢者）
+
+以下のJSON形式で回答してください（JSONのみ、説明文なし）：
+{
+  "scores": [
+    {"id": "creator", "score": 7, "reason": "このブランドに適合/不適合する具体的な理由を1〜2文で"},
+    {"id": "caregiver", "score": 4, "reason": "理由"},
+    {"id": "ruler", "score": 8, "reason": "理由"},
+    {"id": "jester", "score": 3, "reason": "理由"},
+    {"id": "everyman", "score": 5, "reason": "理由"},
+    {"id": "lover", "score": 6, "reason": "理由"},
+    {"id": "hero", "score": 7, "reason": "理由"},
+    {"id": "outlaw", "score": 4, "reason": "理由"},
+    {"id": "magician", "score": 9, "reason": "理由"},
+    {"id": "innocent", "score": 5, "reason": "理由"},
+    {"id": "explorer", "score": 6, "reason": "理由"},
+    {"id": "sage", "score": 5, "reason": "理由"}
+  ],
+  "analysis": "ブランドの本質的な特性とアーキタイプ傾向についての総合分析（350〜450字程度）",
+  "recommendations": "最も適合するアーキタイプに基づいた具体的なブランディングアプローチの提案。コミュニケーションスタイル、ビジュアル方向性、差別化戦略を含む（350〜450字程度）"
+}`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2500,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `APIエラー (${res.status})`);
+  }
+
+  const data = await res.json();
+  const text = data.content?.[0]?.text || "";
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("AIの回答を解析できませんでした。もう一度お試しください。");
+  return JSON.parse(match[0]);
+}
+
+// ===================== MAIN APP =====================
+
+function App() {
+  const [screen, setScreen] = useState("landing");
+  const [step, setStep] = useState(0);
+  const [formData, setFormData] = useState({});
+  const [apiKey, setApiKey] = useState("");
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = useCallback((field, val) => {
+    setFormData(prev => ({ ...prev, [field]: val }));
+  }, []);
+
+  const handleNext = () => {
+    if (step < WORKSHOP_STEPS.length - 1) setStep(s => s + 1);
+    else setScreen("apikey");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBack = () => {
+    if (screen === "apikey") { setScreen("workshop"); return; }
+    if (step > 0) { setStep(s => s - 1); }
+    else { setScreen("landing"); }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleAnalyze = async () => {
+    if (!apiKey.trim()) return;
+    setLoading(true);
+    setError("");
+    setScreen("loading");
+    try {
+      const res = await runAnalysis(apiKey, formData);
+      setResults(res);
+      setScreen("results");
+    } catch (e) {
+      setError(e.message);
+      setScreen("apikey");
+    } finally {
+      setLoading(false);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleRestart = () => {
+    setScreen("landing");
+    setStep(0);
+    setFormData({});
+    setResults(null);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <div>
+      {/* Navbar */}
+      <nav style={{
+        background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
+        borderBottom: "1px solid #e5e7eb", padding: "12px 24px",
+        display: "flex", alignItems: "center", gap: 10,
+        position: "sticky", top: 0, zIndex: 1000,
+      }} className="no-print">
+        <span style={{ fontSize: 22 }}>🔮</span>
+        <span style={{ fontWeight: 800, fontSize: 15, color: "#374151" }}>
+          ブランドアーキタイプ ワークショップ
+        </span>
+        {screen !== "landing" && (
+          <button
+            onClick={() => { if (window.confirm("ホームに戻りますか？入力内容は保持されます。")) setScreen("landing"); }}
+            style={{ marginLeft: "auto", fontSize: 13, color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}
+          >
+            ← ホーム
+          </button>
+        )}
+        <div style={{ marginLeft: screen === "landing" ? "auto" : 0, fontSize: 12, color: "#9ca3af" }}>
+          Powered by Claude AI
+        </div>
+      </nav>
+
+      {/* Screens */}
+      {screen === "landing" && <Landing onStart={() => { setScreen("workshop"); setStep(0); }} />}
+      {screen === "workshop" && (
+        <Workshop stepIndex={step} formData={formData} onChange={handleChange} onNext={handleNext} onBack={handleBack} />
+      )}
+      {screen === "apikey" && (
+        <ApiKey apiKey={apiKey} setApiKey={setApiKey} onAnalyze={handleAnalyze} onBack={handleBack} isLoading={loading} error={error} />
+      )}
+      {screen === "loading" && <Loading />}
+      {screen === "results" && results && (
+        <Results results={results} formData={formData} onRestart={handleRestart} onReport={() => setScreen("report")} />
+      )}
+      {screen === "report" && results && (
+        <Report results={results} formData={formData} onBack={() => setScreen("results")} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
