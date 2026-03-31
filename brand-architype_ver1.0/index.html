@@ -3,25 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔮 ブランドアーキタイプ ワークショップツール</title>
+<title>ブランドアーキタイプ ワークショップツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif;
-    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #faf0ff 100%);
+    font-family: 'Inter', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: #f9fafb;
     min-height: 100vh;
-    color: #111827;
+    color: #3d4b5f;
+    letter-spacing: 0.02em;
   }
   ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #f1f1f1; }
-  ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   input, textarea, select, button { font-family: inherit; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @media print {
     .no-print { display: none !important; }
     nav { display: none !important; }
@@ -123,23 +126,24 @@ function ProgressSteps({ current }) {
           <React.Fragment key={i}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 48 }}>
               <div style={{
-                width: 36, height: 36, borderRadius: "50%", fontSize: 16,
-                background: i < current ? "#6366f1" : i === current ? "#6366f1" : "#e5e7eb",
-                color: i <= current ? "white" : "#9ca3af",
+                width: 32, height: 32, borderRadius: "50%", fontSize: 13,
+                background: i < current ? "#2b70ef" : i === current ? "#ffffff" : "#f1f5f9",
+                color: i < current ? "white" : i === current ? "#2b70ef" : "#94a3b8",
+                border: i === current ? "2px solid #2b70ef" : "2px solid transparent",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: i === current ? "0 0 0 4px #c7d2fe" : "none",
-                transition: "all 0.3s",
+                fontWeight: 600,
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               }}>
                 {i < current ? "✓" : l.icon}
               </div>
-              <div style={{ fontSize: 10, marginTop: 4, color: i <= current ? "#6366f1" : "#9ca3af", fontWeight: 600 }}>
+              <div style={{ fontSize: 11, marginTop: 4, color: i <= current ? "#2b70ef" : "#94a3b8", fontWeight: 500 }}>
                 {l.text}
               </div>
             </div>
             {i < labels.length - 1 && (
               <div style={{
-                flex: 1, height: 3, borderRadius: 2, margin: "0 4px",
-                background: i < current ? "#6366f1" : "#e5e7eb",
+                flex: 1, height: 2, borderRadius: 2, margin: "0 4px",
+                background: i < current ? "#2b70ef" : "#e2e8f0",
                 transition: "background 0.3s", marginBottom: 16,
               }} />
             )}
@@ -152,18 +156,19 @@ function ProgressSteps({ current }) {
 
 function FieldInput({ q, value, onChange }) {
   const base = {
-    width: "100%", padding: "10px 14px", border: "1.5px solid #e5e7eb",
-    borderRadius: 10, fontSize: 14, background: "white",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-    outline: "none", color: "#111827",
+    width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1",
+    borderRadius: 8, fontSize: 15, background: "white",
+    transition: "border-color 0.15s, box-shadow 0.15s",
+    outline: "none", color: "#0f172a", lineHeight: 1.7,
+    caretColor: "#2b70ef",
   };
-  const focus = (e) => { e.target.style.borderColor = "#6366f1"; e.target.style.boxShadow = "0 0 0 3px #eef2ff"; };
-  const blur = (e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; };
+  const focus = (e) => { e.target.style.borderColor = "#2b70ef"; e.target.style.boxShadow = "0 0 0 3px rgba(43,112,239,0.15)"; };
+  const blur = (e) => { e.target.style.borderColor = "#cbd5e1"; e.target.style.boxShadow = "none"; };
 
   if (q.type === "textarea") return (
     <textarea value={value || ""} onChange={e => onChange(q.id, e.target.value)}
       placeholder={q.placeholder} rows={3}
-      style={{ ...base, resize: "vertical", lineHeight: 1.7 }}
+      style={{ ...base, resize: "vertical" }}
       onFocus={focus} onBlur={blur} />
   );
   if (q.type === "select") return (
@@ -182,9 +187,10 @@ function FieldInput({ q, value, onChange }) {
 function Card({ children, style = {} }) {
   return (
     <div style={{
-      background: "white", borderRadius: 20, padding: "28px",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-      animation: "fadeIn 0.4s ease",
+      background: "white", borderRadius: 12, padding: "28px",
+      border: "1px solid #e2e8f0",
+      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+      animation: "fadeIn 0.3s ease",
       ...style
     }}>
       {children}
@@ -195,32 +201,37 @@ function Card({ children, style = {} }) {
 function Btn({ children, onClick, variant = "primary", disabled = false, style = {} }) {
   const styles = {
     primary: {
-      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+      background: "#2b70ef",
       color: "white", border: "none",
-      boxShadow: "0 4px 16px rgba(99,102,241,0.3)",
     },
     outline: {
-      background: "white", color: "#6b7280",
-      border: "2px solid #e5e7eb",
+      background: "white", color: "#3d4b5f",
+      border: "1px solid #e2e8f0",
     },
     danger: {
-      background: "linear-gradient(135deg, #ef4444, #dc2626)",
+      background: "#ef4444",
       color: "white", border: "none",
     },
+  };
+  const hover = {
+    primary: "#1a40b5",
+    outline: "#f9fafb",
+    danger: "#dc2626",
   };
   return (
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        padding: "13px 24px", borderRadius: 12, fontSize: 15, fontWeight: 700,
+        height: 40, padding: "0 20px", borderRadius: 8, fontSize: 15, fontWeight: 600,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
-        transition: "transform 0.15s, box-shadow 0.15s",
+        transition: "background 0.15s, box-shadow 0.15s",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
         ...styles[variant],
         ...style,
       }}
-      onMouseOver={e => { if (!disabled) e.currentTarget.style.transform = "translateY(-1px)"; }}
-      onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+      onMouseOver={e => { if (!disabled) e.currentTarget.style.background = hover[variant]; }}
+      onMouseOut={e => { if (!disabled) e.currentTarget.style.background = styles[variant].background; }}
     >
       {children}
     </button>
@@ -231,40 +242,40 @@ function Btn({ children, onClick, variant = "primary", disabled = false, style =
 
 function Landing({ onStart }) {
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 20px" }}>
       <Card>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ fontSize: 72, marginBottom: 16 }}>🔮</div>
-          <h1 style={{ fontSize: 30, fontWeight: 800, color: "#111827", marginBottom: 12, lineHeight: 1.3 }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🔮</div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", marginBottom: 12, lineHeight: 1.4, letterSpacing: "0.01em" }}>
             ブランドアーキタイプ<br />ワークショップツール
           </h1>
-          <p style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.8 }}>
+          <p style={{ fontSize: 15, color: "#64748b", lineHeight: 2.0 }}>
             企業・ブランドを12種類の「人格」になぞらえ、<br />
             ブランドの本質とアイデンティティを発見するフレームワーク
           </p>
-          <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>
-            Carl Gustav Jung の「元型」理論 × Brand Personality ｜ Margaret Mark & Carol S. Pearson (2001)
+          <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 8 }}>
+            Carl Gustav Jung の「元型」理論 × Brand Personality ｜ Margaret Mark &amp; Carol S. Pearson (2001)
           </div>
         </div>
 
         {/* 4 Quadrants */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: "#374151", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-            <span>🗺️</span> 12のアーキタイプ ― 4つの動機軸
+          <div style={{ fontWeight: 600, fontSize: 13, color: "#64748b", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            12のアーキタイプ ― 4つの動機軸
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {QUADRANTS.map(q => (
               <div key={q.id} style={{
-                background: q.light, border: `1.5px solid ${q.border}`,
-                borderRadius: 14, padding: "14px 16px"
+                background: "#f9fafb", border: "1px solid #e2e8f0",
+                borderRadius: 8, padding: "14px 16px"
               }}>
-                <div style={{ fontWeight: 700, color: q.color, fontSize: 14 }}>{q.name}</div>
-                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10 }}>{q.subtitle}</div>
+                <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 13, marginBottom: 2 }}>{q.name}</div>
+                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 10 }}>{q.subtitle}</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {getArchetypesByQuadrant(q.id).map(a => (
                     <span key={a.id} style={{
-                      fontSize: 12, background: "white", border: `1px solid ${q.border}`,
-                      borderRadius: 20, padding: "3px 9px", color: "#374151",
+                      fontSize: 12, background: "white", border: "1px solid #e2e8f0",
+                      borderRadius: 9999, padding: "2px 10px", color: "#3d4b5f",
                       display: "flex", alignItems: "center", gap: 3
                     }}>{a.icon} {a.nameJa}</span>
                   ))}
@@ -275,42 +286,39 @@ function Landing({ onStart }) {
         </div>
 
         {/* Workshop Flow */}
-        <div style={{
-          background: "#f9fafb", borderRadius: 16, padding: "20px",
-          marginBottom: 32
-        }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#374151", marginBottom: 14 }}>
-            📋 ワークショップの4ステップ（Notion手引きより）
+        <div style={{ background: "#f9fafb", border: "1px solid #e2e8f0", borderRadius: 8, padding: "20px", marginBottom: 32 }}>
+          <div style={{ fontWeight: 600, fontSize: 13, color: "#0f172a", marginBottom: 14 }}>
+            ワークショップの4ステップ
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {WORKSHOP_STEPS.map((s, i) => (
               <div key={s.id} style={{
-                background: "white", borderRadius: 12, padding: "12px 14px",
-                border: `1.5px solid ${s.color}30`
+                background: "white", borderRadius: 8, padding: "12px 14px",
+                border: "1px solid #e2e8f0"
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 20 }}>{s.icon}</span>
+                  <span style={{ fontSize: 18 }}>{s.icon}</span>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "#374151" }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>
                       Step {i + 1}｜{s.title}
                     </div>
-                    <div style={{ fontSize: 11, color: "#9ca3af" }}>{s.subtitle}</div>
+                    <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 1 }}>{s.subtitle}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #e5e7eb", fontSize: 13, color: "#6b7280" }}>
-            ✨ <strong>AI診断</strong>：入力情報をもとにClaude AIが12アーキタイプの適合度を分析・レポート出力
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #e2e8f0", fontSize: 13, color: "#64748b" }}>
+            <strong style={{ color: "#0f172a" }}>AI診断</strong>：入力情報をもとにAIが12アーキタイプの適合度を分析・レポート出力
           </div>
         </div>
 
         <div style={{ textAlign: "center" }}>
-          <Btn onClick={onStart} style={{ padding: "16px 56px", fontSize: 18 }}>
+          <Btn onClick={onStart} style={{ height: 48, padding: "0 48px", fontSize: 16 }}>
             ワークショップを開始する →
           </Btn>
-          <div style={{ marginTop: 10, fontSize: 12, color: "#9ca3af" }}>
-            所要時間：約15〜30分 ｜ Anthropic API キーが必要です
+          <div style={{ marginTop: 10, fontSize: 13, color: "#94a3b8" }}>
+            所要時間：約15〜30分 ｜ Gemini または Anthropic API キーが必要です
           </div>
         </div>
       </Card>
@@ -339,14 +347,14 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
               STEP {stepIndex + 1} / {WORKSHOP_STEPS.length}
             </span>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>
             {step.title}
           </h2>
-          <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>{step.subtitle}</p>
+          <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>{step.subtitle}</p>
           <div style={{
             marginTop: 10, padding: "10px 14px",
-            background: `${step.color}0d`, borderLeft: `3px solid ${step.color}`,
-            borderRadius: "0 8px 8px 0", fontSize: 13, color: "#374151"
+            background: "#f8fafc", borderLeft: `3px solid #e2e8f0`,
+            borderRadius: "0 8px 8px 0", fontSize: 13, color: "#3d4b5f"
           }}>
             💡 {step.hint}
           </div>
@@ -358,7 +366,7 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
             <div key={q.id}>
               <label style={{
                 display: "block", fontWeight: 600, fontSize: 14,
-                color: "#374151", marginBottom: 6
+                color: "#0f172a", marginBottom: 6
               }}>
                 {q.label}
                 {q.required && <span style={{ color: "#ef4444", marginLeft: 4 }}>*</span>}
@@ -384,49 +392,105 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
 
 function ApiKey({ apiKey, setApiKey, onAnalyze, onBack, isLoading, error }) {
   const [show, setShow] = useState(false);
+  const provider = detectProvider(apiKey.trim());
+
+  const providerInfo = {
+    gemini: {
+      label: "Google Gemini を検出",
+      badge: { bg: "#eff6ff", color: "#2b70ef", border: "#bfdbfe" },
+      icon: "🔵",
+    },
+    anthropic: {
+      label: "Anthropic Claude を検出",
+      badge: { bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe" },
+      icon: "🟣",
+    },
+  };
+  const detected = provider !== "unknown" ? providerInfo[provider] : null;
+
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 20px" }}>
       <Card>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 52, marginBottom: 12 }}>✨</div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 8 }}>AI診断の準備</h2>
-          <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.7 }}>
-            Claude AIが入力されたブランド情報をもとに<br />
+          <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>AI診断の準備</h2>
+          <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.7 }}>
+            AIがブランド情報をもとに<br />
             12のアーキタイプへの適合度を詳細分析します
           </p>
         </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ display: "block", fontWeight: 700, fontSize: 14, color: "#374151", marginBottom: 6 }}>
-            🔑 Anthropic API キー
-          </label>
-          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 10 }}>
-            <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
-              style={{ color: "#6366f1" }}>console.anthropic.com</a> から取得できます。
-            キーはこのセッション中のみ使用され、外部に送信・保存されません。
+        {/* Provider Guide Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontWeight: 600, fontSize: 13, color: "#1d4ed8", marginBottom: 4 }}>🔵 Google Gemini</div>
+            <div style={{ fontSize: 11, color: "#3b82f6", marginBottom: 6, fontWeight: 500 }}>無料・カード不要</div>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer"
+              style={{ fontSize: 11, color: "#2b70ef", display: "block" }}>
+              aistudio.google.com →
+            </a>
           </div>
+          <div style={{ background: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontWeight: 600, fontSize: 13, color: "#6d28d9", marginBottom: 4 }}>🟣 Anthropic Claude</div>
+            <div style={{ fontSize: 11, color: "#7c3aed", marginBottom: 6, fontWeight: 500 }}>要クレジット登録</div>
+            <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
+              style={{ fontSize: 11, color: "#7c3aed", display: "block" }}>
+              console.anthropic.com →
+            </a>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: "#0f172a", marginBottom: 6 }}>
+            🔑 API キー
+          </label>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               type={show ? "text" : "password"}
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
-              placeholder="sk-ant-api03-..."
+              placeholder="AIza... または sk-ant-..."
               style={{
-                flex: 1, padding: "11px 14px", border: "1.5px solid #e5e7eb",
-                borderRadius: 10, fontSize: 14, fontFamily: "monospace", outline: "none"
+                flex: 1, padding: "10px 12px", border: "1px solid #cbd5e1",
+                borderRadius: 8, fontSize: 14, fontFamily: "monospace", outline: "none",
+                color: "#0f172a"
               }}
             />
             <button onClick={() => setShow(!show)} style={{
-              padding: "11px 14px", border: "1.5px solid #e5e7eb",
-              borderRadius: 10, background: "white", cursor: "pointer", fontSize: 16
+              padding: "10px 12px", border: "1px solid #cbd5e1",
+              borderRadius: 8, background: "white", cursor: "pointer", fontSize: 16
             }}>{show ? "🙈" : "👁️"}</button>
+          </div>
+          {/* Provider detection badge */}
+          {apiKey.trim().length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              {detected ? (
+                <span style={{
+                  fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 9999,
+                  background: detected.badge.bg, color: detected.badge.color,
+                  border: `1px solid ${detected.badge.border}`,
+                }}>
+                  {detected.icon} {detected.label}
+                </span>
+              ) : (
+                <span style={{
+                  fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 9999,
+                  background: "#fef2f2", color: "#dc2626", border: "1px solid #fca5a5"
+                }}>
+                  ⚠️ 未対応の形式 — GeminiキーはAIza、AnthropicキーはSK-ANT-で始まります
+                </span>
+              )}
+            </div>
+          )}
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>
+            キーはこのセッション中のみ使用され、外部に送信・保存されません。
           </div>
         </div>
 
         {error && (
           <div style={{
             padding: "12px 14px", background: "#fef2f2",
-            border: "1px solid #fca5a5", borderRadius: 10,
+            border: "1px solid #fca5a5", borderRadius: 8,
             fontSize: 13, color: "#dc2626", marginBottom: 16
           }}>
             ⚠️ {error}
@@ -437,7 +501,7 @@ function ApiKey({ apiKey, setApiKey, onAnalyze, onBack, isLoading, error }) {
           <Btn onClick={onBack} variant="outline" style={{ flex: 1 }}>← 戻る</Btn>
           <Btn
             onClick={onAnalyze}
-            disabled={isLoading || !apiKey.trim()}
+            disabled={isLoading || !apiKey.trim() || provider === "unknown"}
             style={{ flex: 2 }}
           >
             {isLoading ? "⏳ 分析中..." : "診断スタート ✨"}
@@ -457,8 +521,8 @@ function Loading() {
   return (
     <div style={{ textAlign: "center", padding: "100px 24px" }}>
       <div style={{ fontSize: 72, marginBottom: 24, animation: "spin 3s linear infinite", display: "inline-block" }}>✨</div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, color: "#374151", marginBottom: 12 }}>AI分析中{dots}</h2>
-      <p style={{ color: "#6b7280", lineHeight: 1.8, fontSize: 15 }}>
+      <h2 style={{ fontSize: 24, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>AI分析中{dots}</h2>
+      <p style={{ color: "#64748b", lineHeight: 1.8, fontSize: 15 }}>
         ブランド情報を解析して<br />
         12のアーキタイプへの適合度を算出しています
       </p>
@@ -482,7 +546,7 @@ function Results({ results, formData, onRestart, onReport }) {
 
   const barData = sorted.map(s => {
     const a = ARCHETYPES.find(x => x.id === s.id);
-    return { name: a?.nameJa, icon: a?.icon, score: s.score, color: getQuadrant(a?.quadrant)?.color || "#6366f1" };
+    return { name: a?.nameJa, icon: a?.icon, score: s.score, color: getQuadrant(a?.quadrant)?.color || "#2b70ef" };
   });
 
   const tabs = [
@@ -496,26 +560,28 @@ function Results({ results, formData, onRestart, onReport }) {
       {/* Hero */}
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ fontSize: 44, marginBottom: 8 }}>🎯</div>
-        <h2 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>診断結果</h2>
-        <p style={{ fontSize: 14, color: "#6b7280" }}>{formData.brandName || "ブランド"} のアーキタイプ分析</p>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>診断結果</h2>
+        <p style={{ fontSize: 14, color: "#64748b" }}>{formData.brandName || "ブランド"} のアーキタイプ分析</p>
       </div>
 
       {/* Primary Archetype */}
       {primary && (
         <div style={{
-          background: `linear-gradient(135deg, ${primaryQ.color}18, ${primaryQ.color}08)`,
-          border: `2px solid ${primaryQ.color}60`,
-          borderRadius: 20, padding: "28px",
+          background: "white",
+          border: `1px solid #e2e8f0`,
+          borderLeft: `4px solid ${primaryQ.color}`,
+          borderRadius: 12, padding: "28px",
           marginBottom: 24, textAlign: "center",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           animation: "fadeIn 0.5s ease"
         }}>
-          <div style={{ fontSize: 11, color: primaryQ.color, fontWeight: 800, letterSpacing: 3, marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: primaryQ.color, fontWeight: 700, letterSpacing: 3, marginBottom: 10 }}>
             PRIMARY ARCHETYPE
           </div>
           <div style={{ fontSize: 64, marginBottom: 10 }}>{primary.icon}</div>
-          <h3 style={{ fontSize: 36, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>{primary.nameJa}</h3>
-          <div style={{ fontSize: 18, color: primaryQ.color, marginBottom: 14, fontWeight: 600 }}>{primary.nameEn}</div>
-          <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 18px" }}>
+          <h3 style={{ fontSize: 32, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>{primary.nameJa}</h3>
+          <div style={{ fontSize: 16, color: primaryQ.color, marginBottom: 14, fontWeight: 600 }}>{primary.nameEn}</div>
+          <p style={{ fontSize: 14, color: "#3d4b5f", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 18px" }}>
             {primary.description}
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
@@ -542,29 +608,30 @@ function Results({ results, formData, onRestart, onReport }) {
 
       {/* Top 3 */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: "#374151", marginBottom: 12 }}>🏆 適合度ランキング TOP 3</div>
+        <div style={{ fontWeight: 600, fontSize: 14, color: "#0f172a", marginBottom: 12 }}>🏆 適合度ランキング TOP 3</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           {top3.map((s, i) => {
             const a = ARCHETYPES.find(x => x.id === s.id);
             const q = getQuadrant(a?.quadrant);
             return (
               <div key={s.id} style={{
-                border: `2px solid ${q?.color}50`,
-                background: i === 0 ? `${q?.color}12` : "white",
-                borderRadius: 16, padding: "18px", textAlign: "center",
-                boxShadow: i === 0 ? `0 4px 20px ${q?.color}20` : "0 2px 8px rgba(0,0,0,0.04)"
+                border: `1px solid #e2e8f0`,
+                borderTop: i === 0 ? `3px solid ${q?.color}` : `1px solid #e2e8f0`,
+                background: "white",
+                borderRadius: 12, padding: "18px", textAlign: "center",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
               }}>
-                <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 4, fontWeight: 600 }}>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontWeight: 600 }}>
                   {["🥇", "🥈", "🥉"][i]}
                 </div>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>{a?.icon}</div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{a?.nameJa}</div>
+                <div style={{ fontWeight: 600, fontSize: 15, color: "#0f172a" }}>{a?.nameJa}</div>
                 <div style={{ fontSize: 11, color: q?.color, marginBottom: 10, fontWeight: 600 }}>{a?.nameEn}</div>
-                <div style={{ fontSize: 30, fontWeight: 800, color: q?.color }}>
-                  {s.score}<span style={{ fontSize: 14, fontWeight: 400 }}>/10</span>
+                <div style={{ fontSize: 28, fontWeight: 700, color: q?.color }}>
+                  {s.score}<span style={{ fontSize: 13, fontWeight: 400, color: "#94a3b8" }}>/10</span>
                 </div>
                 {results.scores?.find(x => x.id === s.id)?.reason && (
-                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 8, lineHeight: 1.5 }}>
                     {results.scores.find(x => x.id === s.id).reason}
                   </div>
                 )}
@@ -575,14 +642,14 @@ function Results({ results, formData, onRestart, onReport }) {
       </div>
 
       {/* Tabs */}
-      <div style={{ background: "#f3f4f6", borderRadius: 14, padding: 4, display: "flex", gap: 4, marginBottom: 20 }}>
+      <div style={{ background: "#f1f5f9", borderRadius: 10, padding: 4, display: "flex", gap: 4, marginBottom: 20 }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            flex: 1, padding: "9px 12px", border: "none", borderRadius: 10,
+            flex: 1, padding: "8px 12px", border: "none", borderRadius: 8,
             cursor: "pointer", fontSize: 13, fontWeight: 600,
             background: tab === t.id ? "white" : "transparent",
-            color: tab === t.id ? "#6366f1" : "#6b7280",
-            boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+            color: tab === t.id ? "#2b70ef" : "#64748b",
+            boxShadow: tab === t.id ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
           }}>
             {t.label}
           </button>
@@ -591,12 +658,12 @@ function Results({ results, formData, onRestart, onReport }) {
 
       {tab === "scores" && (
         <Card>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#374151", marginBottom: 16 }}>📊 全アーキタイプ 適合度スコア</div>
+          <div style={{ fontWeight: 600, fontSize: 14, color: "#0f172a", marginBottom: 16 }}>📊 全アーキタイプ 適合度スコア</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {barData.map((e, i) => (
               <div key={i}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                  <span style={{ color: "#374151" }}>{e.icon} {e.name}</span>
+                  <span style={{ color: "#3d4b5f" }}>{e.icon} {e.name}</span>
                   <strong style={{ color: e.color }}>{e.score} / 10</strong>
                 </div>
                 <div style={{ height: 10, background: "#f3f4f6", borderRadius: 6 }}>
@@ -612,16 +679,16 @@ function Results({ results, formData, onRestart, onReport }) {
         <Card>
           {results.analysis && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, color: "#374151", marginBottom: 10, fontSize: 15 }}>🔍 ブランド分析</div>
-              <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap", padding: "16px", background: "#f9fafb", borderRadius: 12 }}>
+              <div style={{ fontWeight: 600, color: "#0f172a", marginBottom: 10, fontSize: 15 }}>🔍 ブランド分析</div>
+              <div style={{ fontSize: 14, color: "#3d4b5f", lineHeight: 1.9, whiteSpace: "pre-wrap", padding: "16px", background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
                 {results.analysis}
               </div>
             </div>
           )}
           {results.recommendations && (
             <div>
-              <div style={{ fontWeight: 700, color: "#6366f1", marginBottom: 10, fontSize: 15 }}>💡 ブランディングアプローチの提案</div>
-              <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap", padding: "16px", background: "#eef2ff", borderRadius: 12, border: "1px solid #c7d2fe" }}>
+              <div style={{ fontWeight: 600, color: "#0f172a", marginBottom: 10, fontSize: 15 }}>💡 ブランディングアプローチの提案</div>
+              <div style={{ fontSize: 14, color: "#3d4b5f", lineHeight: 1.9, whiteSpace: "pre-wrap", padding: "16px", background: "#eff6ff", borderRadius: 8, border: "1px solid #bfdbfe" }}>
                 {results.recommendations}
               </div>
             </div>
@@ -652,9 +719,9 @@ function Results({ results, formData, onRestart, onReport }) {
                     }}>{s.score}</div>
                   )}
                   <div style={{ fontSize: 28, marginBottom: 4 }}>{a.icon}</div>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: "#111827" }}>{a.nameJa}</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>{a.nameJa}</div>
                   <div style={{ fontSize: 11, color: q.color, fontWeight: 600 }}>{a.nameEn}</div>
-                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{a.role}</div>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{a.role}</div>
                 </div>
               );
             })}
@@ -670,11 +737,11 @@ function Results({ results, formData, onRestart, onReport }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                   <span style={{ fontSize: 44 }}>{a.icon}</span>
                   <div>
-                    <h4 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>{a.nameJa}</h4>
+                    <h4 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: 0 }}>{a.nameJa}</h4>
                     <div style={{ fontSize: 13, color: q.color, fontWeight: 600 }}>{a.nameEn} ｜ {a.role}</div>
                   </div>
                 </div>
-                <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.7, marginBottom: 14 }}>{a.description}</p>
+                <p style={{ fontSize: 14, color: "#3d4b5f", lineHeight: 1.7, marginBottom: 14 }}>{a.description}</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 13 }}>
                   {[
                     ["💜 核心的欲求", a.coreDesire],
@@ -683,13 +750,13 @@ function Results({ results, formData, onRestart, onReport }) {
                     ["🏢 参照ブランド", a.brands.join("、")],
                   ].map(([k, v]) => (
                     <div key={k} style={{ background: "white", borderRadius: 8, padding: "8px 10px" }}>
-                      <div style={{ fontWeight: 700, color: "#374151", marginBottom: 2, fontSize: 12 }}>{k}</div>
-                      <div style={{ color: "#6b7280" }}>{v}</div>
+                      <div style={{ fontWeight: 600, color: "#3d4b5f", marginBottom: 2, fontSize: 12 }}>{k}</div>
+                      <div style={{ color: "#64748b" }}>{v}</div>
                     </div>
                   ))}
                 </div>
                 {results.scores?.find(x => x.id === detail)?.reason && (
-                  <div style={{ marginTop: 12, background: `${q.color}15`, borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#374151" }}>
+                  <div style={{ marginTop: 12, background: `${q.color}15`, borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#3d4b5f" }}>
                     <strong>AI分析：</strong>{results.scores.find(x => x.id === detail).reason}
                   </div>
                 )}
@@ -723,19 +790,19 @@ function Report({ results, formData, onBack }) {
         boxShadow: "0 4px 24px rgba(0,0,0,0.08)"
       }}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 36, borderBottom: "3px solid #6366f1", paddingBottom: 28 }}>
+        <div style={{ textAlign: "center", marginBottom: 36, borderBottom: "2px solid #e2e8f0", paddingBottom: 28 }}>
           <div style={{ fontSize: 44, marginBottom: 10 }}>🔮</div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", margin: "0 0 6px" }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", margin: "0 0 6px" }}>
             ブランドアーキタイプ 診断レポート
           </h1>
-          <p style={{ fontSize: 14, color: "#6b7280" }}>
+          <p style={{ fontSize: 14, color: "#64748b" }}>
             {formData.brandName || "ブランド名"} ｜ {new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
 
         {/* Brand Info */}
         <section style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>🏢 ブランド基本情報</h2>
+          <h2 style={{ fontSize: 17, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>🏢 ブランド基本情報</h2>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <tbody>
               {[
@@ -747,8 +814,8 @@ function Report({ results, formData, onBack }) {
                 ["競合ブランド", formData.competitors],
               ].filter(([, v]) => v).map(([k, v]) => (
                 <tr key={k}>
-                  <td style={{ padding: "8px 14px", fontWeight: 600, color: "#374151", background: "#f9fafb", width: "28%", borderBottom: "1px solid #f0f0f0" }}>{k}</td>
-                  <td style={{ padding: "8px 14px", color: "#6b7280", borderBottom: "1px solid #f0f0f0" }}>{v}</td>
+                  <td style={{ padding: "8px 14px", fontWeight: 600, color: "#3d4b5f", background: "#f8fafc", width: "28%", borderBottom: "1px solid #e2e8f0" }}>{k}</td>
+                  <td style={{ padding: "8px 14px", color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>{v}</td>
                 </tr>
               ))}
             </tbody>
@@ -757,7 +824,7 @@ function Report({ results, formData, onBack }) {
 
         {/* Top 3 */}
         <section style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 14 }}>🎯 診断結果 ― 上位アーキタイプ</h2>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>🎯 診断結果 ― 上位アーキタイプ</h2>
           {top3.map((s, i) => {
             const a = ARCHETYPES.find(x => x.id === s.id);
             const q = getQuadrant(a?.quadrant);
@@ -770,26 +837,26 @@ function Report({ results, formData, onBack }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                   <span style={{ fontSize: 36 }}>{a?.icon}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 800, fontSize: 17, color: "#111827" }}>
+                    <div style={{ fontWeight: 700, fontSize: 17, color: "#0f172a" }}>
                       {"#" + (i + 1)} {a?.nameJa}
-                      <span style={{ fontSize: 14, fontWeight: 400, color: "#6b7280", marginLeft: 8 }}>({a?.nameEn})</span>
+                      <span style={{ fontSize: 14, fontWeight: 400, color: "#64748b", marginLeft: 8 }}>({a?.nameEn})</span>
                     </div>
                     <div style={{ fontSize: 12, color: q?.color, fontWeight: 600 }}>
                       {q?.name} ｜ {a?.role}
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 28, fontWeight: 800, color: q?.color, lineHeight: 1 }}>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: q?.color, lineHeight: 1 }}>
                       {s.score}
-                      <span style={{ fontSize: 14, fontWeight: 400 }}>/10</span>
+                      <span style={{ fontSize: 13, fontWeight: 400, color: "#94a3b8" }}>/10</span>
                     </div>
                   </div>
                 </div>
-                <p style={{ fontSize: 13, color: "#374151", margin: "0 0 10px", lineHeight: 1.7 }}>
+                <p style={{ fontSize: 13, color: "#3d4b5f", margin: "0 0 10px", lineHeight: 1.7 }}>
                   {a?.description}
                 </p>
                 {s.reason && (
-                  <div style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic", borderTop: "1px solid #f0f0f0", paddingTop: 8 }}>
+                  <div style={{ fontSize: 12, color: "#64748b", fontStyle: "italic", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
                     📌 {s.reason}
                   </div>
                 )}
@@ -809,8 +876,8 @@ function Report({ results, formData, onBack }) {
         {/* AI Analysis */}
         {results.analysis && (
           <section style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>🔍 AI分析コメント</h2>
-            <div style={{ background: "#f9fafb", borderRadius: 12, padding: "18px", fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
+            <h2 style={{ fontSize: 17, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>🔍 AI分析コメント</h2>
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "18px", fontSize: 14, color: "#3d4b5f", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
               {results.analysis}
             </div>
           </section>
@@ -819,8 +886,8 @@ function Report({ results, formData, onBack }) {
         {/* Recommendations */}
         {results.recommendations && (
           <section style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>💡 ブランディングアプローチの提案</h2>
-            <div style={{ background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 12, padding: "18px", fontSize: 14, color: "#374151", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
+            <h2 style={{ fontSize: 17, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>💡 ブランディングアプローチの提案</h2>
+            <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "18px", fontSize: 14, color: "#3d4b5f", lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
               {results.recommendations}
             </div>
           </section>
@@ -828,7 +895,7 @@ function Report({ results, formData, onBack }) {
 
         {/* All Scores */}
         <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>📊 全アーキタイプ 適合度一覧</h2>
+          <h2 style={{ fontSize: 17, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>📊 全アーキタイプ 適合度一覧</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
             {QUADRANTS.map(q => (
               <div key={q.id} style={{ background: q.light, borderRadius: 12, padding: "12px" }}>
@@ -860,7 +927,7 @@ function Report({ results, formData, onBack }) {
 
         {/* Footer */}
         <div style={{ marginTop: 28, textAlign: "center", fontSize: 11, color: "#9ca3af", borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
-          ブランドアーキタイプ ワークショップツール ｜ Powered by Claude AI ｜ Aquaring
+          ブランドアーキタイプ ワークショップツール ｜ Powered by AI ｜ Aquaring
         </div>
       </div>
     </div>
@@ -869,7 +936,13 @@ function Report({ results, formData, onBack }) {
 
 // ===================== AI ANALYSIS =====================
 
-async function runAnalysis(apiKey, formData) {
+function detectProvider(apiKey) {
+  if (apiKey.startsWith("AIza")) return "gemini";
+  if (apiKey.startsWith("sk-ant-")) return "anthropic";
+  return "unknown";
+}
+
+function buildPrompt(formData) {
   const info = Object.entries({
     "ブランド名": formData.brandName,
     "主な事業": formData.mainBusiness,
@@ -892,7 +965,7 @@ async function runAnalysis(apiKey, formData) {
     "課題と理想": formData.challenges,
   }).filter(([, v]) => v).map(([k, v]) => `・${k}：${v}`).join("\n");
 
-  const prompt = `あなたはブランドマーケティングの専門家です。以下のブランド情報を深く分析し、12種類のブランドアーキタイプへの適合度を評価してください。
+  return `あなたはブランドマーケティングの専門家です。以下のブランド情報を深く分析し、12種類のブランドアーキタイプへの適合度を評価してください。
 
 【ブランド情報】
 ${info}
@@ -922,7 +995,15 @@ ${info}
   "analysis": "ブランドの本質的な特性とアーキタイプ傾向についての総合分析（350〜450字程度）",
   "recommendations": "最も適合するアーキタイプに基づいた具体的なブランディングアプローチの提案。コミュニケーションスタイル、ビジュアル方向性、差別化戦略を含む（350〜450字程度）"
 }`;
+}
 
+function parseAIResponse(text) {
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("AIの回答を解析できませんでした。もう一度お試しください。");
+  return JSON.parse(match[0]);
+}
+
+async function callAnthropic(apiKey, prompt) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -937,17 +1018,43 @@ ${info}
       messages: [{ role: "user", content: prompt }],
     }),
   });
-
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `APIエラー (${res.status})`);
+    throw new Error(err.error?.message || `Anthropic APIエラー (${res.status})`);
   }
-
   const data = await res.json();
   const text = data.content?.[0]?.text || "";
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("AIの回答を解析できませんでした。もう一度お試しください。");
-  return JSON.parse(match[0]);
+  return parseAIResponse(text);
+}
+
+async function callGemini(apiKey, prompt) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 2500 },
+      }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini APIエラー (${res.status})`);
+  }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return parseAIResponse(text);
+}
+
+async function runAnalysis(apiKey, formData) {
+  const prompt = buildPrompt(formData);
+  const provider = detectProvider(apiKey);
+  if (provider === "gemini") return callGemini(apiKey, prompt);
+  if (provider === "anthropic") return callAnthropic(apiKey, prompt);
+  throw new Error("APIキーの形式が認識できません。GeminiキーはAIzaで、AnthropicキーはSK-ANT-で始まります。");
+
 }
 
 // ===================== MAIN APP =====================
@@ -1009,25 +1116,25 @@ function App() {
     <div>
       {/* Navbar */}
       <nav style={{
-        background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid #e5e7eb", padding: "12px 24px",
+        background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)",
+        borderBottom: "1px solid #e2e8f0", padding: "12px 24px",
         display: "flex", alignItems: "center", gap: 10,
         position: "sticky", top: 0, zIndex: 1000,
       }} className="no-print">
-        <span style={{ fontSize: 22 }}>🔮</span>
-        <span style={{ fontWeight: 800, fontSize: 15, color: "#374151" }}>
+        <span style={{ fontSize: 20 }}>🔮</span>
+        <span style={{ fontWeight: 600, fontSize: 15, color: "#0f172a" }}>
           ブランドアーキタイプ ワークショップ
         </span>
         {screen !== "landing" && (
           <button
             onClick={() => { if (window.confirm("ホームに戻りますか？入力内容は保持されます。")) setScreen("landing"); }}
-            style={{ marginLeft: "auto", fontSize: 13, color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}
+            style={{ marginLeft: "auto", fontSize: 13, color: "#64748b", background: "none", border: "none", cursor: "pointer" }}
           >
             ← ホーム
           </button>
         )}
-        <div style={{ marginLeft: screen === "landing" ? "auto" : 0, fontSize: 12, color: "#9ca3af" }}>
-          Powered by Claude AI
+        <div style={{ marginLeft: screen === "landing" ? "auto" : 0, fontSize: 12, color: "#94a3b8" }}>
+          Powered by AI
         </div>
       </nav>
 
