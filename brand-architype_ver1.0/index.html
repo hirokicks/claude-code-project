@@ -341,7 +341,7 @@ function Landing({ onStart, savedCount, savedStep }) {
   );
 }
 
-function Workshop({ stepIndex, formData, onChange, onNext, onBack, error }) {
+function Workshop({ stepIndex, formData, onChange, onNext, onBack }) {
   const safeIndex = Math.max(0, Math.min(WORKSHOP_STEPS.length - 1, stepIndex || 0));
   const step = WORKSHOP_STEPS[safeIndex];
   const isLast = safeIndex === WORKSHOP_STEPS.length - 1;
@@ -349,16 +349,6 @@ function Workshop({ stepIndex, formData, onChange, onNext, onBack, error }) {
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 20px" }}>
       <ProgressSteps current={stepIndex} />
-
-      {error && (
-        <div style={{
-          margin: "16px 0 0", padding: "12px 16px",
-          background: "#fef2f2", border: "1px solid #fca5a5",
-          borderRadius: 8, fontSize: 13, color: "#dc2626",
-        }}>
-          ⚠️ {error}
-        </div>
-      )}
 
       <Card style={{ marginTop: 16 }}>
         {/* Step Header */}
@@ -532,6 +522,54 @@ function ApiKey({ apiKey, setApiKey, onNext, onBack, error }) {
           >
             ワークショップへ進む →
           </Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function AnalysisError({ error, onFixKey, onBack }) {
+  const isQuota = error && (error.includes("limit: 0") || error.includes("Quota exceeded") || error.includes("quota"));
+  const isAuth  = error && (error.includes("401") || error.includes("API key") || error.includes("INVALID_ARGUMENT"));
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 20px" }}>
+      <Card>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>AI診断でエラーが発生しました</h2>
+        </div>
+
+        {/* エラー本文 */}
+        <div style={{
+          background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8,
+          padding: "12px 14px", fontSize: 13, color: "#dc2626", marginBottom: 20,
+          wordBreak: "break-word", lineHeight: 1.7
+        }}>
+          {error}
+        </div>
+
+        {/* 原因別ガイダンス */}
+        {isQuota && (
+          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "14px 16px", marginBottom: 20 }}>
+            <div style={{ fontWeight: 600, fontSize: 13, color: "#1d4ed8", marginBottom: 8 }}>💡 考えられる原因と対処法</div>
+            <ul style={{ fontSize: 13, color: "#1e40af", lineHeight: 2, paddingLeft: 18, margin: 0 }}>
+              <li><strong>APIキーの取得元を確認</strong>：<a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ color: "#2b70ef" }}>aistudio.google.com/apikey</a> で「Create API key in <u>new project</u>」を選択</li>
+              <li><strong>別のGoogleアカウント</strong>で試す（会社アカウントは制限がある場合があります）</li>
+              <li><strong>Anthropic Claude</strong>（<a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ color: "#7c3aed" }}>console.anthropic.com</a>）に切り替える</li>
+            </ul>
+          </div>
+        )}
+        {isAuth && (
+          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "14px 16px", marginBottom: 20 }}>
+            <div style={{ fontWeight: 600, fontSize: 13, color: "#1d4ed8", marginBottom: 4 }}>💡 APIキーが無効な可能性があります</div>
+            <div style={{ fontSize: 13, color: "#1e40af" }}>キーをコピーし直して再入力してください。</div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12 }}>
+          <Btn onClick={onBack} variant="outline" style={{ flex: 1 }}>← 入力に戻る</Btn>
+          <Btn onClick={onFixKey} style={{ flex: 2 }}>🔑 APIキーを修正する</Btn>
         </div>
       </Card>
     </div>
@@ -1140,7 +1178,7 @@ function App() {
       setScreen("results");
     } catch (e) {
       setError(e.message);
-      setScreen("workshop");
+      setScreen("error");
     } finally {
       setLoading(false);
     }
@@ -1195,7 +1233,7 @@ function App() {
         />
       )}
       {screen === "workshop" && (
-        <Workshop stepIndex={step} formData={formData} onChange={handleChange} onNext={handleNext} onBack={handleBack} error={error} />
+        <Workshop stepIndex={step} formData={formData} onChange={handleChange} onNext={handleNext} onBack={handleBack} />
       )}
       {screen === "apikey" && (
         <ApiKey apiKey={apiKey} setApiKey={setApiKey} onNext={() => { setError(""); setScreen("workshop"); }} onBack={handleBack} error={error} />
@@ -1206,6 +1244,13 @@ function App() {
       )}
       {screen === "report" && results && (
         <Report results={results} formData={formData} onBack={() => setScreen("results")} />
+      )}
+      {screen === "error" && (
+        <AnalysisError
+          error={error}
+          onFixKey={() => { setError(""); setScreen("apikey"); }}
+          onBack={() => { setStep(WORKSHOP_STEPS.length - 1); setScreen("workshop"); }}
+        />
       )}
     </div>
   );
