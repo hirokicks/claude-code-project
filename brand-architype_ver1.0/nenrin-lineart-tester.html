@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>年輪ラインアート ジェネレーター / TAIGA ASSOCIATES</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Segoe UI', sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  #sidebar {
+    width: 360px;
+    min-width: 320px;
+    background: #1a1a1a;
+    border-right: 1px solid #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #sidebar-header {
+    padding: 18px 16px 12px;
+    border-bottom: 1px solid #2a2a2a;
+    flex-shrink: 0;
+  }
+  #sidebar-header .brand { font-size: 10px; letter-spacing: .16em; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+  #sidebar-header h1 { font-size: 15px; font-weight: 600; letter-spacing: .02em; color: #eee; }
+  #sidebar-header p { font-size: 11px; color: #777; line-height: 1.6; margin-top: 6px; }
+
+  #sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #sidebar-scroll::-webkit-scrollbar { width: 8px; }
+  #sidebar-scroll::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 4px; }
+
+  .panel {
+    background: #202020;
+    border: 1px solid #292929;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .panel h2 {
+    font-size: 10.5px;
+    color: #7d7d7d;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel h2 .tag { color: #4a4a4a; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row.between { justify-content: space-between; }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field .label-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11px; color: #aaa;
+  }
+  .field .label-row span.val { color: #6fae8f; font-variant-numeric: tabular-nums; font-size: 10.5px; }
+  .field input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+  }
+  .field input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #d8d3c7;
+    cursor: pointer;
+    border: 2px solid #1a1a1a;
+  }
+  .field input[type=range]::-moz-range-thumb {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #d8d3c7; border: 2px solid #1a1a1a; cursor: pointer;
+  }
+
+  select, input[type=number] {
+    background: #262626; border: 1px solid #333; color: #ddd;
+    border-radius: 5px; padding: 5px 6px; font-size: 11.5px;
+    outline: none;
+  }
+  input[type=color] {
+    width: 30px; height: 26px; border: 1px solid #333; border-radius: 5px;
+    background: none; padding: 0; cursor: pointer;
+  }
+  label.chk { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #ccc; cursor: pointer; user-select: none; }
+  input[type=checkbox] { accent-color: #6fae8f; width: 14px; height: 14px; cursor: pointer; }
+
+  button {
+    font-family: inherit;
+    background: #2a2a2a;
+    border: 1px solid #383838;
+    color: #ddd;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  button:hover { background: #333; border-color: #454545; }
+  button.primary { background: #4a5f52; border-color: #5c7768; color: #eaf3ee; }
+  button.primary:hover { background: #55705f; }
+  button.ghost { background: transparent; }
+  button.danger:hover { background: #4a2b2b; border-color: #6b3838; }
+  button.small { padding: 4px 8px; font-size: 10.5px; }
+  button.wide { width: 100%; }
+
+  .divider { height: 1px; background: #2a2a2a; margin: 2px 0; }
+
+  #layers-list { display: flex; flex-direction: column; gap: 10px; }
+  .layer-panel { border-left: 3px solid var(--lc, #6fae8f); }
+  .layer-title-input {
+    flex: 1;
+    background: transparent; border: none; color: #eee; font-size: 12px; font-weight: 600;
+    outline: none; padding: 2px 0;
+  }
+  .layer-head { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); flex-shrink: 0; }
+  .layer-body { display: none; flex-direction: column; gap: 9px; padding-top: 8px; border-top: 1px solid #2a2a2a; margin-top: 2px; }
+  .layer-panel.open .layer-body { display: flex; }
+  .caret { transition: transform .15s; color: #666; font-size: 11px; }
+  .layer-panel.open .caret { transform: rotate(90deg); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+  .subgroup-label { font-size: 9.5px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+
+  #footer-actions { padding: 12px; border-top: 1px solid #2a2a2a; display: flex; gap: 8px; flex-shrink: 0; }
+  #footer-actions button { flex: 1; }
+
+  /* ---------- Canvas area ---------- */
+  #stage { position: relative; flex: 1; min-width: 0; }
+  #glcanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 20px 26px; pointer-events: none;
+  }
+  #topbar .mark { font-size: 13px; letter-spacing: .3em; color: rgba(40,38,34,.55); font-weight: 600; pointer-events: none; }
+  #topbar .meta { font-size: 10px; letter-spacing: .05em; color: rgba(40,38,34,.4); text-align: right; line-height: 1.6; pointer-events: none; }
+  #toggle-sidebar {
+    position: absolute; top: 18px; left: 18px; z-index: 5;
+    width: 34px; height: 34px; border-radius: 50%; display: none;
+    align-items: center; justify-content: center; font-size: 16px;
+  }
+  body.sidebar-hidden #sidebar { display: none; }
+  body.sidebar-hidden #toggle-sidebar { display: flex; }
+</style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="brand">TAIGA ASSOCIATES — Line Art Tester</div>
+      <h1>年輪ラインアート ジェネレーター</h1>
+      <p>タイガ気候の針葉樹林に育つ、緻密な年輪をモチーフにした線画パターンのパラメーター・テスターです。年輪を平面の同心円ではなく、奥行きを持つ螺旋構造として3Dチルト・パースで見せ、押す／引く／渦を巻くといった変形でメッセージに応じた表情に調整できます。</p>
+    </div>
+    <div id="sidebar-scroll">
+
+      <div class="panel">
+        <h2>Canvas <span class="tag">背景 / 全体</span></h2>
+        <div class="row between">
+          <label class="chk">背景色 <input type="color" id="bgColor"></label>
+          <label class="chk">全体スケール</label>
+        </div>
+        <div class="field">
+          <div class="label-row"><span>全体スケール</span><span class="val" id="v-globalScale">1.00</span></div>
+          <input type="range" id="globalScale" min="0.2" max="2.5" step="0.01" value="1">
+        </div>
+        <div class="divider"></div>
+        <label class="chk"><input type="checkbox" id="autoRotate" checked> 自動回転・常時揺らぎを有効化</label>
+        <label class="chk"><input type="checkbox" id="mouseReact" checked> マウス連動パララックス（層全体の移動）</label>
+        <div class="field" id="mouseStrengthField">
+          <div class="label-row"><span>連動の強さ</span><span class="val" id="v-mouseStrength">40</span></div>
+          <input type="range" id="mouseStrength" min="0" max="150" step="1" value="40">
+        </div>
+        <label class="chk"><input type="checkbox" id="mouseDeform" checked> マウスで形状を歪ませる（年輪自体が反応）</label>
+        <div class="divider"></div>
+        <div class="field">
+          <div class="label-row"><span>3Dチルト X（見下ろし角度）</span><span class="val" id="v-tiltX">32</span></div>
+          <input type="range" id="tiltX" min="-80" max="80" step="1" value="32">
+        </div>
+        <div class="field">
+          <div class="label-row"><span>3Dチルト Y（水平回転）</span><span class="val" id="v-tiltY">-14</span></div>
+          <input type="range" id="tiltY" min="-80" max="80" step="1" value="-14">
+        </div>
+        <div class="field">
+          <div class="label-row"><span>パースの強さ</span><span class="val" id="v-perspective">22</span></div>
+          <input type="range" id="perspective" min="0" max="80" step="1" value="22">
+        </div>
+        <label class="chk"><input type="checkbox" id="autoTilt" checked> 3D自動回転（視点が常に動く）</label>
+      </div>
+
+      <div class="panel">
+        <h2>Presets <span class="tag">プリセット</span></h2>
+        <div class="grid2">
+          <button id="preset-fine" class="small">繊細 / Fine</button>
+          <button id="preset-bold" class="small">ラフ / Bold</button>
+          <button id="preset-moire" class="small">モアレ / Moiré</button>
+          <button id="preset-single" class="small">単層 / Single</button>
+          <button id="preset-spiral" class="small">螺旋 / Spiral</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Layers <span class="tag" id="layerCountTag">2 層</span></h2>
+        <div id="layers-list"></div>
+        <button id="addLayer" class="wide small">＋ 層を追加</button>
+      </div>
+
+    </div>
+    <div id="footer-actions">
+      <button id="randomizeAll" class="primary">🎲 全体ランダマイズ</button>
+      <button id="resetAll">初期化</button>
+      <button id="exportPng">PNG書き出し</button>
+    </div>
+  </div>
+
+  <div id="stage">
+    <button id="toggle-sidebar">☰</button>
+    <canvas id="glcanvas"></canvas>
+    <div id="topbar">
+      <div class="mark">木 TAIGA</div>
+      <div class="meta">年輪 LINE STUDY<br><span id="statsLine">—</span></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------------------------------------------------------
+  // Noise (seeded, seamless-around-circle value noise)
+  // ---------------------------------------------------------------
+  function makeNoise2D(seed){
+    function hash(x,y){
+      var n = Math.sin(x*127.1 + y*311.7 + seed*74.7312) * 43758.5453123;
+      return n - Math.floor(n);
+    }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+    return function noise2D(x,y){
+      var xi = Math.floor(x), yi = Math.floor(y);
+      var xf = x - xi, yf = y - yi;
+      var u = xf*xf*(3-2*xf), v = yf*yf*(3-2*yf);
+      var a = hash(xi,yi),     b = hash(xi+1,yi);
+      var c = hash(xi,yi+1),   d = hash(xi+1,yi+1);
+      return (lerp(lerp(a,b,u), lerp(c,d,u), v) * 2 - 1);
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // WebGL setup
+  // ---------------------------------------------------------------
+  var canvas = document.getElementById('glcanvas');
+  var gl = canvas.getContext('webgl', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) { alert('WebGL に対応していません。'); return; }
+
+  var VERT_SRC = [
+    "attribute vec2 aPos;",
+    "attribute vec2 aDir;",
+    "attribute float aRing;",
+    "attribute vec2 aNormal;",
+    "attribute float aSide;",
+    "uniform mat3 uTransform;",
+    "uniform mat2 uRotMat;",
+    "uniform vec2 uResolution;",
+    "uniform float uLineWidthPx;",
+    "uniform float uTime;",
+    "uniform float uIrregAmt;",
+    "uniform float uIrregFreq;",
+    "uniform float uWobbleSpeed;",
+    "uniform vec2 uSeedOffset;",
+    "uniform vec2 uAnchorLocal;",
+    "uniform float uDeformStrength;",
+    "uniform float uDeformRadius;",
+    "uniform int uDeformType;",
+    "uniform vec2 uCenterPx;",
+    "uniform vec2 uTiltXTrig;",
+    "uniform vec2 uTiltYTrig;",
+    "uniform float uFocal;",
+    "uniform float uSpiralZ;",
+    "uniform float uDepthOffset;",
+    "varying float vEdge;",
+    "float hash3(vec3 p){",
+    "  return fract(sin(dot(p, vec3(127.1,311.7,74.7))) * 43758.5453123);",
+    "}",
+    "float noise3D(vec3 x){",
+    "  vec3 i = floor(x);",
+    "  vec3 f = fract(x);",
+    "  f = f*f*(3.0-2.0*f);",
+    "  float n000 = hash3(i+vec3(0.0,0.0,0.0));",
+    "  float n100 = hash3(i+vec3(1.0,0.0,0.0));",
+    "  float n010 = hash3(i+vec3(0.0,1.0,0.0));",
+    "  float n110 = hash3(i+vec3(1.0,1.0,0.0));",
+    "  float n001 = hash3(i+vec3(0.0,0.0,1.0));",
+    "  float n101 = hash3(i+vec3(1.0,0.0,1.0));",
+    "  float n011 = hash3(i+vec3(0.0,1.0,1.0));",
+    "  float n111 = hash3(i+vec3(1.0,1.0,1.0));",
+    "  float nx00 = mix(n000,n100,f.x);",
+    "  float nx10 = mix(n010,n110,f.x);",
+    "  float nx01 = mix(n001,n101,f.x);",
+    "  float nx11 = mix(n011,n111,f.x);",
+    "  float nxy0 = mix(nx00,nx10,f.y);",
+    "  float nxy1 = mix(nx01,nx11,f.y);",
+    "  return mix(nxy0,nxy1,f.z) * 2.0 - 1.0;",
+    "}",
+    "void main(){",
+    "  float nx = aDir.x * uIrregFreq + aRing * 0.37 + uSeedOffset.x;",
+    "  float ny = aDir.y * uIrregFreq + aRing * 0.37 + uSeedOffset.y;",
+    "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
+    "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt;",
+    "  vec2 animated = aPos + aDir * wob;",
+    "  float d = distance(animated, uAnchorLocal);",
+    "  float influence = exp(-(d*d) / (2.0 * uDeformRadius * uDeformRadius + 0.001));",
+    "  vec2 rel = animated - uAnchorLocal;",
+    "  float rlen = length(rel);",
+    "  vec2 rdir = rlen > 0.0001 ? rel / rlen : vec2(0.0, 1.0);",
+    "  if (uDeformType == 1) {",
+    "    animated -= rdir * uDeformStrength * influence;",
+    "  } else if (uDeformType == 2) {",
+    "    float ang = uDeformStrength * influence * 0.02;",
+    "    float ca = cos(ang), sa = sin(ang);",
+    "    animated = uAnchorLocal + vec2(rel.x*ca - rel.y*sa, rel.x*sa + rel.y*ca);",
+    "  } else {",
+    "    animated += rdir * uDeformStrength * influence;",
+    "  }",
+    "  vec3 pos = uTransform * vec3(animated, 1.0);",
+    "  vec2 nrm = uRotMat * aNormal;",
+    "  float len = length(nrm);",
+    "  if (len > 0.00001) nrm /= len;",
+    "  vec2 extruded = pos.xy + nrm * aSide * (uLineWidthPx * 0.5);",
+    "  float z = aRing * uSpiralZ + uDepthOffset;",
+    "  vec2 rel3 = extruded - uCenterPx;",
+    "  float ry = rel3.y * uTiltXTrig.x - z * uTiltXTrig.y;",
+    "  float rz = rel3.y * uTiltXTrig.y + z * uTiltXTrig.x;",
+    "  float rx = rel3.x * uTiltYTrig.x + rz * uTiltYTrig.y;",
+    "  rz = -rel3.x * uTiltYTrig.y + rz * uTiltYTrig.x;",
+    "  float denom = max(uFocal - rz, uFocal * 0.2);",
+    "  float persp = uFocal / denom;",
+    "  vec2 finalXY = uCenterPx + vec2(rx, ry) * persp;",
+    "  vec2 zeroToOne = finalXY / uResolution;",
+    "  vec2 clip = zeroToOne * 2.0 - 1.0;",
+    "  clip.y = -clip.y;",
+    "  gl_Position = vec4(clip, 0.0, 1.0);",
+    "  vEdge = aSide;",
+    "}"
+  ].join("\n");
+
+  var FRAG_SRC = [
+    "precision mediump float;",
+    "uniform vec4 uColor;",
+    "varying float vEdge;",
+    "void main(){",
+    "  float d = abs(vEdge);",
+    "  float alpha = 1.0 - smoothstep(0.55, 1.0, d);",
+    "  gl_FragColor = vec4(uColor.rgb, uColor.a * alpha);",
+    "}"
+  ].join("\n");
+
+  function compile(type, src){
+    var sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)){
+      console.error(gl.getShaderInfoLog(sh));
+    }
+    return sh;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT_SRC));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG_SRC));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)){
+    console.error(gl.getProgramInfoLog(prog));
+  }
+  gl.useProgram(prog);
+
+  var locPos = gl.getAttribLocation(prog, 'aPos');
+  var locDir = gl.getAttribLocation(prog, 'aDir');
+  var locRing = gl.getAttribLocation(prog, 'aRing');
+  var locNormal = gl.getAttribLocation(prog, 'aNormal');
+  var locSide = gl.getAttribLocation(prog, 'aSide');
+  var locTransform = gl.getUniformLocation(prog, 'uTransform');
+  var locRotMat = gl.getUniformLocation(prog, 'uRotMat');
+  var locResolution = gl.getUniformLocation(prog, 'uResolution');
+  var locLineWidth = gl.getUniformLocation(prog, 'uLineWidthPx');
+  var locColor = gl.getUniformLocation(prog, 'uColor');
+  var locTime = gl.getUniformLocation(prog, 'uTime');
+  var locIrregAmt = gl.getUniformLocation(prog, 'uIrregAmt');
+  var locIrregFreq = gl.getUniformLocation(prog, 'uIrregFreq');
+  var locWobbleSpeed = gl.getUniformLocation(prog, 'uWobbleSpeed');
+  var locSeedOffset = gl.getUniformLocation(prog, 'uSeedOffset');
+  var locAnchorLocal = gl.getUniformLocation(prog, 'uAnchorLocal');
+  var locDeformStrength = gl.getUniformLocation(prog, 'uDeformStrength');
+  var locDeformRadius = gl.getUniformLocation(prog, 'uDeformRadius');
+  var locDeformType = gl.getUniformLocation(prog, 'uDeformType');
+  var locCenterPx = gl.getUniformLocation(prog, 'uCenterPx');
+  var locTiltXTrig = gl.getUniformLocation(prog, 'uTiltXTrig');
+  var locTiltYTrig = gl.getUniformLocation(prog, 'uTiltYTrig');
+  var locFocal = gl.getUniformLocation(prog, 'uFocal');
+  var locSpiralZ = gl.getUniformLocation(prog, 'uSpiralZ');
+  var locDepthOffset = gl.getUniformLocation(prog, 'uDepthOffset');
+
+  gl.enable(gl.BLEND);
+  gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.CULL_FACE);
+
+  var STRIDE = 32; // 8 floats * 4 bytes
+
+  function setupAttribs(){
+    gl.vertexAttribPointer(locPos, 2, gl.FLOAT, false, STRIDE, 0);
+    gl.vertexAttribPointer(locDir, 2, gl.FLOAT, false, STRIDE, 8);
+    gl.vertexAttribPointer(locRing, 1, gl.FLOAT, false, STRIDE, 16);
+    gl.vertexAttribPointer(locNormal, 2, gl.FLOAT, false, STRIDE, 20);
+    gl.vertexAttribPointer(locSide, 1, gl.FLOAT, false, STRIDE, 28);
+    gl.enableVertexAttribArray(locPos);
+    gl.enableVertexAttribArray(locDir);
+    gl.enableVertexAttribArray(locRing);
+    gl.enableVertexAttribArray(locNormal);
+    gl.enableVertexAttribArray(locSide);
+  }
+
+  var BLEND_MODES = {
+    normal:   [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
+    multiply: [gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA],
+    screen:   [gl.ONE, gl.ONE_MINUS_SRC_COLOR],
+    add:      [gl.SRC_ALPHA, gl.ONE]
+  };
+
+  // ---------------------------------------------------------------
+  // Geometry builder — concentric, organically-perturbed ring paths
+  // ---------------------------------------------------------------
+  // Only structural ring placement (count, spacing, eccentricity, ring-to-ring
+  // growth variance) is baked into geometry. The fine per-angle "wood grain"
+  // wobble is computed live in the vertex shader (see uIrregAmt/uWobbleSpeed)
+  // so it can animate continuously and react to the mouse without CPU rebuilds.
+  function buildRingGeometry(p){
+    var noise = makeNoise2D(p.seed);
+    var ringCount = Math.max(1, p.ringCount|0);
+    var segments = Math.max(8, p.segments|0);
+    var eccRad = p.eccentricityAngle * Math.PI / 180;
+    var ecx = Math.cos(eccRad), ecy = Math.sin(eccRad);
+
+    function baseRadiusAt(i){
+      var base = p.baseRadius + i * p.spacing;
+      var growth = noise(i * p.spacingVarFreq * 0.5 + 100, p.seed * 0.017) * p.spacing * p.spacingVarAmt * i * 0.02;
+      return Math.max(0.4, base + growth);
+    }
+    function centerAt(i){
+      var d = p.eccentricity * (i / Math.max(1, ringCount - 1));
+      return [ecx * d, ecy * d];
+    }
+
+    var vertsPerRing = segments * 6;
+    var totalVerts = ringCount * vertsPerRing;
+    var buf = new Float32Array(totalVerts * 8);
+    var o = 0;
+
+    var spiralBlend = p.spiralBlend || 0;
+    for (var i = 0; i < ringCount; i++){
+      var c = centerAt(i);
+      var cx = c[0], cy = c[1];
+      var rBase = baseRadiusAt(i);
+      var prevX = null, prevY = null, prevDx = null, prevDy = null;
+      for (var j = 0; j <= segments; j++){
+        var theta = (j / segments) * Math.PI * 2;
+        // spiralBlend>0 lets radius climb continuously across the ring so
+        // consecutive rings fuse into one coiling spiral instead of closed loops
+        var r = rBase + spiralBlend * (j / segments) * p.spacing;
+        var dirx = Math.cos(theta), diry = Math.sin(theta);
+        var x = cx + dirx * r;
+        var y = cy + diry * r;
+        if (prevX !== null){
+          var dx = x - prevX, dy = y - prevY;
+          var len = Math.hypot(dx, dy) || 1e-6;
+          var nx = -dy / len, ny = dx / len;
+          // A(prev,+1) B(prev,-1) C(cur,+1) D(cur,-1) -> A,B,C, C,B,D
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, 1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, -1);
+          o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, 1);
+          o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, 1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, -1);
+          o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, -1);
+        }
+        prevX = x; prevY = y; prevDx = dirx; prevDy = diry;
+      }
+    }
+    return buf;
+  }
+  function pushV(buf, o, x, y, dx, dy, ring, nx, ny, side){
+    buf[o] = x; buf[o+1] = y; buf[o+2] = dx; buf[o+3] = dy; buf[o+4] = ring;
+    buf[o+5] = nx; buf[o+6] = ny; buf[o+7] = side;
+    return o + 8;
+  }
+
+  // ---------------------------------------------------------------
+  // Layer model
+  // ---------------------------------------------------------------
+  function defaultLayer(overrides){
+    var d = {
+      id: 'L' + (Math.random()*1e6|0),
+      name: '層',
+      enabled: true,
+      ringCount: 90,
+      segments: 180,
+      baseRadius: 60,
+      spacing: 6.5,
+      spacingVarAmt: 0.4,
+      spacingVarFreq: 0.7,
+      irregAmt: 4,
+      irregFreq: 3.2,
+      eccentricity: 0,
+      eccentricityAngle: 0,
+      rotation: 0,
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      rotateSpeed: 0,
+      lineWidth: 0.8,
+      opacity: 0.85,
+      color: '#35322d',
+      blend: 'normal',
+      seed: (Math.random()*1000|0),
+      wobbleSpeed: 0.18,
+      breatheAmp: 0.015,
+      breatheSpeed: 0.4,
+      deformStrength: 30,
+      deformRadius: 220,
+      deformMode: 'mouse',
+      deformType: 'push',
+      anchorX: 0,
+      anchorY: 0,
+      spiralBlend: 0,
+      spiralZ: 0.6,
+      depthOffset: 0
+    };
+    for (var k in overrides) d[k] = overrides[k];
+    return d;
+  }
+
+  var state = {
+    bgColor: '#f2f0e9',
+    globalScale: 1,
+    autoRotate: true,
+    mouseReact: true,
+    mouseStrength: 40,
+    mouseDeform: true,
+    tiltX: 32,
+    tiltY: -14,
+    perspective: 22,
+    autoTilt: true,
+    tiltSpeed: 2.5,
+    layers: []
+  };
+
+  function defaultLayers(){
+    return [
+      defaultLayer({
+        name: '外層 — ベース', ringCount: 95, segments: 200, baseRadius: 70, spacing: 6.8,
+        spacingVarAmt: 0.5, spacingVarFreq: 0.6, irregAmt: 4.5, irregFreq: 3.0,
+        eccentricity: 6, eccentricityAngle: 20, rotation: 0, scale: 1,
+        offsetX: 0, offsetY: 0, rotateSpeed: 0.6, lineWidth: 0.8, opacity: 0.85,
+        color: '#35322d', blend: 'normal', seed: 7,
+        wobbleSpeed: 0.14, breatheAmp: 0.012, breatheSpeed: 0.32,
+        deformStrength: 26, deformRadius: 260, deformMode: 'mouse', deformType: 'push',
+        spiralBlend: 0.35, spiralZ: 1.1, depthOffset: 0
+      }),
+      defaultLayer({
+        name: '重なり層 — モアレ', ringCount: 118, segments: 220, baseRadius: 42, spacing: 5.4,
+        spacingVarAmt: 0.6, spacingVarFreq: 0.9, irregAmt: 6.5, irregFreq: 4.6,
+        eccentricity: 24, eccentricityAngle: 200, rotation: 9, scale: 1.05,
+        offsetX: 18, offsetY: -12, rotateSpeed: -0.9, lineWidth: 0.6, opacity: 0.5,
+        color: '#8a8272', blend: 'multiply', seed: 23,
+        wobbleSpeed: 0.24, breatheAmp: 0.02, breatheSpeed: 0.5,
+        deformStrength: 42, deformRadius: 190, deformMode: 'mouse', deformType: 'swirl',
+        spiralBlend: 0.5, spiralZ: -0.8, depthOffset: -60
+      })
+    ];
+  }
+
+  var geomCache = {}; // layer.id -> {buf, vbo, count}
+
+  function regenLayerGeometry(layer){
+    var buf = buildRingGeometry(layer);
+    var entry = geomCache[layer.id];
+    if (!entry){
+      entry = { vbo: gl.createBuffer() };
+      geomCache[layer.id] = entry;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, entry.vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, buf, gl.DYNAMIC_DRAW);
+    entry.count = buf.length / 8;
+  }
+
+  function regenAll(){
+    state.layers.forEach(regenLayerGeometry);
+    updateStats();
+  }
+
+  function updateStats(){
+    var totalRings = 0, totalVerts = 0;
+    state.layers.forEach(function(l){
+      if (!l.enabled) return;
+      totalRings += l.ringCount;
+      var e = geomCache[l.id];
+      if (e) totalVerts += e.count;
+    });
+    document.getElementById('statsLine').textContent = state.layers.filter(function(l){return l.enabled;}).length + ' Layers ・ ' + totalRings + ' Rings ・ ' + totalVerts.toLocaleString() + ' Verts';
+  }
+
+  // ---------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------
+  function hexToRgb(hex){
+    var v = parseInt(hex.replace('#',''), 16);
+    return [((v>>16)&255)/255, ((v>>8)&255)/255, (v&255)/255];
+  }
+
+  var mouseClientX = 0, mouseClientY = 0, hasMouse = false;
+  window.addEventListener('mousemove', function(e){
+    mouseClientX = e.clientX; mouseClientY = e.clientY; hasMouse = true;
+  });
+
+  var startTime = performance.now();
+
+  function resize(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    var W = Math.round(w * dpr), H = Math.round(h * dpr);
+    if (canvas.width !== W || canvas.height !== H){
+      canvas.width = W; canvas.height = H;
+    }
+    return dpr;
+  }
+
+  function render(){
+    var dpr = resize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    var bg = hexToRgb(state.bgColor);
+    gl.clearColor(bg[0], bg[1], bg[2], 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.uniform2f(locResolution, canvas.width, canvas.height);
+    setupAttribs();
+
+    var elapsed = (performance.now() - startTime) / 1000;
+    var cxPx = canvas.width / 2, cyPx = canvas.height / 2;
+
+    var rect = canvas.getBoundingClientRect();
+    var mouseNX = 0, mouseNY = 0, mouseWorldX, mouseWorldY;
+    if (hasMouse && rect.width > 0 && rect.height > 0){
+      mouseNX = ((mouseClientX - rect.left) / rect.width) * 2 - 1;
+      mouseNY = ((mouseClientY - rect.top) / rect.height) * 2 - 1;
+      mouseWorldX = (mouseClientX - rect.left) * dpr;
+      mouseWorldY = (mouseClientY - rect.top) * dpr;
+    } else {
+      mouseWorldX = -canvas.width * 4; mouseWorldY = -canvas.height * 4;
+    }
+
+    // sway back and forth rather than spin unbounded, so the piece keeps moving
+    // without ever rotating edge-on (where a flat ring plane collapses to a line)
+    var tiltYNow = state.tiltY + (state.autoTilt ? Math.sin(elapsed * state.tiltSpeed * 0.15) * 22 : 0);
+    var txRad = state.tiltX * Math.PI / 180, tyRad = tiltYNow * Math.PI / 180;
+    gl.uniform2f(locCenterPx, cxPx, cyPx);
+    gl.uniform2f(locTiltXTrig, Math.cos(txRad), Math.sin(txRad));
+    gl.uniform2f(locTiltYTrig, Math.cos(tyRad), Math.sin(tyRad));
+    // map the 0..80 "perspective strength" slider to a focal length: 0 = huge
+    // focal (near-orthographic), 80 = focal close to the canvas size (strong,
+    // but always positive and bounded so it can never invert/explode)
+    var perspNorm = Math.min(1, state.perspective / 80);
+    var maxDim = Math.max(canvas.width, canvas.height);
+    var focal = perspNorm < 0.001 ? 1e7 : maxDim * (2.6 - perspNorm * 1.9);
+    gl.uniform1f(locFocal, focal);
+
+    var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
+
+    state.layers.forEach(function(layer, idx){
+      if (!layer.enabled) return;
+      var entry = geomCache[layer.id];
+      if (!entry || !entry.count) return;
+
+      var angleDeg = layer.rotation + (state.autoRotate ? layer.rotateSpeed * elapsed * 6 : 0);
+      var angle = angleDeg * Math.PI / 180;
+      var breathPhase = (layer.seed % 97) * 0.0647;
+      var breathe = 1 + layer.breatheAmp * Math.sin(elapsed * layer.breatheSpeed + breathPhase);
+      var s = layer.scale * state.globalScale * dpr * breathe;
+      var cos = Math.cos(angle), sin = Math.sin(angle);
+
+      var parX = 0, parY = 0;
+      if (state.mouseReact){
+        var depth = 1 + idx * 0.35;
+        parX = mouseNX * state.mouseStrength * depth;
+        parY = mouseNY * state.mouseStrength * depth;
+      }
+      var tx = cxPx + (layer.offsetX + parX) * dpr;
+      var ty = cyPx + (layer.offsetY + parY) * dpr;
+
+      var transform = [
+        s*cos, s*sin, 0,
+        -s*sin, s*cos, 0,
+        tx, ty, 1
+      ];
+      var rotMat = [cos, sin, -sin, cos];
+
+      // resolve the deform anchor into this layer's local (pre-transform) design
+      // space: either the live mouse position, or a fixed user-placed point
+      var lx, ly;
+      if (layer.deformMode === 'fixed'){
+        lx = layer.anchorX; ly = layer.anchorY;
+      } else {
+        var dxm = mouseWorldX - tx, dym = mouseWorldY - ty;
+        var invS = s || 1e-6;
+        lx = (dxm*cos + dym*sin) / invS;
+        ly = (-dxm*sin + dym*cos) / invS;
+      }
+
+      gl.uniformMatrix3fv(locTransform, false, transform);
+      gl.uniformMatrix2fv(locRotMat, false, rotMat);
+      gl.uniform1f(locLineWidth, Math.max(0.1, layer.lineWidth) * dpr);
+      var rgb = hexToRgb(layer.color);
+      gl.uniform4f(locColor, rgb[0], rgb[1], rgb[2], layer.opacity);
+      gl.uniform1f(locTime, elapsed);
+      gl.uniform1f(locIrregAmt, layer.irregAmt);
+      gl.uniform1f(locIrregFreq, layer.irregFreq);
+      gl.uniform1f(locWobbleSpeed, layer.wobbleSpeed);
+      gl.uniform2f(locSeedOffset, layer.seed * 0.173, layer.seed * 0.911);
+      gl.uniform2f(locAnchorLocal, lx, ly);
+      gl.uniform1f(locDeformStrength, (state.mouseDeform || layer.deformMode === 'fixed') ? layer.deformStrength : 0);
+      gl.uniform1f(locDeformRadius, Math.max(1, layer.deformRadius));
+      gl.uniform1i(locDeformType, DEFORM_TYPES[layer.deformType] || 0);
+      gl.uniform1f(locSpiralZ, layer.spiralZ * s);
+      gl.uniform1f(locDepthOffset, layer.depthOffset * dpr);
+
+      var bm = BLEND_MODES[layer.blend] || BLEND_MODES.normal;
+      gl.blendFunc(bm[0], bm[1]);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, entry.vbo);
+      setupAttribs();
+      gl.drawArrays(gl.TRIANGLES, 0, entry.count);
+    });
+
+    requestAnimationFrame(render);
+  }
+
+  // ---------------------------------------------------------------
+  // UI construction
+  // ---------------------------------------------------------------
+  var layersListEl = document.getElementById('layers-list');
+  var layerCountTag = document.getElementById('layerCountTag');
+
+  function slider(label, key, min, max, step, val, onInput, fmt){
+    var wrap = document.createElement('div');
+    wrap.className = 'field';
+    var row = document.createElement('div');
+    row.className = 'label-row';
+    var span = document.createElement('span');
+    span.textContent = label;
+    var valSpan = document.createElement('span');
+    valSpan.className = 'val';
+    valSpan.textContent = fmt ? fmt(val) : val;
+    row.appendChild(span); row.appendChild(valSpan);
+    var input = document.createElement('input');
+    input.type = 'range'; input.min = min; input.max = max; input.step = step; input.value = val;
+    input.addEventListener('input', function(){
+      var v = parseFloat(input.value);
+      valSpan.textContent = fmt ? fmt(v) : v;
+      onInput(v);
+    });
+    wrap.appendChild(row); wrap.appendChild(input);
+    return wrap;
+  }
+
+  function fmt1(v){ return v.toFixed(1); }
+  function fmt2(v){ return v.toFixed(2); }
+  function fmt0(v){ return Math.round(v); }
+
+  function buildLayerPanel(layer, index){
+    var panel = document.createElement('div');
+    panel.className = 'panel layer-panel';
+    panel.style.setProperty('--lc', layer.color);
+
+    var head = document.createElement('div');
+    head.className = 'layer-head';
+    var caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '▶';
+    var swatch = document.createElement('span'); swatch.className = 'swatch'; swatch.style.background = layer.color;
+    var titleInput = document.createElement('input');
+    titleInput.className = 'layer-title-input';
+    titleInput.value = layer.name;
+    titleInput.addEventListener('input', function(){ layer.name = titleInput.value; });
+    titleInput.addEventListener('click', function(e){ e.stopPropagation(); });
+
+    var enableChk = document.createElement('input');
+    enableChk.type = 'checkbox'; enableChk.checked = layer.enabled;
+    enableChk.addEventListener('click', function(e){ e.stopPropagation(); });
+    enableChk.addEventListener('change', function(){ layer.enabled = enableChk.checked; updateStats(); });
+
+    head.appendChild(caret);
+    head.appendChild(swatch);
+    head.appendChild(titleInput);
+    head.appendChild(enableChk);
+    head.style.cursor = 'pointer';
+    head.addEventListener('click', function(){ panel.classList.toggle('open'); });
+
+    var body = document.createElement('div');
+    body.className = 'layer-body';
+
+    function regen(){ regenLayerGeometry(layer); updateStats(); }
+
+    body.appendChild(el('div', 'subgroup-label', '重なり方 / Overlap'));
+    var g1 = document.createElement('div'); g1.className = 'grid2';
+    g1.appendChild(colorField('線の色', layer.color, function(v){ layer.color = v; swatch.style.background=v; panel.style.setProperty('--lc', v); }));
+    g1.appendChild(blendField(layer.blend, function(v){ layer.blend = v; }));
+    body.appendChild(g1);
+    body.appendChild(slider('不透明度', 'opacity', 0, 1, 0.01, layer.opacity, function(v){ layer.opacity = v; }, fmt2));
+    body.appendChild(slider('線幅 (px)', 'lineWidth', 0.2, 4, 0.05, layer.lineWidth, function(v){ layer.lineWidth = v; }, fmt2));
+
+    body.appendChild(el('div', 'subgroup-label', '量 / Density'));
+    body.appendChild(slider('本数（リング数）', 'ringCount', 6, 300, 1, layer.ringCount, function(v){ layer.ringCount = v; regen(); }, fmt0));
+    body.appendChild(slider('分割数（滑らかさ）', 'segments', 16, 360, 2, layer.segments, function(v){ layer.segments = v; regen(); }, fmt0));
+    body.appendChild(slider('基準半径', 'baseRadius', 0, 400, 1, layer.baseRadius, function(v){ layer.baseRadius = v; regen(); }, fmt0));
+    body.appendChild(slider('間隔', 'spacing', 0.5, 30, 0.1, layer.spacing, function(v){ layer.spacing = v; regen(); }, fmt1));
+    body.appendChild(slider('螺旋化（0=同心円 / 1=連続螺旋）', 'spiralBlend', 0, 1, 0.01, layer.spiralBlend, function(v){ layer.spiralBlend = v; regen(); }, fmt2));
+
+    body.appendChild(el('div', 'subgroup-label', '有機的なばらつき / Organic Variance'));
+    body.appendChild(slider('年輪の粗密（ばらつき量）', 'spacingVarAmt', 0, 1, 0.01, layer.spacingVarAmt, function(v){ layer.spacingVarAmt = v; regen(); }, fmt2));
+    body.appendChild(slider('ばらつきの周波数', 'spacingVarFreq', 0.05, 5, 0.05, layer.spacingVarFreq, function(v){ layer.spacingVarFreq = v; regen(); }, fmt2));
+    body.appendChild(slider('偏心量（芯のずれ）', 'eccentricity', 0, 200, 1, layer.eccentricity, function(v){ layer.eccentricity = v; regen(); }, fmt0));
+    body.appendChild(slider('偏心角度', 'eccentricityAngle', 0, 360, 1, layer.eccentricityAngle, function(v){ layer.eccentricityAngle = v; regen(); }, fmt0));
+
+    body.appendChild(el('div', 'subgroup-label', '揺らぎ・アニメーション / Motion'));
+    body.appendChild(slider('歪み量（木目の揺らぎ幅）', 'irregAmt', 0, 40, 0.5, layer.irregAmt, function(v){ layer.irregAmt = v; }, fmt1));
+    body.appendChild(slider('歪みの周波数', 'irregFreq', 0.2, 12, 0.1, layer.irregFreq, function(v){ layer.irregFreq = v; }, fmt1));
+    body.appendChild(slider('揺らぎ速度（常時アニメーション）', 'wobbleSpeed', 0, 3, 0.01, layer.wobbleSpeed, function(v){ layer.wobbleSpeed = v; }, fmt2));
+    body.appendChild(slider('呼吸振幅（スケール脈動）', 'breatheAmp', 0, 0.3, 0.005, layer.breatheAmp, function(v){ layer.breatheAmp = v; }, fmt2));
+    body.appendChild(slider('呼吸速度', 'breatheSpeed', 0, 3, 0.01, layer.breatheSpeed, function(v){ layer.breatheSpeed = v; }, fmt2));
+
+    body.appendChild(el('div', 'subgroup-label', '変形（メッセージ表現）/ Deform'));
+    var g3 = document.createElement('div'); g3.className = 'grid2';
+    g3.appendChild(selectField('アンカー', layer.deformMode, [['mouse','マウス追従'],['fixed','固定位置']], function(v){ layer.deformMode = v; }));
+    g3.appendChild(selectField('種類', layer.deformType, [['push','外へ押す'],['pull','内へ引く'],['swirl','渦を巻く']], function(v){ layer.deformType = v; }));
+    body.appendChild(g3);
+    body.appendChild(slider('変形の強さ', 'deformStrength', 0, 150, 1, layer.deformStrength, function(v){ layer.deformStrength = v; }, fmt0));
+    body.appendChild(slider('変形の半径', 'deformRadius', 20, 800, 5, layer.deformRadius, function(v){ layer.deformRadius = v; }, fmt0));
+    var g4 = document.createElement('div'); g4.className = 'grid2';
+    g4.appendChild(slider('固定アンカーX', 'anchorX', -500, 500, 1, layer.anchorX, function(v){ layer.anchorX = v; }, fmt0));
+    g4.appendChild(slider('固定アンカーY', 'anchorY', -500, 500, 1, layer.anchorY, function(v){ layer.anchorY = v; }, fmt0));
+    body.appendChild(g4);
+
+    body.appendChild(el('div', 'subgroup-label', '角度・スケール・奥行き / Transform'));
+    body.appendChild(slider('回転角度', 'rotation', 0, 360, 1, layer.rotation, function(v){ layer.rotation = v; }, fmt0));
+    body.appendChild(slider('スケール', 'scale', 0.1, 3, 0.01, layer.scale, function(v){ layer.scale = v; }, fmt2));
+    var g2 = document.createElement('div'); g2.className = 'grid2';
+    g2.appendChild(slider('Xオフセット', 'offsetX', -500, 500, 1, layer.offsetX, function(v){ layer.offsetX = v; }, fmt0));
+    g2.appendChild(slider('Yオフセット', 'offsetY', -500, 500, 1, layer.offsetY, function(v){ layer.offsetY = v; }, fmt0));
+    body.appendChild(g2);
+    body.appendChild(slider('自動回転速度', 'rotateSpeed', -30, 30, 0.1, layer.rotateSpeed, function(v){ layer.rotateSpeed = v; }, fmt1));
+    body.appendChild(slider('螺旋の奥行き（リング毎のZ変化）', 'spiralZ', -5, 5, 0.05, layer.spiralZ, function(v){ layer.spiralZ = v; }, fmt2));
+    body.appendChild(slider('奥行きオフセット', 'depthOffset', -400, 400, 1, layer.depthOffset, function(v){ layer.depthOffset = v; }, fmt0));
+
+    var actions = document.createElement('div'); actions.className = 'row';
+    var seedBtn = document.createElement('button'); seedBtn.className = 'small'; seedBtn.textContent = '🎲 シードを変更';
+    seedBtn.addEventListener('click', function(){ layer.seed = (Math.random()*1000|0); regen(); });
+    var dupBtn = document.createElement('button'); dupBtn.className = 'small'; dupBtn.textContent = '複製';
+    dupBtn.addEventListener('click', function(){
+      var copy = defaultLayer(layer);
+      copy.id = 'L' + (Math.random()*1e6|0);
+      copy.name = layer.name + ' コピー';
+      var idx = state.layers.indexOf(layer);
+      state.layers.splice(idx+1, 0, copy);
+      rebuildLayersUI();
+      regenLayerGeometry(copy);
+      updateStats();
+    });
+    var delBtn = document.createElement('button'); delBtn.className = 'small danger'; delBtn.textContent = '削除';
+    delBtn.addEventListener('click', function(){
+      if (state.layers.length <= 1) return;
+      var idx = state.layers.indexOf(layer);
+      state.layers.splice(idx, 1);
+      delete geomCache[layer.id];
+      rebuildLayersUI();
+      updateStats();
+    });
+    actions.appendChild(seedBtn); actions.appendChild(dupBtn); actions.appendChild(delBtn);
+    body.appendChild(actions);
+
+    panel.appendChild(head);
+    panel.appendChild(body);
+    if (index === 0) panel.classList.add('open');
+    return panel;
+  }
+
+  function el(tag, cls, text){ var e = document.createElement(tag); e.className = cls; e.textContent = text; return e; }
+
+  function colorField(label, val, onInput){
+    var wrap = document.createElement('div'); wrap.className = 'field';
+    var row = document.createElement('div'); row.className = 'label-row';
+    row.appendChild(el('span','', label));
+    wrap.appendChild(row);
+    var input = document.createElement('input');
+    input.type = 'color'; input.value = val;
+    input.addEventListener('input', function(){ onInput(input.value); });
+    wrap.appendChild(input);
+    return wrap;
+  }
+  function blendField(val, onInput){
+    return selectField('ブレンド', val, [['normal','通常'],['multiply','乗算'],['screen','スクリーン'],['add','加算']], onInput);
+  }
+  function selectField(label, val, options, onInput){
+    var wrap = document.createElement('div'); wrap.className = 'field';
+    var row = document.createElement('div'); row.className = 'label-row';
+    row.appendChild(el('span','', label));
+    wrap.appendChild(row);
+    var sel = document.createElement('select');
+    options.forEach(function(o){
+      var opt = document.createElement('option'); opt.value = o[0]; opt.textContent = o[1];
+      if (o[0] === val) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function(){ onInput(sel.value); });
+    wrap.appendChild(sel);
+    return wrap;
+  }
+
+  function rebuildLayersUI(){
+    layersListEl.innerHTML = '';
+    state.layers.forEach(function(layer, i){
+      layersListEl.appendChild(buildLayerPanel(layer, i));
+    });
+    layerCountTag.textContent = state.layers.length + ' 層';
+  }
+
+  document.getElementById('addLayer').addEventListener('click', function(){
+    var base = state.layers[state.layers.length - 1];
+    var nl = defaultLayer(base ? Object.assign({}, base, {
+      seed: (Math.random()*1000|0),
+      rotation: (base.rotation + 25) % 360,
+      offsetX: base.offsetX + 10,
+      offsetY: base.offsetY - 8
+    }) : {});
+    nl.id = 'L' + (Math.random()*1e6|0);
+    nl.name = '層 ' + (state.layers.length + 1);
+    state.layers.push(nl);
+    rebuildLayersUI();
+    regenLayerGeometry(nl);
+    updateStats();
+  });
+
+  // ---------------------------------------------------------------
+  // Global controls
+  // ---------------------------------------------------------------
+  document.getElementById('bgColor').value = state.bgColor;
+  document.getElementById('bgColor').addEventListener('input', function(e){ state.bgColor = e.target.value; });
+
+  var gs = document.getElementById('globalScale');
+  var gsVal = document.getElementById('v-globalScale');
+  gs.addEventListener('input', function(){ state.globalScale = parseFloat(gs.value); gsVal.textContent = state.globalScale.toFixed(2); });
+
+  document.getElementById('autoRotate').addEventListener('change', function(e){ state.autoRotate = e.target.checked; });
+  document.getElementById('mouseReact').addEventListener('change', function(e){ state.mouseReact = e.target.checked; });
+  document.getElementById('mouseDeform').addEventListener('change', function(e){ state.mouseDeform = e.target.checked; });
+  var ms = document.getElementById('mouseStrength');
+  var msVal = document.getElementById('v-mouseStrength');
+  ms.addEventListener('input', function(){ state.mouseStrength = parseFloat(ms.value); msVal.textContent = ms.value; });
+
+  var tiltXEl = document.getElementById('tiltX'), tiltXVal = document.getElementById('v-tiltX');
+  tiltXEl.addEventListener('input', function(){ state.tiltX = parseFloat(tiltXEl.value); tiltXVal.textContent = tiltXEl.value; });
+  var tiltYEl = document.getElementById('tiltY'), tiltYVal = document.getElementById('v-tiltY');
+  tiltYEl.addEventListener('input', function(){ state.tiltY = parseFloat(tiltYEl.value); tiltYVal.textContent = tiltYEl.value; });
+  var perspEl = document.getElementById('perspective'), perspVal = document.getElementById('v-perspective');
+  perspEl.addEventListener('input', function(){ state.perspective = parseFloat(perspEl.value); perspVal.textContent = perspEl.value; });
+  document.getElementById('autoTilt').addEventListener('change', function(e){ state.autoTilt = e.target.checked; });
+
+  document.getElementById('randomizeAll').addEventListener('click', function(){
+    state.layers.forEach(function(layer){
+      Object.assign(layer, {
+        ringCount: 30 + (Math.random()*220|0),
+        segments: 60 + (Math.random()*220|0),
+        baseRadius: (Math.random()*120|0),
+        spacing: 2 + Math.random()*14,
+        spacingVarAmt: Math.random()*0.9,
+        spacingVarFreq: 0.1 + Math.random()*3,
+        irregAmt: Math.random()*20,
+        irregFreq: 0.5 + Math.random()*8,
+        eccentricity: Math.random()*80,
+        eccentricityAngle: Math.random()*360,
+        rotation: Math.random()*360,
+        scale: 0.6 + Math.random()*1.2,
+        offsetX: (Math.random()-0.5)*200,
+        offsetY: (Math.random()-0.5)*200,
+        rotateSpeed: (Math.random()-0.5)*6,
+        lineWidth: 0.3 + Math.random()*1.6,
+        opacity: 0.35 + Math.random()*0.5,
+        blend: ['normal','multiply','screen','add'][Math.random()*4|0],
+        seed: (Math.random()*1000|0),
+        wobbleSpeed: Math.random()*0.6,
+        breatheAmp: Math.random()*0.06,
+        breatheSpeed: Math.random()*1.2,
+        deformStrength: Math.random()*80,
+        deformRadius: 60 + Math.random()*400,
+        deformMode: Math.random() < 0.75 ? 'mouse' : 'fixed',
+        deformType: ['push','pull','swirl'][Math.random()*3|0],
+        anchorX: (Math.random()-0.5)*300,
+        anchorY: (Math.random()-0.5)*300,
+        spiralBlend: Math.random(),
+        spiralZ: (Math.random()-0.5)*4,
+        depthOffset: (Math.random()-0.5)*200
+      });
+    });
+    rebuildLayersUI();
+    regenAll();
+  });
+
+  document.getElementById('resetAll').addEventListener('click', function(){
+    applyLayers(defaultLayers());
+    state.bgColor = '#f2f0e9'; document.getElementById('bgColor').value = state.bgColor;
+    state.globalScale = 1; gs.value = 1; gsVal.textContent = '1.00';
+    state.autoRotate = true; document.getElementById('autoRotate').checked = true;
+    state.mouseReact = true; document.getElementById('mouseReact').checked = true;
+    state.mouseDeform = true; document.getElementById('mouseDeform').checked = true;
+    state.mouseStrength = 40; ms.value = 40; msVal.textContent = '40';
+    state.tiltX = 32; tiltXEl.value = 32; tiltXVal.textContent = '32';
+    state.tiltY = -14; tiltYEl.value = -14; tiltYVal.textContent = '-14';
+    state.perspective = 22; perspEl.value = 22; perspVal.textContent = '22';
+    state.autoTilt = true; document.getElementById('autoTilt').checked = true;
+  });
+
+  document.getElementById('exportPng').addEventListener('click', function(){
+    render(); // ensure a fresh frame is in the buffer before capture
+    var link = document.createElement('a');
+    link.download = 'nenrin-lineart.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  document.getElementById('toggle-sidebar').addEventListener('click', function(){
+    document.body.classList.toggle('sidebar-hidden');
+  });
+
+  function applyLayers(list){
+    geomCache = {};
+    state.layers = list;
+    rebuildLayersUI();
+    regenAll();
+  }
+
+  // ---------------------------------------------------------------
+  // Presets
+  // ---------------------------------------------------------------
+  document.getElementById('preset-fine').addEventListener('click', function(){
+    applyLayers([
+      defaultLayer({ name:'外層', ringCount:180, segments:280, baseRadius:50, spacing:4.2, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:2, irregFreq:2.2, eccentricity:4, eccentricityAngle:40, rotation:0, scale:1, lineWidth:0.5, opacity:0.75, color:'#3a3733', blend:'normal', seed:11 }),
+      defaultLayer({ name:'内層', ringCount:150, segments:260, baseRadius:20, spacing:3.6, spacingVarAmt:0.2, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:1.8, eccentricity:2, eccentricityAngle:120, rotation:3, scale:1.0, offsetX:6, offsetY:-4, lineWidth:0.4, opacity:0.55, color:'#6b675f', blend:'multiply', seed:31 })
+    ]);
+  });
+  document.getElementById('preset-bold').addEventListener('click', function(){
+    applyLayers([
+      defaultLayer({ name:'外層', ringCount:34, segments:120, baseRadius:40, spacing:14, spacingVarAmt:0.7, spacingVarFreq:1.2, irregAmt:14, irregFreq:2.4, eccentricity:30, eccentricityAngle:60, rotation:0, scale:1, lineWidth:2.2, opacity:0.9, color:'#2c2925', blend:'normal', seed:5 }),
+      defaultLayer({ name:'重なり層', ringCount:26, segments:100, baseRadius:20, spacing:16, spacingVarAmt:0.8, spacingVarFreq:1.5, irregAmt:18, irregFreq:2.0, eccentricity:40, eccentricityAngle:250, rotation:14, scale:1.08, offsetX:20, offsetY:15, lineWidth:1.6, opacity:0.55, color:'#a9977a', blend:'multiply', seed:44 })
+    ]);
+  });
+  document.getElementById('preset-moire').addEventListener('click', function(){
+    applyLayers([
+      defaultLayer({ name:'層A', ringCount:140, segments:240, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'normal', seed:2 }),
+      defaultLayer({ name:'層B', ringCount:140, segments:240, baseRadius:60, spacing:5.15, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:5, scale:1.015, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'multiply', seed:2 }),
+      defaultLayer({ name:'層C', ringCount:140, segments:240, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:-6, scale:0.985, lineWidth:0.6, opacity:0.5, color:'#33302b', blend:'multiply', seed:2 })
+    ]);
+  });
+  document.getElementById('preset-single').addEventListener('click', function(){
+    applyLayers([
+      defaultLayer({ name:'年輪', ringCount:130, segments:260, baseRadius:20, spacing:6, spacingVarAmt:0.45, spacingVarFreq:0.6, irregAmt:5, irregFreq:3.5, eccentricity:12, eccentricityAngle:80, rotation:0, scale:1, lineWidth:0.9, opacity:0.9, color:'#2f2c27', blend:'normal', seed:9, spiralBlend:0.85, spiralZ:1.6 })
+    ]);
+  });
+  document.getElementById('preset-spiral').addEventListener('click', function(){
+    applyLayers([
+      defaultLayer({ name:'螺旋 — 外', ringCount:160, segments:300, baseRadius:10, spacing:4.5, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:2.5, irregFreq:3.0, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2f2c27', blend:'normal', seed:14, spiralBlend:1, spiralZ:1.8, deformType:'swirl', deformStrength:22 }),
+      defaultLayer({ name:'螺旋 — 内', ringCount:120, segments:260, baseRadius:6, spacing:3.6, spacingVarAmt:0.3, spacingVarFreq:0.6, irregAmt:2, irregFreq:3.4, eccentricity:0, rotation:180, scale:0.98, lineWidth:0.5, opacity:0.5, color:'#9b8f78', blend:'multiply', seed:41, spiralBlend:1, spiralZ:-1.4, deformType:'swirl', deformStrength:16 })
+    ]);
+  });
+
+  // ---------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------
+  applyLayers(defaultLayers());
+  requestAnimationFrame(render);
+
+})();
+</script>
+</body>
+</html>
