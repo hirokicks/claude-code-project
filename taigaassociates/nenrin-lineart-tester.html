@@ -220,6 +220,29 @@
           <button id="preset-moire" class="small">モアレ / Moiré</button>
           <button id="preset-single" class="small">単層 / Single</button>
           <button id="preset-spiral" class="small">螺旋 / Spiral</button>
+          <button id="preset-calm" class="small">静謐 / Calm</button>
+          <button id="preset-growth" class="small">成長 / Growth</button>
+          <button id="preset-vortex" class="small">渦 / Vortex</button>
+          <button id="preset-barrel" class="small">樽 / Barrel</button>
+          <button id="preset-hourglass" class="small">くびれ / Hourglass</button>
+          <button id="preset-eccentric" class="small">偏心 / Eccentric</button>
+          <button id="preset-focus" class="small">収束 / Focus</button>
+          <button id="preset-depth" class="small">深淵 / Depth</button>
+          <button id="preset-helix" class="small">二重螺旋 / Helix</button>
+          <button id="preset-mobius" class="small">メビウス / Möbius</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Settings <span class="tag">JSON 設定</span></h2>
+        <button id="showSettings" class="wide small">現在の設定を表示 / コピー</button>
+        <div id="settingsBox" style="display:none;">
+          <textarea id="settingsText" spellcheck="false" style="width:100%;height:180px;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:8px;font-family:ui-monospace,monospace;font-size:10px;line-height:1.5;box-sizing:border-box;margin-top:8px;"></textarea>
+          <div class="row" style="margin-top:8px;">
+            <button id="copySettings" class="small primary">コピー</button>
+            <button id="applySettings" class="small">貼り付けた内容を適用</button>
+          </div>
+          <div class="label-row" style="margin-top:4px;"><span id="settingsMsg" style="color:#6fae8f;"></span></div>
         </div>
       </div>
 
@@ -304,6 +327,9 @@
     "uniform float uRingCountInv;",
     "uniform float uBulgeAmt;",
     "uniform float uTwistPerRing;",
+    "uniform float uMobiusAmt;",
+    "uniform float uMobiusFreq;",
+    "uniform float uMobiusRingTwist;",
     "varying float vEdge;",
     "float hash3(vec3 p){",
     "  return fract(sin(dot(p, vec3(127.1,311.7,74.7))) * 43758.5453123);",
@@ -359,7 +385,9 @@
     "  float len = length(nrm);",
     "  if (len > 0.00001) nrm /= len;",
     "  vec2 extruded = pos.xy + nrm * aSide * (uLineWidthPx * 0.5);",
-    "  float z = aRing * uSpiralZ + uDepthOffset;",
+    "  float theta = atan(aDir.y, aDir.x);",
+    "  float mobiusPhase = theta * uMobiusFreq + aRing * uMobiusRingTwist;",
+    "  float z = aRing * uSpiralZ + uDepthOffset + sin(mobiusPhase) * uMobiusAmt;",
     "  vec2 rel3 = extruded - uCenterPx;",
     "  float ry = rel3.y * uTiltXTrig.x - z * uTiltXTrig.y;",
     "  float rz = rel3.y * uTiltXTrig.y + z * uTiltXTrig.x;",
@@ -433,6 +461,9 @@
   var locRingCountInv = gl.getUniformLocation(prog, 'uRingCountInv');
   var locBulgeAmt = gl.getUniformLocation(prog, 'uBulgeAmt');
   var locTwistPerRing = gl.getUniformLocation(prog, 'uTwistPerRing');
+  var locMobiusAmt = gl.getUniformLocation(prog, 'uMobiusAmt');
+  var locMobiusFreq = gl.getUniformLocation(prog, 'uMobiusFreq');
+  var locMobiusRingTwist = gl.getUniformLocation(prog, 'uMobiusRingTwist');
 
   gl.enable(gl.BLEND);
   gl.disable(gl.DEPTH_TEST);
@@ -585,7 +616,10 @@
       spiralZ: 0.6,
       depthOffset: 0,
       twistPerRing: 0,
-      bulgeAmt: 0
+      bulgeAmt: 0,
+      mobiusAmt: 0,
+      mobiusFreq: 1,
+      mobiusRingTwist: 0
     };
     for (var k in overrides) d[k] = overrides[k];
     return d;
@@ -786,6 +820,9 @@
       gl.uniform1f(locRingCountInv, 1 / Math.max(1, layer.ringCount - 1));
       gl.uniform1f(locBulgeAmt, layer.bulgeAmt);
       gl.uniform1f(locTwistPerRing, (layer.twistPerRing || 0) * Math.PI / 180);
+      gl.uniform1f(locMobiusAmt, (layer.mobiusAmt || 0) * s);
+      gl.uniform1f(locMobiusFreq, layer.mobiusFreq || 0);
+      gl.uniform1f(locMobiusRingTwist, (layer.mobiusRingTwist || 0) * Math.PI / 180);
 
       var bm = BLEND_MODES[layer.blend] || BLEND_MODES.normal;
       gl.blendFunc(bm[0], bm[1]);
@@ -914,6 +951,9 @@
     body.appendChild(slider('奥行きオフセット', 'depthOffset', -400, 400, 1, layer.depthOffset, function(v){ layer.depthOffset = v; }, fmt0));
     body.appendChild(slider('ひねり（リング毎の回転角度）', 'twistPerRing', -3, 3, 0.02, layer.twistPerRing, function(v){ layer.twistPerRing = v; }, fmt2));
     body.appendChild(slider('膨らみ（樽型 / くびれ）', 'bulgeAmt', -0.6, 0.6, 0.01, layer.bulgeAmt, function(v){ layer.bulgeAmt = v; }, fmt2));
+    body.appendChild(slider('メビウス振幅（輪自体のうねり）', 'mobiusAmt', -200, 200, 1, layer.mobiusAmt, function(v){ layer.mobiusAmt = v; }, fmt0));
+    body.appendChild(slider('メビウス周波数（一周の波の数）', 'mobiusFreq', 0, 6, 0.1, layer.mobiusFreq, function(v){ layer.mobiusFreq = v; }, fmt1));
+    body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
 
     var actions = document.createElement('div'); actions.className = 'row';
     var seedBtn = document.createElement('button'); seedBtn.className = 'small'; seedBtn.textContent = '🎲 シードを変更';
@@ -1063,7 +1103,10 @@
         spiralZ: (Math.random()-0.5)*4,
         depthOffset: (Math.random()-0.5)*200,
         twistPerRing: (Math.random()-0.5)*2,
-        bulgeAmt: (Math.random()-0.5)*0.8
+        bulgeAmt: (Math.random()-0.5)*0.8,
+        mobiusAmt: (Math.random()-0.5)*160,
+        mobiusFreq: Math.random()*4,
+        mobiusRingTwist: (Math.random()-0.5)*16
       });
     });
     rebuildLayersUI();
@@ -1103,38 +1146,165 @@
     regenAll();
   }
 
+  // Applies a layer set together with the "camera mood" (tilt/perspective/bg)
+  // that goes with it, so a preset reads as one complete look, not just a shape.
+  function applyPreset(list, opts){
+    applyLayers(list);
+    opts = opts || {};
+    if ('bgColor' in opts){ state.bgColor = opts.bgColor; document.getElementById('bgColor').value = opts.bgColor; }
+    if ('globalScale' in opts){ state.globalScale = opts.globalScale; gs.value = opts.globalScale; gsVal.textContent = opts.globalScale.toFixed(2); }
+    if ('tiltX' in opts){ state.tiltX = opts.tiltX; tiltXEl.value = opts.tiltX; tiltXVal.textContent = opts.tiltX; }
+    if ('tiltY' in opts){ state.tiltY = opts.tiltY; tiltYEl.value = opts.tiltY; tiltYVal.textContent = opts.tiltY; }
+    if ('perspective' in opts){ state.perspective = opts.perspective; perspEl.value = opts.perspective; perspVal.textContent = opts.perspective; }
+  }
+
+  // ---------------------------------------------------------------
+  // Settings export / import (JSON snapshot of everything on screen)
+  // ---------------------------------------------------------------
+  function getSettingsSnapshot(){
+    return {
+      global: {
+        bgColor: state.bgColor, globalScale: state.globalScale, autoRotate: state.autoRotate,
+        mouseReact: state.mouseReact, mouseStrength: state.mouseStrength, mouseDeform: state.mouseDeform,
+        tiltX: state.tiltX, tiltY: state.tiltY, perspective: state.perspective,
+        autoTilt: state.autoTilt, tiltSpeed: state.tiltSpeed
+      },
+      layers: state.layers.map(function(l){ return Object.assign({}, l); })
+    };
+  }
+  function loadSettingsSnapshot(obj){
+    if (!obj || !Array.isArray(obj.layers) || !obj.layers.length) throw new Error('layers が見つかりません');
+    Object.assign(state, obj.global || {});
+    document.getElementById('bgColor').value = state.bgColor;
+    gs.value = state.globalScale; gsVal.textContent = parseFloat(state.globalScale).toFixed(2);
+    document.getElementById('autoRotate').checked = !!state.autoRotate;
+    document.getElementById('mouseReact').checked = !!state.mouseReact;
+    ms.value = state.mouseStrength; msVal.textContent = state.mouseStrength;
+    document.getElementById('mouseDeform').checked = !!state.mouseDeform;
+    tiltXEl.value = state.tiltX; tiltXVal.textContent = state.tiltX;
+    tiltYEl.value = state.tiltY; tiltYVal.textContent = state.tiltY;
+    perspEl.value = state.perspective; perspVal.textContent = state.perspective;
+    document.getElementById('autoTilt').checked = !!state.autoTilt;
+    applyLayers(obj.layers.map(function(l){ return defaultLayer(l); }));
+  }
+
+  var settingsBox = document.getElementById('settingsBox');
+  var settingsText = document.getElementById('settingsText');
+  var settingsMsg = document.getElementById('settingsMsg');
+  document.getElementById('showSettings').addEventListener('click', function(){
+    var opening = settingsBox.style.display === 'none';
+    if (opening){
+      settingsText.value = JSON.stringify(getSettingsSnapshot(), null, 2);
+      settingsBox.style.display = 'block';
+      settingsMsg.textContent = '';
+    } else {
+      settingsBox.style.display = 'none';
+    }
+  });
+  document.getElementById('copySettings').addEventListener('click', function(){
+    settingsText.select();
+    var ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(settingsText.value); ok = true; }
+      else { ok = document.execCommand('copy'); }
+    } catch(e){ ok = false; }
+    settingsMsg.textContent = ok ? 'コピーしました' : 'コピーに失敗しました（手動で選択してコピーしてください）';
+  });
+  document.getElementById('applySettings').addEventListener('click', function(){
+    try {
+      loadSettingsSnapshot(JSON.parse(settingsText.value));
+      settingsMsg.textContent = '設定を適用しました';
+    } catch(e){
+      settingsMsg.textContent = 'JSONの読み込みに失敗しました: ' + e.message;
+    }
+  });
+
   // ---------------------------------------------------------------
   // Presets
   // ---------------------------------------------------------------
   document.getElementById('preset-fine').addEventListener('click', function(){
-    applyLayers([
+    applyPreset([
       defaultLayer({ name:'外層', ringCount:80, segments:130, baseRadius:50, spacing:4.2, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:2, irregFreq:2.2, eccentricity:4, eccentricityAngle:40, rotation:0, scale:1, lineWidth:0.5, opacity:0.75, color:'#3a3733', blend:'normal', seed:11 }),
       defaultLayer({ name:'内層', ringCount:70, segments:120, baseRadius:20, spacing:3.6, spacingVarAmt:0.2, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:1.8, eccentricity:2, eccentricityAngle:120, rotation:3, scale:1.0, offsetX:6, offsetY:-4, lineWidth:0.4, opacity:0.55, color:'#6b675f', blend:'multiply', seed:31 })
-    ]);
+    ], { bgColor:'#f4f2ec', tiltX:18, tiltY:-8, perspective:10 });
   });
   document.getElementById('preset-bold').addEventListener('click', function(){
-    applyLayers([
+    applyPreset([
       defaultLayer({ name:'外層', ringCount:34, segments:120, baseRadius:40, spacing:14, spacingVarAmt:0.7, spacingVarFreq:1.2, irregAmt:14, irregFreq:2.4, eccentricity:30, eccentricityAngle:60, rotation:0, scale:1, lineWidth:2.2, opacity:0.9, color:'#2c2925', blend:'normal', seed:5 }),
       defaultLayer({ name:'重なり層', ringCount:26, segments:100, baseRadius:20, spacing:16, spacingVarAmt:0.8, spacingVarFreq:1.5, irregAmt:18, irregFreq:2.0, eccentricity:40, eccentricityAngle:250, rotation:14, scale:1.08, offsetX:20, offsetY:15, lineWidth:1.6, opacity:0.55, color:'#a9977a', blend:'multiply', seed:44 })
-    ]);
+    ], { bgColor:'#efece2', tiltX:36, tiltY:-18, perspective:26 });
   });
   document.getElementById('preset-moire').addEventListener('click', function(){
-    applyLayers([
+    applyPreset([
       defaultLayer({ name:'層A', ringCount:75, segments:120, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'normal', seed:2 }),
       defaultLayer({ name:'層B', ringCount:75, segments:120, baseRadius:60, spacing:5.15, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:5, scale:1.015, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'multiply', seed:2 }),
       defaultLayer({ name:'層C', ringCount:75, segments:120, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:-6, scale:0.985, lineWidth:0.6, opacity:0.5, color:'#33302b', blend:'multiply', seed:2 })
-    ]);
+    ], { bgColor:'#f2f0e9', tiltX:6, tiltY:0, perspective:4 });
   });
   document.getElementById('preset-single').addEventListener('click', function(){
-    applyLayers([
+    applyPreset([
       defaultLayer({ name:'年輪', ringCount:75, segments:150, baseRadius:20, spacing:6, spacingVarAmt:0.45, spacingVarFreq:0.6, irregAmt:5, irregFreq:3.5, eccentricity:12, eccentricityAngle:80, rotation:0, scale:1, lineWidth:0.9, opacity:0.9, color:'#2f2c27', blend:'normal', seed:9, spiralBlend:0.85, spiralZ:1.6 })
-    ]);
+    ], { bgColor:'#f2f0e9', tiltX:28, tiltY:-10, perspective:16 });
   });
   document.getElementById('preset-spiral').addEventListener('click', function(){
-    applyLayers([
+    applyPreset([
       defaultLayer({ name:'螺旋 — 外', ringCount:90, segments:160, baseRadius:10, spacing:4.5, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:2.5, irregFreq:3.0, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2f2c27', blend:'normal', seed:14, spiralBlend:1, spiralZ:1.8, deformType:'swirl', deformStrength:22, twistPerRing:0.8, bulgeAmt:0.15 }),
       defaultLayer({ name:'螺旋 — 内', ringCount:70, segments:140, baseRadius:6, spacing:3.6, spacingVarAmt:0.3, spacingVarFreq:0.6, irregAmt:2, irregFreq:3.4, eccentricity:0, rotation:180, scale:0.98, lineWidth:0.5, opacity:0.5, color:'#9b8f78', blend:'multiply', seed:41, spiralBlend:1, spiralZ:-1.4, deformType:'swirl', deformStrength:16, twistPerRing:-0.6, bulgeAmt:-0.1 })
-    ]);
+    ], { bgColor:'#efece3', tiltX:46, tiltY:-20, perspective:34 });
+  });
+  document.getElementById('preset-calm').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'静けさ', ringCount:55, segments:120, baseRadius:45, spacing:5.2, spacingVarAmt:0.12, spacingVarFreq:0.3, irregAmt:1, irregFreq:1.3, eccentricity:0, rotation:0, scale:1, lineWidth:0.4, opacity:0.55, color:'#55503f', blend:'normal', seed:60, wobbleSpeed:0.05, breatheAmp:0.005, breatheSpeed:0.15, rotateSpeed:0.05, spiralZ:0.3, deformStrength:8, deformRadius:150 })
+    ], { bgColor:'#f6f4ee', tiltX:10, tiltY:-4, perspective:4 });
+  });
+  document.getElementById('preset-growth').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'成長', ringCount:75, segments:120, baseRadius:12, spacing:5.8, spacingVarAmt:0.6, spacingVarFreq:0.8, irregAmt:5, irregFreq:2.6, eccentricity:65, eccentricityAngle:70, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#4a3524', blend:'normal', seed:71, spiralZ:0.9, deformType:'push', deformStrength:32, deformRadius:210, wobbleSpeed:0.2 })
+    ], { bgColor:'#f3efe4', tiltX:24, tiltY:-10, perspective:14 });
+  });
+  document.getElementById('preset-vortex').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'渦 — 主', ringCount:80, segments:130, baseRadius:18, spacing:4.6, spacingVarAmt:0.4, spacingVarFreq:0.9, irregAmt:6, irregFreq:3.5, eccentricity:10, rotation:0, scale:1, lineWidth:0.6, opacity:0.9, color:'#201d19', blend:'normal', seed:81, deformType:'swirl', deformStrength:70, deformRadius:260, twistPerRing:1.3, spiralZ:1.0, wobbleSpeed:0.3 }),
+      defaultLayer({ name:'渦 — 残像', ringCount:65, segments:110, baseRadius:12, spacing:5.0, eccentricity:8, rotation:40, scale:1.03, lineWidth:0.45, opacity:0.35, color:'#8f8574', blend:'screen', seed:82, deformType:'swirl', deformStrength:50, deformRadius:220, twistPerRing:-0.9, spiralZ:-0.6 })
+    ], { bgColor:'#efece2', tiltX:30, tiltY:-16, perspective:20 });
+  });
+  document.getElementById('preset-barrel').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'樽', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#3d3226', blend:'normal', seed:91, bulgeAmt:0.45, spiralZ:1.2, spiralBlend:0.3 })
+    ], { bgColor:'#f2ece0', tiltX:38, tiltY:-12, perspective:30 });
+  });
+  document.getElementById('preset-hourglass').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'くびれ', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#332e26', blend:'normal', seed:92, bulgeAmt:-0.4, spiralZ:1.4, spiralBlend:0.3 })
+    ], { bgColor:'#f2ece0', tiltX:38, tiltY:-12, perspective:30 });
+  });
+  document.getElementById('preset-eccentric').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'偏心', ringCount:70, segments:130, baseRadius:8, spacing:4.2, spacingVarAmt:0.3, spacingVarFreq:0.6, irregAmt:2, irregFreq:2.5, eccentricity:140, eccentricityAngle:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#332e26', blend:'normal', seed:101, spiralZ:0.4 })
+    ], { bgColor:'#f2f0e9', tiltX:14, tiltY:-6, perspective:8 });
+  });
+  document.getElementById('preset-focus').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'収束', ringCount:70, segments:130, baseRadius:20, spacing:5, spacingVarAmt:0.2, spacingVarFreq:0.4, irregAmt:2, irregFreq:2, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2c2925', blend:'normal', seed:111, deformType:'pull', deformMode:'fixed', anchorX:0, anchorY:0, deformStrength:55, deformRadius:300 })
+    ], { bgColor:'#f2f0e9', tiltX:20, tiltY:0, perspective:12 });
+  });
+  document.getElementById('preset-depth').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'深淵 — 手前', ringCount:60, segments:120, baseRadius:15, spacing:5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.8, color:'#2a2723', blend:'normal', seed:121, spiralZ:2.2, spiralBlend:0.6, depthOffset:0 }),
+      defaultLayer({ name:'深淵 — 奥', ringCount:60, segments:120, baseRadius:12, spacing:4.6, eccentricity:0, rotation:20, scale:0.96, lineWidth:0.5, opacity:0.5, color:'#77705f', blend:'multiply', seed:122, spiralZ:2.2, spiralBlend:0.6, depthOffset:-250 })
+    ], { bgColor:'#efece2', tiltX:50, tiltY:-22, perspective:50 });
+  });
+  document.getElementById('preset-helix').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'螺旋 — A', ringCount:75, segments:140, baseRadius:14, spacing:4.4, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2f2c27', blend:'normal', seed:131, spiralBlend:1, spiralZ:1.5, twistPerRing:1.0 }),
+      defaultLayer({ name:'螺旋 — B', ringCount:75, segments:140, baseRadius:14, spacing:4.4, eccentricity:0, rotation:180, scale:1, lineWidth:0.6, opacity:0.6, color:'#8a8272', blend:'multiply', seed:131, spiralBlend:1, spiralZ:-1.5, twistPerRing:-1.0 })
+    ], { bgColor:'#f2f0e9', tiltX:40, tiltY:-18, perspective:26 });
+  });
+  document.getElementById('preset-mobius').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'メビウス — 主', ringCount:70, segments:150, baseRadius:15, spacing:5, spacingVarAmt:0.15, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:1.8, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2c2925', blend:'normal', seed:141, spiralBlend:1, spiralZ:0.3, mobiusAmt:110, mobiusFreq:0.5, mobiusRingTwist:8, wobbleSpeed:0.15 }),
+      defaultLayer({ name:'メビウス — 影', ringCount:55, segments:130, baseRadius:12, spacing:4.5, eccentricity:0, rotation:90, scale:0.97, lineWidth:0.45, opacity:0.4, color:'#9b8f78', blend:'multiply', seed:142, spiralBlend:1, spiralZ:0.25, mobiusAmt:90, mobiusFreq:0.5, mobiusRingTwist:-6 })
+    ], { bgColor:'#f2f0e9', tiltX:42, tiltY:-16, perspective:32 });
   });
 
   // ---------------------------------------------------------------
