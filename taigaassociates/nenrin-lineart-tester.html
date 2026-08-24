@@ -301,6 +301,9 @@
     "uniform float uFocal;",
     "uniform float uSpiralZ;",
     "uniform float uDepthOffset;",
+    "uniform float uRingCountInv;",
+    "uniform float uBulgeAmt;",
+    "uniform float uTwistPerRing;",
     "varying float vEdge;",
     "float hash3(vec3 p){",
     "  return fract(sin(dot(p, vec3(127.1,311.7,74.7))) * 43758.5453123);",
@@ -331,6 +334,12 @@
     "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
     "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt;",
     "  vec2 animated = aPos + aDir * wob;",
+    "  float ringN = clamp(aRing * uRingCountInv, 0.0, 1.0);",
+    "  float bulgeScale = 1.0 + uBulgeAmt * sin(ringN * 3.14159265);",
+    "  animated *= bulgeScale;",
+    "  float twistAng = aRing * uTwistPerRing;",
+    "  float twc = cos(twistAng), tws = sin(twistAng);",
+    "  animated = vec2(animated.x*twc - animated.y*tws, animated.x*tws + animated.y*twc);",
     "  float d = distance(animated, uAnchorLocal);",
     "  float influence = exp(-(d*d) / (2.0 * uDeformRadius * uDeformRadius + 0.001));",
     "  vec2 rel = animated - uAnchorLocal;",
@@ -421,6 +430,9 @@
   var locFocal = gl.getUniformLocation(prog, 'uFocal');
   var locSpiralZ = gl.getUniformLocation(prog, 'uSpiralZ');
   var locDepthOffset = gl.getUniformLocation(prog, 'uDepthOffset');
+  var locRingCountInv = gl.getUniformLocation(prog, 'uRingCountInv');
+  var locBulgeAmt = gl.getUniformLocation(prog, 'uBulgeAmt');
+  var locTwistPerRing = gl.getUniformLocation(prog, 'uTwistPerRing');
 
   gl.enable(gl.BLEND);
   gl.disable(gl.DEPTH_TEST);
@@ -472,7 +484,13 @@
       return [ecx * d, ecy * d];
     }
 
-    var vertsPerRing = segments * 6;
+    // Every sample point also gets a small round "joint" fan (see pushJoint).
+    // Segment quads alone leave a visible notch wherever the shader-side wobble/
+    // twist/deform bends the line sharply, since each quad only knows its own
+    // straight extent — the joint disc bridges that gap and rounds the corner,
+    // and since it shares the same aPos/aDir/aRing as the segment endpoint it
+    // sits on, it animates identically (wobble/deform/twist all happen on GPU).
+    var vertsPerRing = segments * 6 + (segments + 1) * JOIN_VERTS;
     var totalVerts = ringCount * vertsPerRing;
     var buf = new Float32Array(totalVerts * 8);
     var o = 0;
@@ -503,6 +521,7 @@
           o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, -1);
           o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, -1);
         }
+        o = pushJoint(buf, o, x, y, dirx, diry, i);
         prevX = x; prevY = y; prevDx = dirx; prevDy = diry;
       }
     }
@@ -512,6 +531,17 @@
     buf[o] = x; buf[o+1] = y; buf[o+2] = dx; buf[o+3] = dy; buf[o+4] = ring;
     buf[o+5] = nx; buf[o+6] = ny; buf[o+7] = side;
     return o + 8;
+  }
+  var JOIN_SIDES = 5, JOIN_VERTS = JOIN_SIDES * 3;
+  function pushJoint(buf, o, x, y, dx, dy, ring){
+    for (var k = 0; k < JOIN_SIDES; k++){
+      var a0 = (k / JOIN_SIDES) * Math.PI * 2;
+      var a1 = ((k + 1) / JOIN_SIDES) * Math.PI * 2;
+      o = pushV(buf, o, x, y, dx, dy, ring, 0, 0, 0);
+      o = pushV(buf, o, x, y, dx, dy, ring, Math.cos(a0), Math.sin(a0), 1);
+      o = pushV(buf, o, x, y, dx, dy, ring, Math.cos(a1), Math.sin(a1), 1);
+    }
+    return o;
   }
 
   // ---------------------------------------------------------------
@@ -553,7 +583,9 @@
       anchorY: 0,
       spiralBlend: 0,
       spiralZ: 0.6,
-      depthOffset: 0
+      depthOffset: 0,
+      twistPerRing: 0,
+      bulgeAmt: 0
     };
     for (var k in overrides) d[k] = overrides[k];
     return d;
@@ -577,7 +609,7 @@
   function defaultLayers(){
     return [
       defaultLayer({
-        name: '外層 — ベース', ringCount: 95, segments: 200, baseRadius: 70, spacing: 6.8,
+        name: '外層 — ベース', ringCount: 55, segments: 90, baseRadius: 70, spacing: 6.8,
         spacingVarAmt: 0.5, spacingVarFreq: 0.6, irregAmt: 4.5, irregFreq: 3.0,
         eccentricity: 6, eccentricityAngle: 20, rotation: 0, scale: 1,
         offsetX: 0, offsetY: 0, rotateSpeed: 0.6, lineWidth: 0.8, opacity: 0.85,
@@ -587,7 +619,7 @@
         spiralBlend: 0.35, spiralZ: 1.1, depthOffset: 0
       }),
       defaultLayer({
-        name: '重なり層 — モアレ', ringCount: 118, segments: 220, baseRadius: 42, spacing: 5.4,
+        name: '重なり層 — モアレ', ringCount: 65, segments: 100, baseRadius: 42, spacing: 5.4,
         spacingVarAmt: 0.6, spacingVarFreq: 0.9, irregAmt: 6.5, irregFreq: 4.6,
         eccentricity: 24, eccentricityAngle: 200, rotation: 9, scale: 1.05,
         offsetX: 18, offsetY: -12, rotateSpeed: -0.9, lineWidth: 0.6, opacity: 0.5,
@@ -751,6 +783,9 @@
       gl.uniform1i(locDeformType, DEFORM_TYPES[layer.deformType] || 0);
       gl.uniform1f(locSpiralZ, layer.spiralZ * s);
       gl.uniform1f(locDepthOffset, layer.depthOffset * dpr);
+      gl.uniform1f(locRingCountInv, 1 / Math.max(1, layer.ringCount - 1));
+      gl.uniform1f(locBulgeAmt, layer.bulgeAmt);
+      gl.uniform1f(locTwistPerRing, (layer.twistPerRing || 0) * Math.PI / 180);
 
       var bm = BLEND_MODES[layer.blend] || BLEND_MODES.normal;
       gl.blendFunc(bm[0], bm[1]);
@@ -877,6 +912,8 @@
     body.appendChild(slider('自動回転速度', 'rotateSpeed', -30, 30, 0.1, layer.rotateSpeed, function(v){ layer.rotateSpeed = v; }, fmt1));
     body.appendChild(slider('螺旋の奥行き（リング毎のZ変化）', 'spiralZ', -5, 5, 0.05, layer.spiralZ, function(v){ layer.spiralZ = v; }, fmt2));
     body.appendChild(slider('奥行きオフセット', 'depthOffset', -400, 400, 1, layer.depthOffset, function(v){ layer.depthOffset = v; }, fmt0));
+    body.appendChild(slider('ひねり（リング毎の回転角度）', 'twistPerRing', -3, 3, 0.02, layer.twistPerRing, function(v){ layer.twistPerRing = v; }, fmt2));
+    body.appendChild(slider('膨らみ（樽型 / くびれ）', 'bulgeAmt', -0.6, 0.6, 0.01, layer.bulgeAmt, function(v){ layer.bulgeAmt = v; }, fmt2));
 
     var actions = document.createElement('div'); actions.className = 'row';
     var seedBtn = document.createElement('button'); seedBtn.className = 'small'; seedBtn.textContent = '🎲 シードを変更';
@@ -994,8 +1031,8 @@
   document.getElementById('randomizeAll').addEventListener('click', function(){
     state.layers.forEach(function(layer){
       Object.assign(layer, {
-        ringCount: 30 + (Math.random()*220|0),
-        segments: 60 + (Math.random()*220|0),
+        ringCount: 30 + (Math.random()*110|0),
+        segments: 50 + (Math.random()*130|0),
         baseRadius: (Math.random()*120|0),
         spacing: 2 + Math.random()*14,
         spacingVarAmt: Math.random()*0.9,
@@ -1024,7 +1061,9 @@
         anchorY: (Math.random()-0.5)*300,
         spiralBlend: Math.random(),
         spiralZ: (Math.random()-0.5)*4,
-        depthOffset: (Math.random()-0.5)*200
+        depthOffset: (Math.random()-0.5)*200,
+        twistPerRing: (Math.random()-0.5)*2,
+        bulgeAmt: (Math.random()-0.5)*0.8
       });
     });
     rebuildLayersUI();
@@ -1069,8 +1108,8 @@
   // ---------------------------------------------------------------
   document.getElementById('preset-fine').addEventListener('click', function(){
     applyLayers([
-      defaultLayer({ name:'外層', ringCount:180, segments:280, baseRadius:50, spacing:4.2, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:2, irregFreq:2.2, eccentricity:4, eccentricityAngle:40, rotation:0, scale:1, lineWidth:0.5, opacity:0.75, color:'#3a3733', blend:'normal', seed:11 }),
-      defaultLayer({ name:'内層', ringCount:150, segments:260, baseRadius:20, spacing:3.6, spacingVarAmt:0.2, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:1.8, eccentricity:2, eccentricityAngle:120, rotation:3, scale:1.0, offsetX:6, offsetY:-4, lineWidth:0.4, opacity:0.55, color:'#6b675f', blend:'multiply', seed:31 })
+      defaultLayer({ name:'外層', ringCount:80, segments:130, baseRadius:50, spacing:4.2, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:2, irregFreq:2.2, eccentricity:4, eccentricityAngle:40, rotation:0, scale:1, lineWidth:0.5, opacity:0.75, color:'#3a3733', blend:'normal', seed:11 }),
+      defaultLayer({ name:'内層', ringCount:70, segments:120, baseRadius:20, spacing:3.6, spacingVarAmt:0.2, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:1.8, eccentricity:2, eccentricityAngle:120, rotation:3, scale:1.0, offsetX:6, offsetY:-4, lineWidth:0.4, opacity:0.55, color:'#6b675f', blend:'multiply', seed:31 })
     ]);
   });
   document.getElementById('preset-bold').addEventListener('click', function(){
@@ -1081,20 +1120,20 @@
   });
   document.getElementById('preset-moire').addEventListener('click', function(){
     applyLayers([
-      defaultLayer({ name:'層A', ringCount:140, segments:240, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'normal', seed:2 }),
-      defaultLayer({ name:'層B', ringCount:140, segments:240, baseRadius:60, spacing:5.15, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:5, scale:1.015, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'multiply', seed:2 }),
-      defaultLayer({ name:'層C', ringCount:140, segments:240, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:-6, scale:0.985, lineWidth:0.6, opacity:0.5, color:'#33302b', blend:'multiply', seed:2 })
+      defaultLayer({ name:'層A', ringCount:75, segments:120, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'normal', seed:2 }),
+      defaultLayer({ name:'層B', ringCount:75, segments:120, baseRadius:60, spacing:5.15, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:5, scale:1.015, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'multiply', seed:2 }),
+      defaultLayer({ name:'層C', ringCount:75, segments:120, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:-6, scale:0.985, lineWidth:0.6, opacity:0.5, color:'#33302b', blend:'multiply', seed:2 })
     ]);
   });
   document.getElementById('preset-single').addEventListener('click', function(){
     applyLayers([
-      defaultLayer({ name:'年輪', ringCount:130, segments:260, baseRadius:20, spacing:6, spacingVarAmt:0.45, spacingVarFreq:0.6, irregAmt:5, irregFreq:3.5, eccentricity:12, eccentricityAngle:80, rotation:0, scale:1, lineWidth:0.9, opacity:0.9, color:'#2f2c27', blend:'normal', seed:9, spiralBlend:0.85, spiralZ:1.6 })
+      defaultLayer({ name:'年輪', ringCount:75, segments:150, baseRadius:20, spacing:6, spacingVarAmt:0.45, spacingVarFreq:0.6, irregAmt:5, irregFreq:3.5, eccentricity:12, eccentricityAngle:80, rotation:0, scale:1, lineWidth:0.9, opacity:0.9, color:'#2f2c27', blend:'normal', seed:9, spiralBlend:0.85, spiralZ:1.6 })
     ]);
   });
   document.getElementById('preset-spiral').addEventListener('click', function(){
     applyLayers([
-      defaultLayer({ name:'螺旋 — 外', ringCount:160, segments:300, baseRadius:10, spacing:4.5, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:2.5, irregFreq:3.0, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2f2c27', blend:'normal', seed:14, spiralBlend:1, spiralZ:1.8, deformType:'swirl', deformStrength:22 }),
-      defaultLayer({ name:'螺旋 — 内', ringCount:120, segments:260, baseRadius:6, spacing:3.6, spacingVarAmt:0.3, spacingVarFreq:0.6, irregAmt:2, irregFreq:3.4, eccentricity:0, rotation:180, scale:0.98, lineWidth:0.5, opacity:0.5, color:'#9b8f78', blend:'multiply', seed:41, spiralBlend:1, spiralZ:-1.4, deformType:'swirl', deformStrength:16 })
+      defaultLayer({ name:'螺旋 — 外', ringCount:90, segments:160, baseRadius:10, spacing:4.5, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:2.5, irregFreq:3.0, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2f2c27', blend:'normal', seed:14, spiralBlend:1, spiralZ:1.8, deformType:'swirl', deformStrength:22, twistPerRing:0.8, bulgeAmt:0.15 }),
+      defaultLayer({ name:'螺旋 — 内', ringCount:70, segments:140, baseRadius:6, spacing:3.6, spacingVarAmt:0.3, spacingVarFreq:0.6, irregAmt:2, irregFreq:3.4, eccentricity:0, rotation:180, scale:0.98, lineWidth:0.5, opacity:0.5, color:'#9b8f78', blend:'multiply', seed:41, spiralBlend:1, spiralZ:-1.4, deformType:'swirl', deformStrength:16, twistPerRing:-0.6, bulgeAmt:-0.1 })
     ]);
   });
 
