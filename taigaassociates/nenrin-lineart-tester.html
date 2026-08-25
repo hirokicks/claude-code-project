@@ -428,13 +428,28 @@
     "      Xt = shapeR * radialX + w * cos(bandAngle) * radialX;",
     "      Yt = shapeR * radialY + w * cos(bandAngle) * radialY;",
     "      Zt = w * sin(bandAngle);",
-    "    } else {",
+    "    } else if (uShapeMode == 4) {",
     "      float cxr = aDir.x, cyr = aDir.y;",
     "      float m = max(abs(cxr), abs(cyr));",
     "      if (m < 0.0001) m = 0.0001;",
     "      Xt = (cxr / m) * shapeR;",
     "      Yt = (cyr / m) * shapeR;",
     "      Zt = (ringN - 0.5) * uShapeHeight;",
+    "    } else {",
+    "      float angle8 = tAlong * 6.28318530718;",
+    "      float ca8 = cos(angle8), sa8 = sin(angle8);",
+    "      float cx8 = shapeR * ca8;",
+    "      float cy8 = shapeR * sa8 * ca8;",
+    "      vec2 tan8 = vec2(-sa8, cos(2.0 * angle8));",
+    "      float tlen8 = length(tan8);",
+    "      if (tlen8 < 0.0001) tlen8 = 0.0001;",
+    "      tan8 /= tlen8;",
+    "      vec2 nrm8 = vec2(-tan8.y, tan8.x);",
+    "      float bandAngle8 = angle8 * 0.5;",
+    "      float w8 = (ringN - 0.5) * 2.0 * uShapeRadius2;",
+    "      Xt = cx8 + w8 * cos(bandAngle8) * nrm8.x;",
+    "      Yt = cy8 + w8 * cos(bandAngle8) * nrm8.y;",
+    "      Zt = w8 * sin(bandAngle8);",
     "    }",
     "    animated = mix(animated, vec2(Xt, Yt), uShapeMorph);",
     "    shapeZ = mix(existingZ, Zt * uShapeScale, uShapeMorph);",
@@ -978,7 +993,7 @@
     gl.uniform1f(locFocal, focal);
 
     var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
-    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4 };
+    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4, infinity: 5 };
 
     state.layers.forEach(function(layer, idx){
       if (!layer.enabled) return;
@@ -1223,7 +1238,7 @@
     body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
 
     body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
-    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ']], function(v){ layer.shapeMode = v; }));
+    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）']], function(v){ layer.shapeMode = v; }));
     body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
     body.appendChild(slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0));
     body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
