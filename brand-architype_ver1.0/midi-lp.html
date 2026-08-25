@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIDI — ランチタイムのためのノンアルコールワイン</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F8F5F0;
+      --bg-dark: #1C1A16;
+      --text: #1C1A16;
+      --text-muted: #8A8580;
+      --text-light: #F8F5F0;
+      --blanc: #C9A84C;
+      --blanc-light: #FBF6E9;
+      --rouge: #8E2236;
+      --rouge-mid: #C4566A;
+      --rouge-light: #FBF0F2;
+      --rose: #C4607A;
+      --rose-light: #FDF0F4;
+      --border: rgba(28,26,22,0.09);
+      --shadow: 0 8px 40px rgba(28,26,22,0.08);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1.2rem 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(248,245,240,0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: box-shadow 0.3s;
+    }
+    .nav-logo { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 300; letter-spacing: 0.25em; color: var(--text); text-decoration: none; }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a { font-size: 0.78rem; letter-spacing: 0.1em; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta { font-size: 0.78rem; letter-spacing: 0.1em; padding: 0.6rem 1.5rem; background: var(--text); color: var(--text-light); border: none; cursor: pointer; font-family: var(--font-sans); transition: background 0.2s; }
+    .nav-cta:hover { background: var(--rouge); }
+
+    /* ─── HERO ─── */
+    #hero {
+      min-height: 100vh;
+      background: var(--bg-dark);
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 8rem 5% 5rem;
+      position: relative; overflow: hidden;
+      gap: 4rem;
+    }
+    .hero-orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.12; pointer-events: none; }
+    .hero-orb-1 { width: 700px; height: 700px; background: var(--rouge); top: -200px; right: -100px; }
+    .hero-orb-2 { width: 450px; height: 450px; background: var(--blanc); bottom: -100px; right: 100px; }
+    .hero-orb-3 { width: 350px; height: 350px; background: var(--rose); top: 80px; right: 380px; }
+
+    .hero-content { position: relative; z-index: 2; }
+    .hero-tag {
+      display: inline-block; font-size: 0.7rem; letter-spacing: 0.18em;
+      color: var(--blanc); border: 1px solid rgba(201,168,76,0.35);
+      padding: 0.35rem 0.9rem; margin-bottom: 2.5rem;
+    }
+    .hero-headline {
+      font-family: var(--font-serif); font-size: clamp(3.2rem, 5.5vw, 5.5rem);
+      font-weight: 300; line-height: 1.15; color: var(--text-light); margin-bottom: 1.5rem;
+    }
+    .hero-headline em { font-style: italic; color: var(--blanc); }
+    .hero-sub { font-size: 0.95rem; color: rgba(248,245,240,0.55); max-width: 400px; line-height: 1.85; margin-bottom: 3rem; }
+    .hero-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-block; padding: 0.9rem 2rem; background: var(--blanc);
+      color: var(--bg-dark); font-size: 0.83rem; letter-spacing: 0.07em; font-weight: 500;
+      text-decoration: none; border: none; cursor: pointer; font-family: var(--font-sans);
+      transition: all 0.25s;
+    }
+    .btn-primary:hover { background: #DDB85C; transform: translateY(-1px); }
+    .btn-ghost {
+      display: inline-block; padding: 0.9rem 2rem;
+      background: transparent; color: rgba(248,245,240,0.65);
+      font-size: 0.83rem; letter-spacing: 0.07em; text-decoration: none;
+      border: 1px solid rgba(248,245,240,0.18); transition: all 0.25s;
+    }
+    .btn-ghost:hover { border-color: rgba(248,245,240,0.45); color: var(--text-light); }
+
+    /* Hero bottles */
+    .hero-visual {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center; align-items: center;
+      height: 500px;
+    }
+    .wine-bottle { position: absolute; transition: transform 0.35s ease; cursor: default; }
+    .wine-bottle:hover { transform: translateY(-10px) scale(1.03) !important; }
+    .bottle-blanc { transform: rotate(-9deg) translateX(-90px) translateY(15px); z-index: 1; }
+    .bottle-rouge { transform: rotate(2deg) translateX(10px) translateY(-15px); z-index: 3; }
+    .bottle-rose  { transform: rotate(11deg) translateX(100px) translateY(20px); z-index: 2; }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      background: var(--blanc);
+      padding: 1.25rem 5%;
+      display: flex; justify-content: center; gap: 5rem; flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-num { font-family: var(--font-serif); font-size: 2rem; font-weight: 600; color: var(--bg-dark); line-height: 1; }
+    .stat-label { font-size: 0.7rem; letter-spacing: 0.12em; color: rgba(28,26,22,0.55); margin-top: 0.2rem; }
+
+    /* ─── SHARED SECTION ─── */
+    section { padding: 8rem 5%; }
+    .section-label { display: block; font-size: 0.7rem; letter-spacing: 0.22em; color: var(--text-muted); margin-bottom: 1rem; }
+    .section-title { font-family: var(--font-serif); font-size: clamp(2.4rem, 3.8vw, 3.5rem); font-weight: 300; line-height: 1.25; margin-bottom: 1.5rem; }
+    .section-title em { font-style: italic; }
+
+    /* ─── CONCEPT ─── */
+    #concept { background: var(--bg); display: grid; grid-template-columns: 1fr 1fr; gap: 7rem; align-items: center; }
+    .concept-body { font-size: 1rem; color: var(--text-muted); line-height: 1.95; margin-bottom: 2.5rem; }
+    .concept-features { display: flex; flex-direction: column; gap: 1rem; }
+    .concept-feature {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: 1.25rem; background: white; border: 1px solid var(--border);
+    }
+    .feature-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .feature-text h4 { font-size: 0.88rem; font-weight: 500; margin-bottom: 0.2rem; }
+    .feature-text p  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.65; }
+
+    .concept-card { background: var(--bg-dark); padding: 3rem; }
+    .concept-quote { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.2vw, 2rem); font-weight: 300; line-height: 1.55; color: var(--text-light); margin-bottom: 2rem; }
+    .concept-quote em { font-style: italic; color: var(--blanc); }
+    .concept-attr { font-size: 0.72rem; letter-spacing: 0.12em; color: rgba(248,245,240,0.35); }
+    .timeline { margin-top: 2rem; }
+    .tl-item { display: flex; gap: 1.5rem; padding: 1.1rem 0; border-bottom: 1px solid rgba(248,245,240,0.07); }
+    .tl-time { font-family: var(--font-serif); font-size: 0.95rem; color: var(--blanc); min-width: 55px; font-weight: 300; }
+    .tl-desc { font-size: 0.82rem; color: rgba(248,245,240,0.55); line-height: 1.65; }
+
+    /* ─── PRODUCTS ─── */
+    #products { background: white; }
+    .products-header { text-align: center; max-width: 580px; margin: 0 auto 4.5rem; }
+    .products-header p { color: var(--text-muted); font-size: 0.97rem; line-height: 1.8; }
+
+    .product-tabs {
+      display: flex; width: fit-content; margin: 0 auto 4rem;
+      border: 1px solid var(--border);
+    }
+    .product-tab {
+      padding: 0.75rem 2.5rem; font-size: 0.8rem; letter-spacing: 0.1em;
+      cursor: pointer; border: none; background: transparent; color: var(--text-muted);
+      font-family: var(--font-sans); transition: all 0.25s; border-bottom: 2px solid transparent;
+    }
+    .product-tab:hover:not(.tab-active) { background: var(--bg); }
+    .product-tab.tab-active-blanc { background: var(--blanc-light); color: var(--blanc); border-bottom-color: var(--blanc); }
+    .product-tab.tab-active-rouge { background: var(--rouge-light); color: var(--rouge); border-bottom-color: var(--rouge); }
+    .product-tab.tab-active-rose  { background: var(--rose-light);  color: var(--rose);  border-bottom-color: var(--rose); }
+
+    .product-panel { display: none; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+    .product-panel.active { display: grid; animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .product-visual {
+      display: flex; justify-content: center; align-items: center;
+      min-height: 480px; position: relative;
+    }
+    .pv-blanc { background: var(--blanc-light); }
+    .pv-rouge { background: var(--rouge-light); }
+    .pv-rose  { background: var(--rose-light); }
+    .pv-label { position: absolute; top: 1.5rem; left: 1.75rem; font-size: 0.68rem; letter-spacing: 0.18em; color: var(--text-muted); }
+
+    .product-info { padding-right: 1rem; }
+    .type-tag {
+      display: inline-block; font-size: 0.7rem; letter-spacing: 0.15em;
+      padding: 0.3rem 0.85rem; margin-bottom: 1.25rem; font-weight: 500;
+    }
+    .tt-blanc { background: var(--blanc-light); color: var(--blanc); }
+    .tt-rouge { background: var(--rouge-light); color: var(--rouge); }
+    .tt-rose  { background: var(--rose-light);  color: var(--rose); }
+
+    .product-name { font-family: var(--font-serif); font-size: 3.8rem; font-weight: 300; line-height: 1; margin-bottom: 0.4rem; }
+    .product-sub  { font-family: var(--font-serif); font-size: 1.05rem; font-style: italic; color: var(--text-muted); margin-bottom: 1.75rem; }
+    .product-desc { font-size: 0.93rem; color: var(--text-muted); line-height: 1.9; margin-bottom: 2rem; }
+    .product-attrs { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 2.25rem; }
+    .attr { font-size: 0.76rem; padding: 0.35rem 0.9rem; border: 1px solid var(--border); color: var(--text-muted); letter-spacing: 0.04em; }
+    .product-btn {
+      display: inline-block; padding: 0.9rem 2.25rem; font-size: 0.83rem;
+      letter-spacing: 0.07em; border: none; cursor: pointer; font-weight: 500;
+      font-family: var(--font-sans); transition: all 0.25s; text-decoration: none;
+    }
+    .pb-blanc { background: var(--blanc); color: white; }
+    .pb-blanc:hover { background: #B8963E; }
+    .pb-rouge { background: var(--rouge); color: white; }
+    .pb-rouge:hover { background: #721A2C; }
+    .pb-rose  { background: var(--rose);  color: white; }
+    .pb-rose:hover  { background: #AD5068; }
+
+    /* ─── SCENES ─── */
+    #scenes { background: var(--bg); }
+    .scenes-header { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: end; margin-bottom: 3.5rem; }
+    .scenes-header p { font-size: 0.93rem; color: var(--text-muted); line-height: 1.85; }
+    .scenes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .scene-card {
+      background: white; padding: 2.25rem 2rem;
+      border: 1px solid var(--border); transition: all 0.3s;
+    }
+    .scene-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); border-color: rgba(142,34,54,0.15); }
+    .scene-icon { font-size: 1.8rem; margin-bottom: 1rem; }
+    .scene-card h3 { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.65rem; }
+    .scene-card p  { font-size: 0.83rem; color: var(--text-muted); line-height: 1.72; }
+
+    /* ─── TESTIMONIALS ─── */
+    #testimonials { background: var(--bg-dark); }
+    .testimonials-header { text-align: center; margin-bottom: 4rem; }
+    .testimonials-header .section-label { color: rgba(248,245,240,0.35); }
+    .testimonials-header .section-title { color: var(--text-light); }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .t-card {
+      background: rgba(248,245,240,0.04); border: 1px solid rgba(248,245,240,0.07);
+      padding: 2.5rem; transition: all 0.3s;
+    }
+    .t-card:hover { background: rgba(248,245,240,0.07); border-color: rgba(248,245,240,0.14); }
+    .t-tag { display: inline-block; font-size: 0.68rem; letter-spacing: 0.1em; padding: 0.25rem 0.75rem; margin-bottom: 1.5rem; }
+    .tt-tb { background: rgba(201,168,76,0.15); color: var(--blanc); }
+    .tt-tr { background: rgba(142,34,54,0.22);  color: #E07080; }
+    .tt-tz { background: rgba(196,96,122,0.22); color: #E090A8; }
+    .t-text { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.75; color: rgba(248,245,240,0.82); margin-bottom: 2rem; }
+    .t-name { font-size: 0.83rem; font-weight: 500; color: var(--text-light); }
+    .t-role { font-size: 0.75rem; color: rgba(248,245,240,0.35); margin-top: 0.2rem; }
+
+    /* ─── WHY ─── */
+    #why { background: white; }
+    .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .why-content { padding-right: 6rem; }
+    .why-list { margin-top: 2.5rem; }
+    .why-item { padding: 1.75rem 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 44px 1fr; gap: 1.25rem; }
+    .why-num { font-family: var(--font-serif); font-size: 2rem; font-weight: 300; color: rgba(28,26,22,0.13); line-height: 1; }
+    .why-item h3 { font-size: 0.93rem; font-weight: 500; margin-bottom: 0.45rem; }
+    .why-item p  { font-size: 0.85rem; color: var(--text-muted); line-height: 1.72; }
+    .why-visual { background: var(--bg); padding: 5rem 3.5rem; display: flex; flex-direction: column; justify-content: center; }
+    .why-quote { font-family: var(--font-serif); font-size: clamp(1.7rem, 2.2vw, 2.3rem); font-weight: 300; line-height: 1.5; margin-bottom: 1.5rem; }
+    .why-quote em { font-style: italic; color: var(--rouge); }
+
+    /* ─── CTA ─── */
+    #cta { background: var(--bg); text-align: center; padding: 10rem 5%; }
+    #cta .section-title { max-width: 680px; margin: 0 auto 1.25rem; }
+    #cta p { max-width: 480px; margin: 0 auto 3.5rem; color: var(--text-muted); font-size: 0.97rem; line-height: 1.85; }
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-dark {
+      display: inline-block; padding: 1rem 2.5rem; background: var(--bg-dark); color: var(--text-light);
+      font-size: 0.85rem; letter-spacing: 0.07em; border: none; cursor: pointer;
+      font-family: var(--font-sans); transition: all 0.25s; text-decoration: none;
+    }
+    .btn-dark:hover { background: var(--rouge); }
+    .btn-outline {
+      display: inline-block; padding: 1rem 2.5rem; background: transparent; color: var(--text);
+      font-size: 0.85rem; letter-spacing: 0.07em; border: 1px solid var(--border);
+      text-decoration: none; transition: all 0.25s;
+    }
+    .btn-outline:hover { border-color: var(--text-muted); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--bg-dark); padding: 4.5rem 5%;
+      display: grid; grid-template-columns: 1fr auto; gap: 4rem; align-items: start;
+      border-top: 1px solid rgba(248,245,240,0.05);
+    }
+    .footer-logo { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 300; letter-spacing: 0.25em; color: var(--text-light); margin-bottom: 0.75rem; }
+    .footer-tagline { font-size: 0.8rem; color: rgba(248,245,240,0.33); line-height: 1.75; max-width: 260px; }
+    .footer-links { display: flex; gap: 4rem; }
+    .footer-col h4 { font-size: 0.68rem; letter-spacing: 0.18em; color: rgba(248,245,240,0.35); margin-bottom: 1.25rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-col ul li a { font-size: 0.83rem; color: rgba(248,245,240,0.48); text-decoration: none; transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--text-light); }
+    .footer-bottom {
+      background: var(--bg-dark); padding: 1.5rem 5%;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid rgba(248,245,240,0.05);
+    }
+    .footer-bottom p { font-size: 0.72rem; color: rgba(248,245,240,0.22); }
+
+    /* ─── SCROLL REVEAL ─── */
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: 0.1s; }
+    .d2 { transition-delay: 0.2s; }
+    .d3 { transition-delay: 0.3s; }
+    .d4 { transition-delay: 0.4s; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 960px) {
+      #hero { grid-template-columns: 1fr; padding-top: 7rem; text-align: center; }
+      .hero-actions { justify-content: center; }
+      .hero-sub { margin: 0 auto 3rem; }
+      .hero-visual { display: none; }
+      #concept, .why-grid { grid-template-columns: 1fr; }
+      .why-content { padding-right: 0; }
+      .product-panel.active { grid-template-columns: 1fr; }
+      .product-visual { min-height: 280px; }
+      .scenes-header { grid-template-columns: 1fr; }
+      .scenes-grid { grid-template-columns: repeat(2, 1fr); }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      footer { grid-template-columns: 1fr; }
+      .footer-links { flex-wrap: wrap; gap: 2.5rem; }
+    }
+    @media (max-width: 600px) {
+      .stats-bar { gap: 2rem; }
+      .scenes-grid { grid-template-columns: 1fr; }
+      .product-tabs { width: 100%; }
+      .product-tab { flex: 1; padding: 0.75rem 0.5rem; font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav id="main-nav">
+  <a href="#" class="nav-logo">MIDI</a>
+  <ul class="nav-links">
+    <li><a href="#concept">コンセプト</a></li>
+    <li><a href="#products">ラインナップ</a></li>
+    <li><a href="#scenes">シーン</a></li>
+  </ul>
+  <button class="nav-cta">購入する</button>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <div class="hero-content">
+    <span class="hero-tag">NON-ALCOHOLIC WINE FOR DIGITAL WORKERS</span>
+    <h1 class="hero-headline">
+      ランチを、<br>
+      <em>バージョン</em><br>
+      アップしよう。
+    </h1>
+    <p class="hero-sub">
+      0%のアルコール、100%のエレガンス。<br>
+      デジタルワーカーの12:00を、もっとクリエイティブに。
+    </p>
+    <div class="hero-actions">
+      <a href="#products" class="btn-primary">ラインナップを見る</a>
+      <a href="#concept" class="btn-ghost">コンセプトを知る</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <!-- BLANC -->
+    <div class="wine-bottle bottle-blanc">
+      <svg width="95" height="268" viewBox="0 0 95 268" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="36" y="0" width="23" height="15" rx="2" fill="#C9A84C" opacity="0.75"/>
+        <path d="M36 15 Q27 38 24 65 L24 238 Q24 250 36 250 L59 250 Q71 250 71 238 L71 65 Q68 38 59 15Z" fill="url(#bg1)"/>
+        <rect x="30" y="115" width="35" height="1.2" fill="rgba(255,255,255,0.35)"/>
+        <text x="47" y="152" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="7.5" letter-spacing="2.5" font-family="Georgia,serif">BLANC</text>
+        <text x="47" y="166" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="5.5" letter-spacing="2">MIDI</text>
+        <defs>
+          <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#F0E6C8"/><stop offset="100%" stop-color="#B8903C"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <!-- ROUGE -->
+    <div class="wine-bottle bottle-rouge">
+      <svg width="108" height="295" viewBox="0 0 108 295" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="41" y="0" width="26" height="18" rx="2" fill="#6E1828" opacity="0.85"/>
+        <path d="M41 18 Q31 43 28 72 L28 262 Q28 276 41 276 L67 276 Q80 276 80 262 L80 72 Q77 43 67 18Z" fill="url(#bg2)"/>
+        <rect x="34" y="125" width="40" height="1.5" fill="rgba(255,255,255,0.18)"/>
+        <text x="54" y="170" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="8.5" letter-spacing="2.5" font-family="Georgia,serif">ROUGE</text>
+        <text x="54" y="185" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="5.5" letter-spacing="2">MIDI</text>
+        <defs>
+          <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#C0506A"/><stop offset="100%" stop-color="#3E0A14"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <!-- ROSÉ -->
+    <div class="wine-bottle bottle-rose">
+      <svg width="90" height="255" viewBox="0 0 90 255" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="34" y="0" width="22" height="14" rx="2" fill="#B85070" opacity="0.78"/>
+        <path d="M34 14 Q25 36 22 62 L22 226 Q22 238 34 238 L56 238 Q68 238 68 226 L68 62 Q65 36 56 14Z" fill="url(#bg3)"/>
+        <rect x="28" y="108" width="34" height="1.2" fill="rgba(255,255,255,0.32)"/>
+        <text x="45" y="144" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="7" letter-spacing="2.5" font-family="Georgia,serif">ROSÉ</text>
+        <text x="45" y="158" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="5.5" letter-spacing="2">MIDI</text>
+        <defs>
+          <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#EEAABB"/><stop offset="100%" stop-color="#8A3050"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STATS BAR ─── -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num">0%</div><div class="stat-label">アルコール</div></div>
+  <div class="stat-item"><div class="stat-num">3種</div><div class="stat-label">ラインナップ</div></div>
+  <div class="stat-item"><div class="stat-num">12:00</div><div class="stat-label">デイリールーティン</div></div>
+  <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">午後の可能性</div></div>
+</div>
+
+<!-- ─── CONCEPT ─── -->
+<section id="concept">
+  <div class="reveal">
+    <span class="section-label">— CONCEPT</span>
+    <h2 class="section-title">12:00、<br><em>ラップトップを</em><br>閉じよう。</h2>
+    <p class="concept-body">
+      スタンドアップをこなし、コードを書き、Slackに応答し続ける毎日。<br>
+      ランチは、ただ食べるためだけにあるのではない。<br><br>
+      MIDIは、デジタルワーカーのランチタイムをもっとエレガントで充実したものにするために開発されたノンアルコールワインです。チームや仲間と過ごすランチに、乾杯の瞬間を。
+    </p>
+    <div class="concept-features">
+      <div class="concept-feature">
+        <div class="feature-icon" style="background:var(--blanc-light)">🍷</div>
+        <div class="feature-text">
+          <h4>アルコールゼロで午後も全力</h4>
+          <p>デプロイ後でも会議前でも。本物のワインのような体験を、0%アルコールで。</p>
+        </div>
+      </div>
+      <div class="concept-feature">
+        <div class="feature-icon" style="background:var(--rose-light)">👥</div>
+        <div class="feature-text">
+          <h4>複数人で楽しむために設計</h4>
+          <p>ボトルサイズからラベルまで、グループランチを前提に作られた、乾杯のためのワイン。</p>
+        </div>
+      </div>
+      <div class="concept-feature">
+        <div class="feature-icon" style="background:var(--rouge-light)">✨</div>
+        <div class="feature-text">
+          <h4>今日の気分で3種類から選べる</h4>
+          <p>白・赤・ロゼ。仕事の状況や気分に合わせて、ランチのテンションをチューニングしよう。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal d2">
+    <div class="concept-card">
+      <p class="concept-quote">「ランチが終わったら<em>もう一仕事</em>できる。<br>それがMIDIの哲学。」</p>
+      <p class="concept-attr">— MIDI MANIFESTO</p>
+      <div class="timeline">
+        <div class="tl-item">
+          <span class="tl-time">9:00</span>
+          <span class="tl-desc">スタンドアップ、朝のコーヒー、最初のコミット</span>
+        </div>
+        <div class="tl-item">
+          <span class="tl-time">12:00</span>
+          <span class="tl-desc">ラップトップを閉じて、チームと乾杯。MIDIの時間。</span>
+        </div>
+        <div class="tl-item">
+          <span class="tl-time">13:00</span>
+          <span class="tl-desc">午後のスプリント開始。頭はクリア、気分はリフレッシュ。</span>
+        </div>
+        <div class="tl-item">
+          <span class="tl-time">18:00</span>
+          <span class="tl-desc">PRをマージ。今日のMIDIは、正解だった。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PRODUCTS ─── -->
+<section id="products">
+  <div class="products-header reveal">
+    <span class="section-label">— LINEUP</span>
+    <h2 class="section-title">今日の気分を、<br><em>3つから選ぼう。</em></h2>
+    <p>白、赤、ロゼ。それぞれが、あなたの今日に寄り添うために作られた。</p>
+  </div>
+
+  <div class="product-tabs reveal">
+    <button class="product-tab tab-active-blanc" data-type="blanc">BLANC — 白</button>
+    <button class="product-tab" data-type="rouge">ROUGE — 赤</button>
+    <button class="product-tab" data-type="rose">ROSÉ — ロゼ</button>
+  </div>
+
+  <!-- BLANC -->
+  <div class="product-panel active" id="panel-blanc">
+    <div class="product-visual pv-blanc">
+      <span class="pv-label">BLANC</span>
+      <svg width="150" height="400" viewBox="0 0 150 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="57" y="0" width="36" height="26" rx="3" fill="#C9A84C" opacity="0.68"/>
+        <path d="M57 26 Q44 60 40 100 L40 358 Q40 374 57 374 L93 374 Q110 374 110 358 L110 100 Q106 60 93 26Z" fill="url(#lbg1)"/>
+        <rect x="46" y="180" width="58" height="1.5" fill="rgba(255,255,255,0.4)"/>
+        <rect x="46" y="184" width="58" height="0.5" fill="rgba(255,255,255,0.18)"/>
+        <text x="75" y="234" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="13" letter-spacing="3.5" font-family="Georgia,serif">BLANC</text>
+        <text x="75" y="254" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9" letter-spacing="3">MIDI</text>
+        <text x="75" y="272" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="7" letter-spacing="1.5">NON-ALCOHOLIC</text>
+        <defs>
+          <linearGradient id="lbg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#F4EDD5"/><stop offset="55%" stop-color="#E0C888"/><stop offset="100%" stop-color="#B88030"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="product-info">
+      <span class="type-tag tt-blanc">BLANC — 白</span>
+      <h3 class="product-name">Blanc</h3>
+      <p class="product-sub">午前中の頑張りに、ご褒美を。</p>
+      <p class="product-desc">
+        朝9時からのミーティングをこなし、コードを書き続けたあなたへ。爽やかな柑橘の香りと軽やかな酸味が、午後のクリエイティビティを静かに覚醒させます。<br><br>
+        アルコールフリーだから、コードレビューの前でも安心して乾杯を。午前の頑張りを祝いながら、午後への英気を養う一本。
+      </p>
+      <div class="product-attrs">
+        <span class="attr">🍋 フレッシュ</span>
+        <span class="attr">🌿 爽やか</span>
+        <span class="attr">☀️ 軽快</span>
+        <span class="attr">0% アルコール</span>
+      </div>
+      <button class="product-btn pb-blanc">このワインを購入する</button>
+    </div>
+  </div>
+
+  <!-- ROUGE -->
+  <div class="product-panel" id="panel-rouge">
+    <div class="product-visual pv-rouge">
+      <span class="pv-label">ROUGE</span>
+      <svg width="150" height="400" viewBox="0 0 150 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="57" y="0" width="36" height="26" rx="3" fill="#6E1828" opacity="0.82"/>
+        <path d="M57 26 Q44 60 40 100 L40 358 Q40 374 57 374 L93 374 Q110 374 110 358 L110 100 Q106 60 93 26Z" fill="url(#lbg2)"/>
+        <rect x="46" y="180" width="58" height="1.5" fill="rgba(255,255,255,0.2)"/>
+        <rect x="46" y="184" width="58" height="0.5" fill="rgba(255,255,255,0.1)"/>
+        <text x="75" y="234" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="13" letter-spacing="3.5" font-family="Georgia,serif">ROUGE</text>
+        <text x="75" y="254" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" letter-spacing="3">MIDI</text>
+        <text x="75" y="272" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="7" letter-spacing="1.5">NON-ALCOHOLIC</text>
+        <defs>
+          <linearGradient id="lbg2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#C05068"/><stop offset="55%" stop-color="#7E1A2E"/><stop offset="100%" stop-color="#35080E"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="product-info">
+      <span class="type-tag tt-rouge">ROUGE — 赤</span>
+      <h3 class="product-name">Rouge</h3>
+      <p class="product-sub">午後からさらに頑張りたいあなたへ。</p>
+      <p class="product-desc">
+        デプロイ成功。プルリクエスト、マージ済み。そんなランチ直前のあなたに、力強い赤の余韻を。<br><br>
+        フルボディの満足感とスパイシーな後味が、午後のスプリントを力強く支えます。ランチが終わってもまだ仕事がしたくなる、そんな充実感を。
+      </p>
+      <div class="product-attrs">
+        <span class="attr">🍇 コク深い</span>
+        <span class="attr">🔥 力強い</span>
+        <span class="attr">💪 フルボディ</span>
+        <span class="attr">0% アルコール</span>
+      </div>
+      <button class="product-btn pb-rouge">このワインを購入する</button>
+    </div>
+  </div>
+
+  <!-- ROSÉ -->
+  <div class="product-panel" id="panel-rose">
+    <div class="product-visual pv-rose">
+      <span class="pv-label">ROSÉ</span>
+      <svg width="150" height="400" viewBox="0 0 150 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="57" y="0" width="36" height="26" rx="3" fill="#B85070" opacity="0.78"/>
+        <path d="M57 26 Q44 60 40 100 L40 358 Q40 374 57 374 L93 374 Q110 374 110 358 L110 100 Q106 60 93 26Z" fill="url(#lbg3)"/>
+        <rect x="46" y="180" width="58" height="1.5" fill="rgba(255,255,255,0.32)"/>
+        <rect x="46" y="184" width="58" height="0.5" fill="rgba(255,255,255,0.15)"/>
+        <text x="75" y="234" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="13" letter-spacing="3.5" font-family="Georgia,serif">ROSÉ</text>
+        <text x="75" y="254" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9" letter-spacing="3">MIDI</text>
+        <text x="75" y="272" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="7" letter-spacing="1.5">NON-ALCOHOLIC</text>
+        <defs>
+          <linearGradient id="lbg3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#F0B4C4"/><stop offset="55%" stop-color="#D07090"/><stop offset="100%" stop-color="#803050"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="product-info">
+      <span class="type-tag tt-rose">ROSÉ — ロゼ</span>
+      <h3 class="product-name">Rosé</h3>
+      <p class="product-sub">今日1日を充実させたいあなたへ。</p>
+      <p class="product-desc">
+        月曜日でも、金曜日でも。今日という日を特別にしたいなら、このロゼを。<br><br>
+        ベリーの甘さとフローラルな香りが、チームランチをちょっとした祝祭に変えます。どんな一日も、このロゼがあれば充実した記憶になる。
+      </p>
+      <div class="product-attrs">
+        <span class="attr">🌸 華やか</span>
+        <span class="attr">🎉 お祝い感</span>
+        <span class="attr">✨ エレガント</span>
+        <span class="attr">0% アルコール</span>
+      </div>
+      <button class="product-btn pb-rose">このワインを購入する</button>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SCENES ─── -->
+<section id="scenes">
+  <div class="scenes-header">
+    <div class="reveal">
+      <span class="section-label">— SCENE</span>
+      <h2 class="section-title">こんなランチに、<br><em>MIDIを。</em></h2>
+    </div>
+    <div class="reveal d2">
+      <p>MIDIは複数人のランチをより充実させるために作られています。みんなで乾杯する瞬間に、その価値が倍になる。</p>
+    </div>
+  </div>
+  <div class="scenes-grid">
+    <div class="scene-card reveal">
+      <div class="scene-icon">🖥️</div>
+      <h3>チームのウィークリーランチ</h3>
+      <p>毎週金曜のチームランチに。スプリントを振り返りながら、少しだけ乾杯する時間がチームの絆を深める。</p>
+    </div>
+    <div class="scene-card reveal d1">
+      <div class="scene-icon">🎯</div>
+      <h3>プロジェクト完了のお祝い</h3>
+      <p>リリース成功、プロジェクト完了。ランチで乾杯するほどでもないけど、何かで祝いたい。そんな時のMIDI。</p>
+    </div>
+    <div class="scene-card reveal d2">
+      <div class="scene-icon">🤝</div>
+      <h3>新メンバーのウェルカムランチ</h3>
+      <p>新しい仲間を迎えるランチに。アルコールの有無に関係なく、全員が同じグラスで乾杯できる。</p>
+    </div>
+    <div class="scene-card reveal d3">
+      <div class="scene-icon">💻</div>
+      <h3>リモートチームの合同ランチ</h3>
+      <p>普段はリモートのチームが集まる日に。特別感を演出しながら、ランチをもっと記憶に残るものにしよう。</p>
+    </div>
+    <div class="scene-card reveal d1">
+      <div class="scene-icon">🌟</div>
+      <h3>クライアントとのランチMTG</h3>
+      <p>大事なミーティングの前でも安心。エレガントなボトルが、プロフェッショナルな雰囲気を演出する。</p>
+    </div>
+    <div class="scene-card reveal d2">
+      <div class="scene-icon">📈</div>
+      <h3>月初・月末のチェックポイント</h3>
+      <p>月の始まりや終わりにチームで現状を振り返るランチに。区切りの瞬間を、少しだけ特別にしよう。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIALS ─── -->
+<section id="testimonials">
+  <div class="testimonials-header reveal">
+    <span class="section-label">— VOICE</span>
+    <h2 class="section-title">デジタルワーカーの<br><em>リアルな声。</em></h2>
+  </div>
+  <div class="testimonials-grid">
+    <div class="t-card reveal">
+      <span class="t-tag tt-tb">BLANC 愛用</span>
+      <p class="t-text">「午前のコードレビューが終わった後、チームでブランで乾杯するのが習慣になった。アルコールがないから午後も集中できるし、なんかちゃんとランチした感がある。」</p>
+      <p class="t-name">K. Yamamoto</p>
+      <p class="t-role">Frontend Engineer, 東京</p>
+    </div>
+    <div class="t-card reveal d1">
+      <span class="t-tag tt-tr">ROUGE 愛用</span>
+      <p class="t-text">「デプロイ日のランチは絶対ルージュ。チームで乾杯して、午後のお問い合わせに備える。なんか、儀式みたいになってきた（笑）」</p>
+      <p class="t-name">T. Sato</p>
+      <p class="t-role">Backend Engineer, 大阪</p>
+    </div>
+    <div class="t-card reveal d2">
+      <span class="t-tag tt-tz">ROSÉ 愛用</span>
+      <p class="t-text">「クライアントとのランチにロゼを持参したら、めちゃくちゃウケた。『ノンアルコールなの？』って驚かれて、それが会話のきっかけになった。」</p>
+      <p class="t-name">M. Nakamura</p>
+      <p class="t-role">Product Manager, 福岡</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── WHY ─── -->
+<section id="why">
+  <div class="why-grid">
+    <div class="why-content reveal">
+      <span class="section-label">— WHY MIDI</span>
+      <h2 class="section-title">なぜMIDIが<br><em>選ばれるのか。</em></h2>
+      <div class="why-list">
+        <div class="why-item">
+          <span class="why-num">01</span>
+          <div>
+            <h3>午後のパフォーマンスを落とさない</h3>
+            <p>ランチにアルコールを入れると午後の集中力が低下する。MIDIはゼロアルコールだから、ランチ後も全力で仕事に向き合える。</p>
+          </div>
+        </div>
+        <div class="why-item">
+          <span class="why-num">02</span>
+          <div>
+            <h3>グループで楽しむために設計されている</h3>
+            <p>ボトルサイズからラベルデザイン、味の設計まで、グループランチを前提に作られています。乾杯する瞬間のために存在するワイン。</p>
+          </div>
+        </div>
+        <div class="why-item">
+          <span class="why-num">03</span>
+          <div>
+            <h3>エレガントな体験を、全員に</h3>
+            <p>アルコールが飲めない人も、飲まない選択をしている人も、全員が同じグラスで乾杯できる。MIDIは、誰も排除しないランチのための飲み物。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="why-visual reveal d2">
+      <p class="why-quote">「ランチは、<em>チームの生産性</em>に直結する。だから、ちゃんと乾杯しよう。」</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.82">スタンドアップだけではチームは作れない。ランチの乾杯が、チームの信頼を深める。MIDIは、そのための選択肢。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ─── -->
+<section id="cta">
+  <span class="section-label reveal">— LET'S TOAST</span>
+  <h2 class="section-title reveal">さあ、<em>今日のランチ</em>を<br>バージョンアップしよう。</h2>
+  <p class="reveal d1">赤、白、ロゼ。今日の気分に合った一本を選んで、チームと乾杯しよう。アルコールゼロで、充実度はマックス。</p>
+  <div class="cta-actions reveal d2">
+    <button class="btn-dark" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">ラインナップを見る</button>
+    <a href="#concept" class="btn-outline">MIDIについて</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div>
+    <p class="footer-logo">MIDI</p>
+    <p class="footer-tagline">デジタルワーカーのランチタイムを、もっとエレガントに。0%アルコール、100%充実のノンアルコールワイン。</p>
+  </div>
+  <div class="footer-links">
+    <div class="footer-col">
+      <h4>PRODUCT</h4>
+      <ul>
+        <li><a href="#">BLANC — 白</a></li>
+        <li><a href="#">ROUGE — 赤</a></li>
+        <li><a href="#">ROSÉ — ロゼ</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>COMPANY</h4>
+      <ul>
+        <li><a href="#">コンセプト</a></li>
+        <li><a href="#">ストーリー</a></li>
+        <li><a href="#">お問い合わせ</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>FOLLOW</h4>
+      <ul>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Twitter / X</a></li>
+        <li><a href="#">Newsletter</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <p>© 2025 MIDI. All rights reserved.</p>
+  <p>Non-Alcoholic Wine for Digital Workers</p>
+</div>
+
+<script>
+  // Product tabs
+  const tabs = document.querySelectorAll('.product-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const type = tab.dataset.type;
+      tabs.forEach(t => t.className = 'product-tab');
+      tab.classList.add('tab-active-' + type);
+      document.querySelectorAll('.product-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + type).classList.add('active');
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Nav shadow on scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('main-nav').style.boxShadow = window.scrollY > 40 ? '0 2px 24px rgba(28,26,22,0.09)' : 'none';
+  });
+</script>
+</body>
+</html>
