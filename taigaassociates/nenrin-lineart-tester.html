@@ -356,6 +356,7 @@
     "uniform float uRingWidthVar;",
     "uniform float uRingOpacityVar;",
     "uniform float uRingWobbleVar;",
+    "uniform float uRingDrift;",
     "varying float vEdge;",
     "varying float vGrowth;",
     "varying float vRingOpacity;",
@@ -390,8 +391,9 @@
     "  float ringOpacityMod = clamp(1.0 + (ringHashO - 0.5) * 2.0 * uRingOpacityVar, 0.15, 1.35);",
     "  float ringWobbleMod = max(0.0, 1.0 + (ringHashN - 0.5) * 2.0 * uRingWobbleVar);",
     "  vRingOpacity = ringOpacityMod;",
-    "  float nx = aDir.x * uIrregFreq + aU * 0.37 + uSeedOffset.x;",
-    "  float ny = aDir.y * uIrregFreq + aU * 0.37 + uSeedOffset.y;",
+    "  float ringDrift = aU * uRingCountInv * uRingDrift;",
+    "  float nx = aDir.x * uIrregFreq + aU * 0.37 + uSeedOffset.x + ringDrift * 0.71;",
+    "  float ny = aDir.y * uIrregFreq + aU * 0.37 + uSeedOffset.y - ringDrift * 0.53;",
     "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
     "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt * ringWobbleMod;",
     "  vec2 animated = aPos + aDir * wob;",
@@ -588,6 +590,7 @@
   var locRingWidthVar = gl.getUniformLocation(prog, 'uRingWidthVar');
   var locRingOpacityVar = gl.getUniformLocation(prog, 'uRingOpacityVar');
   var locRingWobbleVar = gl.getUniformLocation(prog, 'uRingWobbleVar');
+  var locRingDrift = gl.getUniformLocation(prog, 'uRingDrift');
 
   gl.enable(gl.BLEND);
   gl.disable(gl.DEPTH_TEST);
@@ -870,7 +873,8 @@
       twistSpeed: 0,
       ringWidthVar: 0.35,
       ringOpacityVar: 0.35,
-      ringWobbleVar: 0.4
+      ringWobbleVar: 0.4,
+      ringDrift: 3.5
     };
     for (var k in overrides) d[k] = overrides[k];
     return d;
@@ -1101,6 +1105,7 @@
       gl.uniform1f(locRingWidthVar, layer.ringWidthVar || 0);
       gl.uniform1f(locRingOpacityVar, layer.ringOpacityVar || 0);
       gl.uniform1f(locRingWobbleVar, layer.ringWobbleVar || 0);
+      gl.uniform1f(locRingDrift, layer.ringDrift || 0);
 
       // Pass 1: draw this layer's segment quads + round joints into an
       // offscreen texture with MAX blending. Color is constant across the
@@ -1226,6 +1231,7 @@
     body.appendChild(slider('線幅のばらつき（1本ずつ）', 'ringWidthVar', 0, 1, 0.01, layer.ringWidthVar, function(v){ layer.ringWidthVar = v; }, fmt2));
     body.appendChild(slider('濃さのばらつき（1本ずつ）', 'ringOpacityVar', 0, 1, 0.01, layer.ringOpacityVar, function(v){ layer.ringOpacityVar = v; }, fmt2));
     body.appendChild(slider('揺らぎ幅のばらつき（1本ずつ）', 'ringWobbleVar', 0, 1.5, 0.01, layer.ringWobbleVar, function(v){ layer.ringWobbleVar = v; }, fmt2));
+    body.appendChild(slider('揺らぎパターンのドリフト（外側ほどコブがズレる）', 'ringDrift', 0, 8, 0.1, layer.ringDrift, function(v){ layer.ringDrift = v; }, fmt1));
 
     body.appendChild(el('div', 'subgroup-label', '揺らぎ・アニメーション / Motion'));
     body.appendChild(slider('歪み量（木目の揺らぎ幅）', 'irregAmt', 0, 40, 0.5, layer.irregAmt, function(v){ layer.irregAmt = v; }, fmt1));
