@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ─── Reset & Base ─────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #ffffff;
+  --bg-sub:     #f5f5f5;
+  --bg-hover:   #ebebeb;
+  --border:     #e0e0e0;
+  --text:       #1a1a1a;
+  --text-2:     #666666;
+  --text-3:     #aaaaaa;
+  --accent:     #18a0fb;
+  --accent-d:   #0d8de0;
+  --danger:     #f24822;
+  --success:    #1bc47d;
+  --r:          6px;
+}
+
+body {
+  font-family: -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Layout ───────────────────────────────────── */
+#app { display: flex; flex-direction: column; height: 100%; }
+
+/* Header */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+header h1 { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; }
+
+/* Main scrollable area */
+#main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+/* Footer action bar */
+#action-bar {
+  display: none;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+#action-bar.visible { display: flex; }
+
+/* ─── Loading ──────────────────────────────────── */
+#view-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 11px;
+}
+.spinner {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── List View ────────────────────────────────── */
+#view-list { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+#view-list.active { display: flex; }
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.list-header-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+#font-list { flex: 1; overflow-y: auto; }
+
+/* 登録アイテム */
+.font-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.font-item:hover { background: var(--bg-hover); }
+
+.fi-info { flex: 1; min-width: 0; }
+.fi-name {
+  font-size: 12px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fi-desc {
+  font-size: 10px; color: var(--text-2); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fi-badges { display: flex; gap: 3px; margin-top: 3px; flex-wrap: wrap; }
+
+.badge {
+  font-size: 9px; font-weight: 600; padding: 1px 5px;
+  border-radius: 3px; letter-spacing: .02em;
+}
+.badge-letter { background: #e8f5e9; color: #2e7d32; }
+.badge-number { background: #fff3e0; color: #bf360c; }
+.badge-punct  { background: #f3e5f5; color: #7b1fa2; }
+.badge-style  { background: #e3f2fd; color: #0277bd; }
+
+.fi-actions { display: flex; gap: 3px; flex-shrink: 0; }
+
+/* Empty state */
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-3);
+}
+.empty-state p { font-size: 12px; margin-bottom: 6px; }
+.empty-state small { font-size: 11px; }
+
+/* ─── Editor View ──────────────────────────────── */
+#view-editor {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+#view-editor.active { display: flex; }
+
+/* セクション */
+.section { display: flex; flex-direction: column; gap: 8px; }
+.section-title {
+  font-size: 10px; font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field-label { font-size: 11px; color: var(--text-2); font-weight: 500; }
+
+input[type="text"], select {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23aaa'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 22px;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+input[type="text"]:focus, select:focus { border-color: var(--accent); }
+
+/* カスタム検索可能ドロップダウン */
+.fsel { position: relative; }
+
+.fsel-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  cursor: text;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+.fsel-input:focus { border-color: var(--accent); }
+.fsel-input::placeholder { color: var(--text-3); }
+
+.fsel-arrow {
+  position: absolute;
+  right: 7px; top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-3);
+}
+
+.fsel-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0; right: 0;
+  z-index: 99;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 4px 14px rgba(0,0,0,.13);
+  max-height: 150px;
+  overflow-y: auto;
+  display: none;
+}
+.fsel-dropdown.open { display: block; }
+
+.fsel-opt {
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .08s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fsel-opt:hover    { background: var(--bg-hover); }
+.fsel-opt.focused  { background: var(--bg-hover); }
+.fsel-opt.selected { background: #deeeff; color: var(--accent); font-weight: 600; }
+.fsel-opt.empty    { color: var(--text-3); font-style: italic; cursor: default; }
+.fsel-opt.empty:hover { background: transparent; }
+
+/* チェックボックス */
+.cb-group { display: flex; gap: 14px; flex-wrap: wrap; }
+.cb-item {
+  display: flex; align-items: center; gap: 5px;
+  cursor: pointer; font-size: 12px; color: var(--text);
+  user-select: none;
+}
+.cb-item input[type="checkbox"] {
+  width: 14px; height: 14px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* サブ書体パネル */
+.sub-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.sub-panel-head {
+  padding: 7px 10px;
+  background: var(--bg-sub);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sub-panel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+/* プレビュー */
+.preview-box {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 12px;
+}
+.preview-hint { font-size: 10px; color: var(--text-3); margin-bottom: 5px; }
+.preview-text {
+  font-size: 18px;
+  line-height: 1.6;
+  min-height: 30px;
+  word-break: break-all;
+  color: var(--text);
+}
+#preview-main { /* メイン書体 */ }
+#preview-sub  { /* サブ書体  */ }
+
+/* ─── Buttons ──────────────────────────────────── */
+.btn {
+  height: 30px; padding: 0 12px;
+  border: none; border-radius: var(--r);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px;
+  transition: background .12s, opacity .12s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn:active  { opacity: .78; }
+.btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-d); }
+
+.btn-outline   { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--bg-hover); }
+
+.btn-ghost     { background: transparent; color: var(--text-2); }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text); }
+
+.btn-new {
+  height: 26px; padding: 0 10px;
+  font-size: 11px; font-weight: 600;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 4px; cursor: pointer;
+  font-family: inherit;
+  transition: background .12s;
+}
+.btn-new:hover { background: var(--accent-d); }
+
+/* Icon buttons */
+.ibtn {
+  width: 26px; height: 26px; padding: 0;
+  border: none; background: transparent;
+  cursor: pointer; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2);
+  transition: background .1s, color .1s;
+}
+.ibtn:hover               { background: var(--bg-hover); color: var(--text); }
+.ibtn:hover.ibtn-danger   { background: #fde8e4; color: var(--danger); }
+.ibtn:hover.ibtn-primary  { background: #deeeff; color: var(--accent); }
+.ibtn.ibtn-danger:hover   { background: #fde8e4; color: var(--danger); }
+.ibtn.ibtn-primary:hover  { background: #deeeff; color: var(--accent); }
+
+/* ─── Toast ────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%) translateY(50px);
+  background: #1a1a1a; color: #fff;
+  padding: 7px 16px; border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+  transition: transform .2s ease;
+  z-index: 200;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show    { transform: translateX(-50%) translateY(0); }
+#toast.success { background: var(--success); }
+#toast.error   { background: var(--danger); }
+
+/* ─── 2行ラベルボタン ──────────────────────────── */
+.btn-stacked {
+  height: auto;
+  padding: 6px 10px;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+.btn-stacked .btn-main { font-size: 11px; font-weight: 600; }
+.btn-stacked .btn-sub  { font-size: 9px; opacity: 0.75; }
+
+/* 一覧の適用ボタン */
+.fi-apply-btn {
+  height: 24px; padding: 0 8px;
+  font-size: 10px; font-weight: 600;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background .1s, color .1s;
+}
+.fi-apply-btn:hover { background: var(--accent); color: #fff; }
+
+/* ─── カスタム確認ダイアログ ──────────────────── */
+#dialog {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+}
+.dialog-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.35);
+}
+.dialog-box {
+  position: relative; z-index: 1;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 18px 18px 14px;
+  width: 240px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+}
+.dialog-title {
+  font-size: 12px; font-weight: 700;
+  margin-bottom: 5px;
+}
+.dialog-msg {
+  font-size: 11px; color: var(--text-2); line-height: 1.5;
+  margin-bottom: 14px;
+}
+.dialog-actions { display: flex; gap: 7px; justify-content: flex-end; }
+
+/* ─── Utility ──────────────────────────────────── */
+.divider { height: 1px; background: var(--border); }
+.hidden  { display: none !important; }
+.flex-1  { flex: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ヘッダー -->
+  <header>
+    <h1>合成書体プラグイン</h1>
+    <span id="hdr-sub" style="font-size:10px;color:var(--text-3)"></span>
+  </header>
+
+  <div id="main">
+
+    <!-- ローディング -->
+    <div id="view-loading">
+      <div class="spinner"></div>
+      <span>フォント読み込み中…</span>
+    </div>
+
+    <!-- ─── 一覧ビュー ─────────────────────────── -->
+    <div id="view-list">
+      <div class="list-header">
+        <span class="list-header-label">登録済み合成書体</span>
+        <button class="btn-new" id="btn-new">＋ 新規作成</button>
+      </div>
+      <div id="font-list"></div>
+    </div>
+
+    <!-- ─── エディタービュー ──────────────────── -->
+    <div id="view-editor">
+
+      <!-- 書体名称 -->
+      <div class="section">
+        <div class="section-title">書体名称</div>
+        <div class="field">
+          <input type="text" id="f-name"
+            placeholder="例：SourceHan + Inter" maxlength="60">
+        </div>
+      </div>
+
+      <!-- メイン書体 -->
+      <div class="section">
+        <div class="section-title">メイン書体（日本語・基本文字）</div>
+        <div class="field">
+          <label class="field-label">ファミリー</label>
+          <div class="fsel" id="fsel-main">
+            <input class="fsel-input" id="fi-main" placeholder="フォントを検索…" autocomplete="off">
+            <svg class="fsel-arrow" width="8" height="5" viewBox="0 0 8 5">
+              <path d="M0 0l4 5 4-5z" fill="currentColor"/>
+            </svg>
+            <div class="fsel-dropdown" id="fd-main"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">ウェイト</label>
+          <select id="fs-main"><option value="">— ファミリーを先に選択 —</option></select>
+        </div>
+      </div>
+
+      <!-- サブ書体 -->
+      <div class="sub-panel">
+        <div class="sub-panel-head">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 004 4h12"/>
+          </svg>
+          サブ書体（指定文字種に適用）
+        </div>
+        <div class="sub-panel-body">
+          <div class="field">
+            <label class="field-label">ファミリー</label>
+            <div class="fsel" id="fsel-sub">
+              <input class="fsel-input" id="fi-sub" placeholder="フォントを検索…" autocomplete="off">
+              <svg class="fsel-arrow" width="8" height="5" viewBox="0 0 8 5">
+                <path d="M0 0l4 5 4-5z" fill="currentColor"/>
+              </svg>
+              <div class="fsel-dropdown" id="fd-sub"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">ウェイト</label>
+            <select id="fs-sub"><option value="">— ファミリーを先に選択 —</option></select>
+          </div>
+          <div class="field">
+            <label class="field-label">適用する文字種</label>
+            <div class="cb-group">
+              <label class="cb-item">
+                <input type="checkbox" id="r-letters" checked>
+                <span>英字 <small style="color:var(--text-3)">(a–Z)</small></span>
+              </label>
+              <label class="cb-item">
+                <input type="checkbox" id="r-numbers" checked>
+                <span>数字 <small style="color:var(--text-3)">(0–9)</small></span>
+              </label>
+              <label class="cb-item">
+                <input type="checkbox" id="r-punct">
+                <span>約物 <small style="color:var(--text-3)">(!,. …)</small></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- プレビュー -->
+      <div class="section">
+        <div class="section-title">プレビュー</div>
+        <div class="preview-box">
+          <div class="preview-hint">※ システムフォントのみ反映されます</div>
+          <div class="preview-text">
+            <span id="preview-main">あいうえお漢字 </span><span id="preview-sub">ABCabc 012 .,!?</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-editor -->
+
+  </div><!-- /main -->
+
+  <!-- アクションバー（エディター表示時のみ） -->
+  <div id="action-bar">
+    <button class="btn btn-ghost" id="btn-back">← 戻る</button>
+    <button class="btn btn-stacked btn-primary flex-1" id="btn-apply">
+      <span class="btn-main">書体を適用</span>
+      <span class="btn-sub">選択テキストに反映・保存</span>
+    </button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- カスタム確認ダイアログ -->
+<div id="dialog" class="hidden">
+  <div class="dialog-overlay" id="dialog-overlay"></div>
+  <div class="dialog-box">
+    <div class="dialog-title" id="dialog-title">確認</div>
+    <div class="dialog-msg"  id="dialog-msg"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" id="dialog-cancel">キャンセル</button>
+      <button class="btn btn-primary" id="dialog-ok" style="background:var(--danger)">削除する</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── 状態 ─────────────────────────────────────────
+let fontFamilies = {}; // { familyName: [style, ...] }
+let savedFonts   = [];
+let editingId    = null;
+
+// ─── DOM ──────────────────────────────────────────
+const $   = id => document.getElementById(id);
+const vLoad   = $('view-loading');
+const vList   = $('view-list');
+const vEditor = $('view-editor');
+const aBar    = $('action-bar');
+const fList   = $('font-list');
+
+// ─── Toast ────────────────────────────────────────
+let _toastT;
+function toast(msg, type = '') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className   = 'show ' + type;
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => { el.className = ''; }, 2800);
+}
+
+// ─── ビュー切替 ───────────────────────────────────
+function showList() {
+  vLoad.style.display   = 'none';
+  vEditor.classList.remove('active');
+  vList.classList.add('active');
+  aBar.classList.remove('visible');
+  editingId = null;
+  renderList();
+}
+
+function showEditor(def = null) {
+  vList.classList.remove('active');
+  vEditor.classList.add('active');
+  aBar.classList.add('visible');
+
+  if (def) {
+    editingId = def.id;
+    $('f-name').value = def.name ?? '';
+    setFamily('main', def.mainFamily ?? '');
+    setTimeout(() => setStyle('main', def.mainStyle ?? ''), 0);
+    setFamily('sub',  def.subFamily  ?? '');
+    setTimeout(() => setStyle('sub',  def.subStyle  ?? ''), 0);
+    $('r-letters').checked = def.subRanges?.letters    ?? true;
+    $('r-numbers').checked = def.subRanges?.numbers    ?? true;
+    $('r-punct'  ).checked = def.subRanges?.punctuation ?? false;
+  } else {
+    editingId = null;
+    $('f-name').value = '';
+    setFamily('main', '');
+    setFamily('sub',  '');
+    $('r-letters').checked = true;
+    $('r-numbers').checked = true;
+    $('r-punct'  ).checked = false;
+  }
+  updatePreview();
+}
+
+// ─── 一覧レンダリング ─────────────────────────────
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderList() {
+  if (savedFonts.length === 0) {
+    fList.innerHTML = `
+      <div class="empty-state">
+        <p>合成書体がまだ登録されていません</p>
+        <small>「新規作成」から合成書体を作ってください</small>
+      </div>`;
+    return;
+  }
+
+  fList.innerHTML = savedFonts.map(f => {
+    const badges = [
+      f.subRanges?.letters     ? '<span class="badge badge-letter">英字</span>' : '',
+      f.subRanges?.numbers     ? '<span class="badge badge-number">数字</span>' : '',
+      f.subRanges?.punctuation ? '<span class="badge badge-punct">約物</span>'  : '',
+    ].join('');
+
+    const SVG_EDIT   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const SVG_DELETE = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>`;
+
+    return `
+    <div class="font-item" data-id="${f.id}">
+      <div class="fi-info">
+        <div class="fi-name">${esc(f.name)}</div>
+        <div class="fi-desc">${esc(f.mainFamily)} ＋ ${esc(f.subFamily)}</div>
+        <div class="fi-badges">${badges}<span class="badge badge-style">${esc(f.mainStyle)}</span></div>
+      </div>
+      <div class="fi-actions">
+        <button class="fi-apply-btn" data-act="apply"  data-id="${f.id}" title="選択中のテキストに書体を適用">▶ 適用</button>
+        <button class="ibtn"         data-act="edit"   data-id="${f.id}" title="設定を編集">${SVG_EDIT}</button>
+        <button class="ibtn ibtn-danger" data-act="delete" data-id="${f.id}" title="削除">${SVG_DELETE}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  fList.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const { act, id } = btn.dataset;
+      const font = savedFonts.find(f => f.id === id);
+      if (act === 'apply'  && font) send('apply', { def: font });
+      if (act === 'edit'   && font) showEditor(font);
+      if (act === 'delete' && font) {
+        showConfirm(
+          `「${font.name}」を削除`,
+          'この合成書体の定義を削除します。Figmaに登録済みのテキストスタイルは残ります。',
+          () => send('delete', { id })
+        );
+      }
+    });
+  });
+}
+
+// ─── フォントセレクター ───────────────────────────
+function setupFsel(prefix) {
+  const input  = $(`fi-${prefix}`);
+  const drop   = $(`fd-${prefix}`);
+  const styleSel = $(`fs-${prefix}`);
+  let filtered = [], focused = -1;
+
+  function open(q = '') {
+    const lq = q.toLowerCase();
+    filtered = Object.keys(fontFamilies)
+      .filter(f => f.toLowerCase().includes(lq))
+      .sort((a, b) => {
+        const ai = a.toLowerCase().indexOf(lq);
+        const bi = b.toLowerCase().indexOf(lq);
+        return ai !== bi ? ai - bi : a.localeCompare(b);
+      })
+      .slice(0, 60);
+
+    const cur = input.value;
+    drop.innerHTML = filtered.length
+      ? filtered.map((f, i) =>
+          `<div class="fsel-opt${f === cur ? ' selected' : ''}" data-i="${i}">${esc(f)}</div>`
+        ).join('')
+      : '<div class="fsel-opt empty">見つかりませんでした</div>';
+
+    drop.classList.add('open');
+    focused = -1;
+  }
+
+  function close() { drop.classList.remove('open'); focused = -1; }
+
+  function pick(family) {
+    input.value = family;
+    close();
+    const styles = fontFamilies[family] ?? [];
+    styleSel.innerHTML = styles.length
+      ? styles.map(s => `<option value="${s}">${s}</option>`).join('')
+      : '<option value="">スタイルなし</option>';
+
+    // 適切なデフォルトスタイルを選択
+    const pref = ['Regular', 'Medium', 'Normal', 'Book'];
+    const def  = pref.find(p => styles.includes(p)) ?? styles[0];
+    if (def) styleSel.value = def;
+
+    updatePreview();
+  }
+
+  input.addEventListener('focus', () => open(input.value));
+  input.addEventListener('input', () => open(input.value));
+
+  input.addEventListener('keydown', e => {
+    const opts = drop.querySelectorAll('.fsel-opt:not(.empty)');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focused = Math.min(focused + 1, opts.length - 1);
+      opts.forEach((el, i) => el.classList.toggle('focused', i === focused));
+      opts[focused]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focused = Math.max(focused - 1, 0);
+      opts.forEach((el, i) => el.classList.toggle('focused', i === focused));
+      opts[focused]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (focused >= 0) pick(filtered[focused]);
+    } else if (e.key === 'Escape') {
+      close(); input.blur();
+    }
+  });
+
+  drop.addEventListener('mousedown', e => {
+    const opt = e.target.closest('.fsel-opt:not(.empty)');
+    if (opt) { e.preventDefault(); pick(filtered[+opt.dataset.i]); }
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !drop.contains(e.target)) close();
+  });
+
+  styleSel.addEventListener('change', updatePreview);
+}
+
+function setFamily(prefix, family) {
+  const input    = $(`fi-${prefix}`);
+  const styleSel = $(`fs-${prefix}`);
+  input.value = family;
+  const styles = fontFamilies[family] ?? [];
+  styleSel.innerHTML = styles.length
+    ? styles.map(s => `<option value="${s}">${s}</option>`).join('')
+    : '<option value="">— ファミリーを先に選択 —</option>';
+}
+
+function setStyle(prefix, style) {
+  $(`fs-${prefix}`).value = style;
+}
+
+// ─── プレビュー更新 ───────────────────────────────
+function updatePreview() {
+  const mFam = $('fi-main').value;
+  const sFam = $('fi-sub' ).value;
+  const mSty = $('fs-main').value ?? '';
+  const sSty = $('fs-sub' ).value ?? '';
+
+  const applyFont = (el, fam, sty) => {
+    if (!fam) return;
+    el.style.fontFamily  = `"${fam}", sans-serif`;
+    el.style.fontWeight  = sty.match(/bold|black|heavy|semibold/i) ? '700' : '400';
+    el.style.fontStyle   = sty.match(/italic|oblique/i)            ? 'italic' : 'normal';
+  };
+
+  applyFont($('preview-main'), mFam, mSty);
+  applyFont($('preview-sub'),  sFam, sSty);
+
+  let sub = '';
+  if ($('r-letters').checked) sub += 'ABCabc ';
+  if ($('r-numbers').checked) sub += '0123 ';
+  if ($('r-punct'  ).checked) sub += '.,!?…（）';
+  $('preview-sub').textContent = sub || '（文字種未選択）';
+}
+
+// ─── フォームの値収集・バリデーション ─────────────
+function genId() {
+  return 'cf_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function collectDef() {
+  return {
+    id:         editingId ?? genId(),
+    name:       $('f-name' ).value.trim(),
+    mainFamily: $('fi-main').value.trim(),
+    mainStyle:  $('fs-main').value,
+    subFamily:  $('fi-sub' ).value.trim(),
+    subStyle:   $('fs-sub' ).value,
+    subRanges: {
+      letters:     $('r-letters').checked,
+      numbers:     $('r-numbers').checked,
+      punctuation: $('r-punct'  ).checked,
+    },
+  };
+}
+
+function validate(d) {
+  if (!d.name)       return '書体名称を入力してください';
+  if (!d.mainFamily) return 'メイン書体を選択してください';
+  if (!d.mainStyle)  return 'メイン書体のスタイルを選択してください';
+  if (!d.subFamily)  return 'サブ書体を選択してください';
+  if (!d.subStyle)   return 'サブ書体のスタイルを選択してください';
+  if (!d.subRanges.letters && !d.subRanges.numbers && !d.subRanges.punctuation)
+    return '適用する文字種を1つ以上選択してください';
+  return null;
+}
+
+// ─── カスタム確認ダイアログ ──────────────────────
+let _confirmCallback = null;
+function showConfirm(title, message, onOk) {
+  $('dialog-title').textContent = title;
+  $('dialog-msg').textContent   = message;
+  _confirmCallback = onOk;
+  $('dialog').classList.remove('hidden');
+}
+$('dialog-cancel').addEventListener('click', () => {
+  $('dialog').classList.add('hidden');
+  _confirmCallback = null;
+});
+$('dialog-ok').addEventListener('click', () => {
+  $('dialog').classList.add('hidden');
+  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+});
+$('dialog-overlay').addEventListener('click', () => {
+  $('dialog').classList.add('hidden');
+  _confirmCallback = null;
+});
+
+// ─── コードとの通信 ──────────────────────────────
+function send(type, payload = {}) {
+  parent.postMessage({ pluginMessage: { type, ...payload } }, '*');
+}
+
+window.onmessage = e => {
+  const msg = e.data?.pluginMessage;
+  if (!msg) return;
+  switch (msg.type) {
+    case 'ready':
+      // フォントマップ構築
+      fontFamilies = {};
+      for (const { fontName } of msg.fonts ?? []) {
+        if (!fontFamilies[fontName.family]) fontFamilies[fontName.family] = [];
+        fontFamilies[fontName.family].push(fontName.style);
+      }
+      savedFonts = msg.saved ?? [];
+      setupFsel('main');
+      setupFsel('sub');
+      showList();
+      break;
+
+    case 'saved':
+      savedFonts = msg.saved ?? [];
+      // btn-back から自動保存された場合はすでに一覧にいるので再遷移しない
+      if (!vList.classList.contains('active')) {
+        toast(msg.message ?? '保存しました', 'success');
+        showList();
+      }
+      break;
+
+    case 'applied':
+      // データを更新しつつエディターに留まる（繰り返し調整できるよう）
+      savedFonts = msg.saved ?? savedFonts;
+      toast(msg.message ?? '保存しました', 'success');
+      break;
+
+    case 'error':
+      toast(msg.message ?? 'エラーが発生しました', 'error');
+      break;
+  }
+};
+
+// ─── ボタンイベント ───────────────────────────────
+$('btn-new').addEventListener('click', () => showEditor());
+
+$('btn-back').addEventListener('click', () => {
+  const def = collectDef();
+  const err = validate(def);
+  if (!err) {
+    // ローカル状態を即時更新（Figmaへの保存はバックグラウンドで）
+    const idx = savedFonts.findIndex(f => f.id === def.id);
+    if (idx >= 0) savedFonts[idx] = def;
+    else savedFonts.push(def);
+    send('save', { def });
+  }
+  showList();  // 保存の完了を待たず即時遷移
+});
+
+$('btn-apply').addEventListener('click', () => {
+  const def = collectDef();
+  const err = validate(def);
+  if (err) { toast(err, 'error'); return; }
+  send('apply', { def });
+});
+
+['r-letters','r-numbers','r-punct'].forEach(id =>
+  $(id).addEventListener('change', updatePreview)
+);
+
+// ─── 起動 ─────────────────────────────────────────
+send('init');
+</script>
+</body>
+</html>
