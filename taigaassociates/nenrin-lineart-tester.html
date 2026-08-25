@@ -238,6 +238,7 @@
           <button id="preset-ripplesphere" class="small">波打つ球体 / Sphere</button>
           <button id="preset-cube" class="small">キューブ / Cube</button>
           <button id="preset-trusknot" class="small">トーラスノット / trusknot</button>
+          <button id="preset-mirror" class="small">ミラー / mirror</button>
         </div>
       </div>
 
@@ -358,6 +359,8 @@
     "uniform float uRingOpacityVar;",
     "uniform float uRingWobbleVar;",
     "uniform float uRingDrift;",
+    "uniform float uRot3DX;",
+    "uniform float uRot3DY;",
     "varying float vEdge;",
     "varying float vGrowth;",
     "varying float vRingOpacity;",
@@ -502,6 +505,14 @@
     "  } else {",
     "    animated += rdir * uDeformStrength * influence;",
     "  }",
+    "  float cxr3 = cos(uRot3DX), sxr3 = sin(uRot3DX);",
+    "  float ny3 = animated.y * cxr3 - shapeZ * sxr3;",
+    "  float nz3 = animated.y * sxr3 + shapeZ * cxr3;",
+    "  animated.y = ny3; shapeZ = nz3;",
+    "  float cyr3 = cos(uRot3DY), syr3 = sin(uRot3DY);",
+    "  float nx3 = animated.x * cyr3 + shapeZ * syr3;",
+    "  nz3 = -animated.x * syr3 + shapeZ * cyr3;",
+    "  animated.x = nx3; shapeZ = nz3;",
     "  vec3 pos = uTransform * vec3(animated, 1.0);",
     "  vec2 nrm = uRotMat * aNormal;",
     "  float len = length(nrm);",
@@ -606,6 +617,8 @@
   var locRingOpacityVar = gl.getUniformLocation(prog, 'uRingOpacityVar');
   var locRingWobbleVar = gl.getUniformLocation(prog, 'uRingWobbleVar');
   var locRingDrift = gl.getUniformLocation(prog, 'uRingDrift');
+  var locRot3DX = gl.getUniformLocation(prog, 'uRot3DX');
+  var locRot3DY = gl.getUniformLocation(prog, 'uRot3DY');
 
   gl.enable(gl.BLEND);
   gl.disable(gl.DEPTH_TEST);
@@ -889,7 +902,9 @@
       ringWidthVar: 0.35,
       ringOpacityVar: 0.35,
       ringWobbleVar: 0.4,
-      ringDrift: 3.5
+      ringDrift: 3.5,
+      rot3DX: 0,
+      rot3DY: 0
     };
     for (var k in overrides) d[k] = overrides[k];
     return d;
@@ -1121,6 +1136,8 @@
       gl.uniform1f(locRingOpacityVar, layer.ringOpacityVar || 0);
       gl.uniform1f(locRingWobbleVar, layer.ringWobbleVar || 0);
       gl.uniform1f(locRingDrift, layer.ringDrift || 0);
+      gl.uniform1f(locRot3DX, (layer.rot3DX || 0) * Math.PI / 180);
+      gl.uniform1f(locRot3DY, (layer.rot3DY || 0) * Math.PI / 180);
 
       // Pass 1: draw this layer's segment quads + round joints into an
       // offscreen texture with MAX blending. Color is constant across the
@@ -1283,6 +1300,10 @@
     body.appendChild(slider('自動回転速度', 'rotateSpeed', -30, 30, 0.1, layer.rotateSpeed, function(v){ layer.rotateSpeed = v; }, fmt1));
     body.appendChild(slider('螺旋の奥行き（リング毎のZ変化）', 'spiralZ', -5, 5, 0.05, layer.spiralZ, function(v){ layer.spiralZ = v; }, fmt2));
     body.appendChild(slider('奥行きオフセット', 'depthOffset', -400, 400, 1, layer.depthOffset, function(v){ layer.depthOffset = v; }, fmt0));
+    var g2b = document.createElement('div'); g2b.className = 'grid2';
+    g2b.appendChild(slider('3D回転 X軸', 'rot3DX', -180, 180, 1, layer.rot3DX, function(v){ layer.rot3DX = v; }, fmt0));
+    g2b.appendChild(slider('3D回転 Y軸', 'rot3DY', -180, 180, 1, layer.rot3DY, function(v){ layer.rot3DY = v; }, fmt0));
+    body.appendChild(g2b);
     body.appendChild(slider('ひねり（リング毎の回転角度）', 'twistPerRing', -3, 3, 0.02, layer.twistPerRing, function(v){ layer.twistPerRing = v; }, fmt2));
     body.appendChild(slider('ひねりの回転速度（Z軸を中心に常時回転）', 'twistSpeed', -60, 60, 0.5, layer.twistSpeed, function(v){ layer.twistSpeed = v; }, fmt1));
     body.appendChild(slider('膨らみ（樽型 / くびれ）', 'bulgeAmt', -0.6, 0.6, 0.01, layer.bulgeAmt, function(v){ layer.bulgeAmt = v; }, fmt2));
@@ -1706,6 +1727,12 @@
       defaultLayer({ name:'トーラスノット — 主', ringCount:70, segments:260, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:1.5, irregFreq:2.5, lineWidth:0.5, opacity:0.85, color:'#1f3a63', blend:'normal', seed:291, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, shapeMode:'torusknot', shapeMorph:1, shapeRadius:170, shapeRadius2:55, shapeTurns:1, shapeTwist:7 }),
       defaultLayer({ name:'トーラスノット — 陰影', ringCount:56, segments:240, baseRadius:45, spacing:4, rotation:6, lineWidth:0.35, opacity:0.4, color:'#7d90b8', blend:'multiply', seed:292, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, shapeMode:'torusknot', shapeMorph:1, shapeRadius:165, shapeRadius2:52, shapeTurns:1, shapeTwist:7 })
     ], { bgColor:'#f4f6fa', tiltX:12, tiltY:-6, perspective:10 });
+  });
+  document.getElementById('preset-mirror').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'ミラー — 縦（エッジ像）', ringCount:60, segments:180, baseRadius:22, spacing:3, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, scale:1.35, lineWidth:0.45, opacity:0.8, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, offsetX:55, offsetY:-55, rot3DY:88 }),
+      defaultLayer({ name:'ミラー — 横（正面像）', ringCount:60, segments:180, baseRadius:22, spacing:3, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, lineWidth:0.45, opacity:0.8, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, offsetX:-55, offsetY:55, rot3DY:0 })
+    ], { bgColor:'#fafaf7', globalScale:0.72, tiltX:14, tiltY:-8, perspective:14 });
   });
   // ---------------------------------------------------------------
   // Init
