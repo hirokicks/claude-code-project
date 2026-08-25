@@ -239,6 +239,7 @@
           <button id="preset-cube" class="small">キューブ / Cube</button>
           <button id="preset-trusknot" class="small">トーラスノット / trusknot</button>
           <button id="preset-mirror" class="small">ミラー / mirror</button>
+          <button id="preset-wave" class="small">ウェーブ / Wave</button>
         </div>
       </div>
 
@@ -273,7 +274,7 @@
     <button id="toggle-sidebar">☰</button>
     <canvas id="glcanvas"></canvas>
     <div id="topbar">
-      <div class="mark">木 TAIGA</div>
+      <div class="mark">TAIGA ASSOCIATES</div>
       <div class="meta">年輪 LINE STUDY<br><span id="statsLine">—</span></div>
     </div>
   </div>
@@ -471,7 +472,7 @@
     "      Xt = cx8 + w8 * cos(bandAngle8) * nrm8.x;",
     "      Yt = cy8 + w8 * cos(bandAngle8) * nrm8.y;",
     "      Zt = w8 * sin(bandAngle8);",
-    "    } else {",
+    "    } else if (uShapeMode == 6) {",
     "      float tk = tAlong * 6.28318530718;",
     "      float mainAngle = tk * uShapeTurns;",
     "      float tubeAngle = tk * uShapeTwist;",
@@ -485,6 +486,22 @@
     "      Xt = coreX + wk * knotDir.x;",
     "      Yt = coreY + wk * knotDir.y;",
     "      Zt = coreZ + wk * knotDir.z;",
+    "    } else {",
+    "      float tw = tAlong - 0.5;",
+    "      float xAlong = tw * uShapeHeight;",
+    "      float phase = tAlong * uShapeTurns * 6.28318530718;",
+    "      float yWave = shapeR * sin(phase);",
+    "      float dyWave = shapeR * uShapeTurns * 6.28318530718 * cos(phase);",
+    "      vec2 tanW = vec2(uShapeHeight, dyWave);",
+    "      float tlenW = length(tanW);",
+    "      if (tlenW < 0.0001) tlenW = 0.0001;",
+    "      tanW /= tlenW;",
+    "      vec2 nrmW = vec2(-tanW.y, tanW.x);",
+    "      float bandAngleW = tAlong * uShapeTwist * 3.14159265;",
+    "      float wW = (ringN - 0.5) * 2.0 * uShapeRadius2;",
+    "      Xt = xAlong + wW * cos(bandAngleW) * nrmW.x;",
+    "      Yt = yWave + wW * cos(bandAngleW) * nrmW.y;",
+    "      Zt = wW * sin(bandAngleW);",
     "    }",
     "    animated = mix(animated, vec2(Xt, Yt), uShapeMorph);",
     "    smoothPos = mix(smoothPos, vec2(Xt, Yt), uShapeMorph);",
@@ -1051,7 +1068,7 @@
     gl.uniform1f(locFocal, focal);
 
     var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
-    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4, infinity: 5, torusknot: 6 };
+    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4, infinity: 5, torusknot: 6, wave: 7 };
 
     state.layers.forEach(function(layer, idx){
       if (!layer.enabled) return;
@@ -1312,7 +1329,7 @@
     body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
 
     body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
-    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット']], function(v){ layer.shapeMode = v; }));
+    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット'],['wave','ウェーブ']], function(v){ layer.shapeMode = v; }));
     body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
     body.appendChild(slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0));
     body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
@@ -1733,6 +1750,12 @@
       defaultLayer({ name:'ミラー — 主', ringCount:70, segments:280, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, rotation:135, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:160, shapeRadius2:145, shapeTwist:1 }),
       defaultLayer({ name:'ミラー — 陰影', ringCount:56, segments:240, baseRadius:36, spacing:3.5, rotation:141, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:302, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:155, shapeRadius2:138, shapeTwist:1 })
     ], { bgColor:'#fafaf7', globalScale:1, tiltX:32, tiltY:-26, perspective:18 });
+  });
+  document.getElementById('preset-wave').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'ウェーブ — 主', ringCount:70, segments:260, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:311, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'wave', shapeMorph:1, shapeRadius:130, shapeRadius2:80, shapeTurns:1, shapeHeight:380, shapeTwist:1.5 }),
+      defaultLayer({ name:'ウェーブ — 陰影', ringCount:56, segments:220, baseRadius:36, spacing:3.5, rotation:4, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:312, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'wave', shapeMorph:1, shapeRadius:125, shapeRadius2:75, shapeTurns:1, shapeHeight:370, shapeTwist:1.5 })
+    ], { bgColor:'#fafaf7', globalScale:0.85, tiltX:20, tiltY:-24, perspective:16 });
   });
   // ---------------------------------------------------------------
   // Init
