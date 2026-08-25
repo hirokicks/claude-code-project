@@ -353,8 +353,12 @@
     "uniform float uRippleFreq;",
     "uniform float uRippleSpeed;",
     "uniform float uTwistSpeed;",
+    "uniform float uRingWidthVar;",
+    "uniform float uRingOpacityVar;",
+    "uniform float uRingWobbleVar;",
     "varying float vEdge;",
     "varying float vGrowth;",
+    "varying float vRingOpacity;",
     "float hash3(vec3 p){",
     "  return fract(sin(dot(p, vec3(127.1,311.7,74.7))) * 43758.5453123);",
     "}",
@@ -379,10 +383,17 @@
     "  return mix(nxy0,nxy1,f.z) * 2.0 - 1.0;",
     "}",
     "void main(){",
+    "  float ringHashW = fract(sin(aRing * 12.9898 + uSeedOffset.x * 78.233 + 4.7) * 43758.5453123);",
+    "  float ringHashO = fract(sin(aRing * 39.3468 + uSeedOffset.y * 11.135 + 19.19) * 24634.6345);",
+    "  float ringHashN = fract(sin(aRing * 71.2351 + uSeedOffset.x * 3.719 + uSeedOffset.y * 5.331 + 91.7) * 12945.734);",
+    "  float ringWidthMod = max(0.15, 1.0 + (ringHashW - 0.5) * 2.0 * uRingWidthVar);",
+    "  float ringOpacityMod = clamp(1.0 + (ringHashO - 0.5) * 2.0 * uRingOpacityVar, 0.15, 1.35);",
+    "  float ringWobbleMod = max(0.0, 1.0 + (ringHashN - 0.5) * 2.0 * uRingWobbleVar);",
+    "  vRingOpacity = ringOpacityMod;",
     "  float nx = aDir.x * uIrregFreq + aU * 0.37 + uSeedOffset.x;",
     "  float ny = aDir.y * uIrregFreq + aU * 0.37 + uSeedOffset.y;",
     "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
-    "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt;",
+    "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt * ringWobbleMod;",
     "  vec2 animated = aPos + aDir * wob;",
     "  vec2 smoothPos = aPos;",
     "  float ringN = clamp(aRing * uRingCountInv, 0.0, 1.0);",
@@ -478,7 +489,7 @@
     "  vec2 nrm = uRotMat * aNormal;",
     "  float len = length(nrm);",
     "  if (len > 0.00001) nrm /= len;",
-    "  vec2 extruded = pos.xy + nrm * aSide * (uLineWidthPx * 0.5);",
+    "  vec2 extruded = pos.xy + nrm * aSide * (uLineWidthPx * ringWidthMod * 0.5);",
     "  float z = shapeZ;",
     "  vec2 rel3 = extruded - uCenterPx;",
     "  float ry = rel3.y * uTiltXTrig.x - z * uTiltXTrig.y;",
@@ -501,10 +512,11 @@
     "uniform vec4 uColor;",
     "varying float vEdge;",
     "varying float vGrowth;",
+    "varying float vRingOpacity;",
     "void main(){",
     "  float d = abs(vEdge);",
     "  float alpha = 1.0 - smoothstep(0.55, 1.0, d);",
-    "  gl_FragColor = vec4(uColor.rgb, uColor.a * alpha * vGrowth);",
+    "  gl_FragColor = vec4(uColor.rgb, uColor.a * alpha * vGrowth * vRingOpacity);",
     "}"
   ].join("\n");
 
@@ -573,6 +585,9 @@
   var locRippleFreq = gl.getUniformLocation(prog, 'uRippleFreq');
   var locRippleSpeed = gl.getUniformLocation(prog, 'uRippleSpeed');
   var locTwistSpeed = gl.getUniformLocation(prog, 'uTwistSpeed');
+  var locRingWidthVar = gl.getUniformLocation(prog, 'uRingWidthVar');
+  var locRingOpacityVar = gl.getUniformLocation(prog, 'uRingOpacityVar');
+  var locRingWobbleVar = gl.getUniformLocation(prog, 'uRingWobbleVar');
 
   gl.enable(gl.BLEND);
   gl.disable(gl.DEPTH_TEST);
@@ -852,7 +867,10 @@
       rippleAmt: 0,
       rippleFreq: 4,
       rippleSpeed: 0.15,
-      twistSpeed: 0
+      twistSpeed: 0,
+      ringWidthVar: 0.35,
+      ringOpacityVar: 0.35,
+      ringWobbleVar: 0.4
     };
     for (var k in overrides) d[k] = overrides[k];
     return d;
@@ -1080,6 +1098,9 @@
       gl.uniform1f(locRippleFreq, layer.rippleFreq || 0);
       gl.uniform1f(locRippleSpeed, layer.rippleSpeed || 0);
       gl.uniform1f(locTwistSpeed, (layer.twistSpeed || 0) * Math.PI / 180);
+      gl.uniform1f(locRingWidthVar, layer.ringWidthVar || 0);
+      gl.uniform1f(locRingOpacityVar, layer.ringOpacityVar || 0);
+      gl.uniform1f(locRingWobbleVar, layer.ringWobbleVar || 0);
 
       // Pass 1: draw this layer's segment quads + round joints into an
       // offscreen texture with MAX blending. Color is constant across the
@@ -1200,6 +1221,11 @@
     body.appendChild(slider('ばらつきの周波数', 'spacingVarFreq', 0.05, 5, 0.05, layer.spacingVarFreq, function(v){ layer.spacingVarFreq = v; regen(); }, fmt2));
     body.appendChild(slider('偏心量（芯のずれ）', 'eccentricity', 0, 200, 1, layer.eccentricity, function(v){ layer.eccentricity = v; regen(); }, fmt0));
     body.appendChild(slider('偏心角度', 'eccentricityAngle', 0, 360, 1, layer.eccentricityAngle, function(v){ layer.eccentricityAngle = v; regen(); }, fmt0));
+
+    body.appendChild(el('div', 'subgroup-label', '年輪の個体差 / Ring Individuality'));
+    body.appendChild(slider('線幅のばらつき（1本ずつ）', 'ringWidthVar', 0, 1, 0.01, layer.ringWidthVar, function(v){ layer.ringWidthVar = v; }, fmt2));
+    body.appendChild(slider('濃さのばらつき（1本ずつ）', 'ringOpacityVar', 0, 1, 0.01, layer.ringOpacityVar, function(v){ layer.ringOpacityVar = v; }, fmt2));
+    body.appendChild(slider('揺らぎ幅のばらつき（1本ずつ）', 'ringWobbleVar', 0, 1.5, 0.01, layer.ringWobbleVar, function(v){ layer.ringWobbleVar = v; }, fmt2));
 
     body.appendChild(el('div', 'subgroup-label', '揺らぎ・アニメーション / Motion'));
     body.appendChild(slider('歪み量（木目の揺らぎ幅）', 'irregAmt', 0, 40, 0.5, layer.irregAmt, function(v){ layer.irregAmt = v; }, fmt1));
