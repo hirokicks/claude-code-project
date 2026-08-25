@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>太陽系 — Scroll Camera Prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --panel-bg: rgba(8, 12, 30, 0.88);
+  }
+
+  html { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif; }
+
+  /* ── Scroll driver ── */
+  #scroll-driver { height: 800vh; }
+
+  /* ── Fixed stage ── */
+  #stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* ── Camera wrap — transform target ── */
+  #bg-wrap {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+    transform-origin: center center;
+    /* NO CSS transition — JS rAF drives all motion */
+  }
+
+  /* ── bg-scene: 2× viewport, centered in bg-wrap ── */
+  #bg-scene {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background: #000;
+  }
+
+  /* Canvas fills bg-scene */
+  #space-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── SVG hotspot overlay: same size/position as bg-scene ── */
+  #hotspot-svg {
+    position: absolute;
+    left: -50%;
+    top: -50%;
+    width: 200%;
+    height: 200%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* Hotspot styles */
+  .hs-ring {
+    fill: none;
+    stroke-width: 3;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .hs-ring.active {
+    opacity: 1;
+    animation: pulse-ring 2.4s ease-in-out infinite;
+  }
+  .hs-ring-outer {
+    fill: none;
+    stroke-width: 1.5;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    stroke-dasharray: 8 6;
+  }
+  .hs-ring-outer.active {
+    opacity: 0.5;
+    animation: rotate-dash 12s linear infinite;
+  }
+  .hs-dot {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .hs-dot.active { opacity: 1; }
+  .hs-label {
+    font-size: 28px;
+    font-weight: 600;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .hs-label.active { opacity: 0.9; }
+
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(1.12); }
+  }
+  @keyframes rotate-dash {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: -200; }
+  }
+
+  /* ── Vignette ── */
+  #vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 80% at 50% 50%,
+      transparent 35%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ── Info panel ── */
+  #info-panel {
+    position: fixed;
+    right: 36px;
+    top: 50%;
+    transform: translateY(-50%) translateX(140%);
+    width: 300px;
+    background: var(--panel-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 100;
+    transition: transform 0.85s var(--ease-out-expo), opacity 0.6s ease;
+    opacity: 0;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: #fff;
+  }
+  #info-panel.visible {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+  }
+
+  .panel-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .panel-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+  }
+  .panel-title {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 6px;
+    color: #fff;
+  }
+  .panel-sub {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 14px;
+  }
+  .panel-desc {
+    font-size: 13px;
+    line-height: 1.85;
+    color: rgba(255,255,255,0.7);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 14px;
+    margin-bottom: 16px;
+  }
+  .panel-stats {
+    display: flex;
+    gap: 8px;
+  }
+  .stat-item {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .stat-label {
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Section title ── */
+  #section-title {
+    position: fixed;
+    bottom: 52px;
+    left: 50%;
+    transform: translateX(-50%) translateY(28px);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.7s ease, transform 0.7s var(--ease-out-expo);
+    z-index: 100;
+    pointer-events: none;
+  }
+  #section-title.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #section-title .en {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  #section-title .ja {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.8);
+  }
+
+  /* ── Progress nav ── */
+  #progress-nav {
+    position: fixed;
+    left: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 100;
+  }
+  .nav-dot {
+    position: relative;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: all 0.35s ease;
+  }
+  .nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    white-space: nowrap;
+    color: rgba(255,255,255,0);
+    transition: color 0.25s ease;
+  }
+  .nav-dot:hover::after { color: rgba(255,255,255,0.7); }
+  .nav-dot.active {
+    background: #fff;
+    transform: scale(1.6);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+
+  /* ── Hero ── */
+  #hero {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    pointer-events: none;
+    transition: opacity 0.9s ease;
+  }
+  #hero .h-en {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  #hero .h-ja {
+    font-size: 46px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 60px rgba(100,160,255,0.4);
+    line-height: 1.15;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+  #hero .h-sub {
+    margin-top: 22px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.08em;
+    text-align: center;
+    line-height: 1.9;
+  }
+
+  /* ── Scroll hint ── */
+  #scroll-hint {
+    position: fixed;
+    bottom: 28px;
+    right: 36px;
+    color: rgba(255,255,255,0.35);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.5s ease;
+  }
+  #scroll-hint::before {
+    content: '';
+    width: 1px; height: 44px;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4));
+    animation: drip 1.8s ease-in-out infinite;
+  }
+  @keyframes drip {
+    0%   { transform: scaleY(0) translateY(-22px); opacity: 0; }
+    40%  { transform: scaleY(1) translateY(0);     opacity: 1; }
+    100% { transform: scaleY(0) translateY(22px);  opacity: 0; }
+  }
+
+  /* ── Orbit info strip (top) ── */
+  #orbit-strip {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 30px;
+    padding: 6px 16px;
+    z-index: 100;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.1em;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  #orbit-strip.visible { opacity: 1; }
+  #orbit-dist { color: rgba(255,255,255,0.8); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ── Stage ── -->
+<div id="stage">
+
+  <!-- Camera wrap -->
+  <div id="bg-wrap">
+
+    <!-- Background scene (2× viewport) -->
+    <div id="bg-scene">
+      <canvas id="space-canvas"></canvas>
+    </div>
+
+    <!-- SVG hotspots (same size/position as bg-scene, viewBox = canvas px) -->
+    <svg id="hotspot-svg" viewBox="0 0 3200 2000" preserveAspectRatio="xMidYMid meet">
+
+      <!-- Mercury -->
+      <g id="hs-mercury">
+        <circle class="hs-ring-outer" cx="1180" cy="995" r="80"
+          stroke="#aaa"/>
+        <circle class="hs-ring" cx="1180" cy="995" r="52"
+          stroke="#cccccc"/>
+        <circle class="hs-dot" cx="1180" cy="995" r="16" fill="#ccc"/>
+        <text class="hs-label" x="1215" y="970" fill="#ccc">水星</text>
+      </g>
+
+      <!-- Venus -->
+      <g id="hs-venus">
+        <circle class="hs-ring-outer" cx="1360" cy="1005" r="90"
+          stroke="#e8c87a"/>
+        <circle class="hs-ring" cx="1360" cy="1005" r="60"
+          stroke="#e8c87a"/>
+        <circle class="hs-dot" cx="1360" cy="1005" r="20" fill="#e8c87a"/>
+        <text class="hs-label" x="1398" y="975" fill="#e8c87a">金星</text>
+      </g>
+
+      <!-- Earth -->
+      <g id="hs-earth">
+        <circle class="hs-ring-outer" cx="1550" cy="995" r="95"
+          stroke="#4fc3f7"/>
+        <circle class="hs-ring" cx="1550" cy="995" r="64"
+          stroke="#4fc3f7"/>
+        <circle class="hs-dot" cx="1550" cy="995" r="22" fill="#4fc3f7"/>
+        <text class="hs-label" x="1590" y="965" fill="#4fc3f7">地球</text>
+      </g>
+
+      <!-- Mars -->
+      <g id="hs-mars">
+        <circle class="hs-ring-outer" cx="1740" cy="1005" r="80"
+          stroke="#ef5350"/>
+        <circle class="hs-ring" cx="1740" cy="1005" r="54"
+          stroke="#ef5350"/>
+        <circle class="hs-dot" cx="1740" cy="1005" r="17" fill="#ef5350"/>
+        <text class="hs-label" x="1778" y="975" fill="#ef5350">火星</text>
+      </g>
+
+      <!-- Jupiter -->
+      <g id="hs-jupiter">
+        <circle class="hs-ring-outer" cx="2050" cy="990" r="150"
+          stroke="#d4956a"/>
+        <circle class="hs-ring" cx="2050" cy="990" r="104"
+          stroke="#d4956a"/>
+        <circle class="hs-dot" cx="2050" cy="990" r="30" fill="#d4956a"/>
+        <text class="hs-label" x="2096" y="955" fill="#d4956a">木星</text>
+      </g>
+
+      <!-- Saturn -->
+      <g id="hs-saturn">
+        <circle class="hs-ring-outer" cx="2420" cy="1010" r="170"
+          stroke="#c8b560"/>
+        <circle class="hs-ring" cx="2420" cy="1010" r="120"
+          stroke="#c8b560"/>
+        <circle class="hs-dot" cx="2420" cy="1010" r="28" fill="#c8b560"/>
+        <text class="hs-label" x="2465" y="975" fill="#c8b560">土星</text>
+      </g>
+
+    </svg>
+
+  </div><!-- /bg-wrap -->
+
+  <!-- Vignette -->
+  <div id="vignette"></div>
+
+  <!-- Hero overlay -->
+  <div id="hero">
+    <div class="h-en">Solar System — Scroll Experience</div>
+    <div class="h-ja">宇宙を旅する</div>
+    <div class="h-sub">スクロールして各惑星へ<br>カメラが宇宙を航行します</div>
+  </div>
+
+  <!-- Section title -->
+  <div id="section-title">
+    <div class="en" id="title-en"></div>
+    <div class="ja" id="title-ja"></div>
+  </div>
+
+  <!-- Progress nav -->
+  <div id="progress-nav">
+    <div class="nav-dot active" data-section="0" data-label="太陽系"></div>
+    <div class="nav-dot" data-section="1" data-label="水星"></div>
+    <div class="nav-dot" data-section="2" data-label="金星"></div>
+    <div class="nav-dot" data-section="3" data-label="地球"></div>
+    <div class="nav-dot" data-section="4" data-label="火星"></div>
+    <div class="nav-dot" data-section="5" data-label="木星"></div>
+    <div class="nav-dot" data-section="6" data-label="土星"></div>
+  </div>
+
+  <!-- Orbit strip -->
+  <div id="orbit-strip">
+    太陽からの距離 &nbsp;<span id="orbit-dist">—</span>
+  </div>
+
+  <!-- Info panel -->
+  <div id="info-panel">
+    <div class="panel-tag" id="panel-tag">
+      <span class="panel-dot" id="panel-dot"></span>
+      <span id="panel-tag-text"></span>
+    </div>
+    <div class="panel-title" id="panel-title"></div>
+    <div class="panel-sub" id="panel-sub"></div>
+    <div class="panel-desc" id="panel-desc"></div>
+    <div class="panel-stats" id="panel-stats"></div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div id="scroll-hint">SCROLL</div>
+
+</div><!-- /stage -->
+
+<!-- Scroll driver -->
+<div id="scroll-driver"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CANVAS: Solar System Renderer
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CANVAS_W = 3200;
+const CANVAS_H = 2000;
+
+// Planet data (canvas pixel coords on CANVAS_W × CANVAS_H)
+const PLANETS = {
+  sun:     { x: 1000, y: 1000, r: 100 },
+  mercury: { x: 1180, y: 995,  r:   8 },
+  venus:   { x: 1360, y: 1005, r:  14 },
+  earth:   { x: 1550, y: 995,  r:  16 },
+  mars:    { x: 1740, y: 1005, r:  11 },
+  jupiter: { x: 2050, y: 990,  r:  42 },
+  saturn:  { x: 2420, y: 1010, r:  33 },
+};
+
+function initCanvas() {
+  const canvas = document.getElementById('space-canvas');
+  canvas.width  = CANVAS_W;
+  canvas.height = CANVAS_H;
+  const ctx = canvas.getContext('2d');
+  drawSpace(ctx);
+}
+
+/* ── Seeded PRNG (Mulberry32) ── */
+function makePRNG(seed) {
+  let s = seed;
+  return () => {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function drawSpace(ctx) {
+  const W = CANVAS_W, H = CANVAS_H;
+  const rand = makePRNG(42);
+
+  // ── 1. Deep space background ──
+  const bg = ctx.createRadialGradient(W*0.4, H*0.5, 0, W*0.5, H*0.5, W*0.7);
+  bg.addColorStop(0,   '#0a0d1f');
+  bg.addColorStop(0.5, '#050810');
+  bg.addColorStop(1,   '#000000');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 2. Nebula / galactic clouds ──
+  const nebulas = [
+    { x: W*0.18, y: H*0.28, rx: W*0.25, ry: H*0.30, color: 'rgba(60,30,120,0.07)' },
+    { x: W*0.72, y: H*0.60, rx: W*0.30, ry: H*0.28, color: 'rgba(20,60,120,0.06)' },
+    { x: W*0.45, y: H*0.75, rx: W*0.28, ry: H*0.22, color: 'rgba(80,20,80,0.05)'  },
+    { x: W*0.85, y: H*0.25, rx: W*0.20, ry: H*0.28, color: 'rgba(10,80,100,0.06)' },
+  ];
+  nebulas.forEach(n => {
+    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(n.rx, n.ry));
+    g.addColorStop(0,   n.color);
+    g.addColorStop(0.6, n.color.replace(/[\d.]+\)$/, '0.02)'));
+    g.addColorStop(1,   'transparent');
+    ctx.save();
+    ctx.scale(1, n.ry / n.rx);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y * (n.rx/n.ry), n.rx, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // ── 3. Stars ──
+  // Category: [count, minR, maxR, minAlpha, maxAlpha]
+  const starCats = [
+    [1600, 0.4, 0.8,  0.25, 0.65],
+    [ 350, 0.8, 1.4,  0.50, 0.90],
+    [  60, 1.4, 2.2,  0.75, 1.00],
+    [  12, 2.2, 3.0,  0.90, 1.00],
+  ];
+  starCats.forEach(([count, rMin, rMax, aMin, aMax]) => {
+    for (let i = 0; i < count; i++) {
+      const sx = rand() * W;
+      const sy = rand() * H;
+      const sr = rMin + rand() * (rMax - rMin);
+      const sa = aMin + rand() * (aMax - aMin);
+      const hue = rand() < 0.15 ? (rand() < 0.5 ? 210 : 30) : 0; // some blue/orange tint
+      const sat = hue ? '60%' : '0%';
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${hue},${sat},100%,${sa})`;
+      ctx.fill();
+    }
+  });
+
+  // ── 4. Orbit rings ──
+  const SUN = PLANETS.sun;
+  const orbitPlanets = ['mercury','venus','earth','mars','jupiter','saturn'];
+  orbitPlanets.forEach(name => {
+    const p = PLANETS[name];
+    const r = Math.hypot(p.x - SUN.x, p.y - SUN.y);
+    ctx.beginPath();
+    ctx.arc(SUN.x, SUN.y, r, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.055)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // ── 5. Asteroid belt ──
+  const beltInner = Math.hypot(PLANETS.mars.x    - SUN.x, 0) + 70;
+  const beltOuter = Math.hypot(PLANETS.jupiter.x - SUN.x, 0) - 80;
+  const astRand = makePRNG(999);
+  for (let i = 0; i < 280; i++) {
+    const angle = astRand() * Math.PI * 2;
+    const dist  = beltInner + astRand() * (beltOuter - beltInner);
+    const bx = SUN.x + Math.cos(angle) * dist;
+    const by = SUN.y + Math.sin(angle) * dist;
+    const br = 0.8 + astRand() * 2.0;
+    const ba = 0.2 + astRand() * 0.5;
+    ctx.beginPath();
+    ctx.arc(bx, by, br, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(180,170,160,${ba})`;
+    ctx.fill();
+  }
+
+  // ── 6. Sun ──
+  ;(function drawSun() {
+    const { x, y, r } = SUN;
+    // Corona glow layers
+    [[r*8, 0.02], [r*5, 0.05], [r*3.2, 0.10], [r*2, 0.20]].forEach(([gr, ga]) => {
+      const g = ctx.createRadialGradient(x, y, r*0.5, x, y, gr);
+      g.addColorStop(0, `rgba(255,220,100,${ga})`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, gr, 0, Math.PI*2);
+      ctx.fill();
+    });
+    // Corona rays (subtle)
+    ctx.save();
+    for (let i = 0; i < 12; i++) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(i * Math.PI / 6);
+      const rg = ctx.createLinearGradient(0, 0, r*6, 0);
+      rg.addColorStop(0,   'rgba(255,200,80,0.08)');
+      rg.addColorStop(0.4, 'rgba(255,180,60,0.03)');
+      rg.addColorStop(1,   'transparent');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.moveTo(r*0.9, -r*0.12);
+      ctx.lineTo(r*6,   0);
+      ctx.lineTo(r*0.9, +r*0.12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+    // Main sphere
+    const sg = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.05, x, y, r);
+    sg.addColorStop(0,   '#fff8e0');
+    sg.addColorStop(0.25,'#ffd966');
+    sg.addColorStop(0.6, '#ff9900');
+    sg.addColorStop(0.85,'#e05500');
+    sg.addColorStop(1,   '#7a1a00');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = sg;
+    ctx.fill();
+    // Surface shimmer
+    for (let i = 0; i < 6; i++) {
+      const sx = x + (rand()*2-1)*r*0.6;
+      const sy = y + (rand()*2-1)*r*0.6;
+      const sr2 = r*0.08 + rand()*r*0.15;
+      const flg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr2);
+      flg.addColorStop(0, 'rgba(255,250,220,0.18)');
+      flg.addColorStop(1, 'transparent');
+      ctx.fillStyle = flg;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr2, 0, Math.PI*2);
+      ctx.fill();
+    }
+  })();
+
+  // ── 7. Planets ──
+  function drawPlanet(name, drawFn) {
+    const p = PLANETS[name];
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    drawFn(ctx, p.r);
+    ctx.restore();
+  }
+
+  // Mercury
+  drawPlanet('mercury', (c, r) => {
+    const g = c.createRadialGradient(-r*0.3,-r*0.3, r*0.05, 0, 0, r);
+    g.addColorStop(0,   '#d0cece');
+    g.addColorStop(0.5, '#9e9e9e');
+    g.addColorStop(1,   '#5a5a5a');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle = g; c.fill();
+    // craters
+    [[r*0.3, r*0.1, r*0.12],[-r*0.2, r*0.2, r*0.08],[-r*0.3,-r*0.2,r*0.06]].forEach(([cx,cy,cr]) => {
+      c.beginPath(); c.arc(cx,cy,cr,0,Math.PI*2);
+      c.strokeStyle='rgba(60,60,60,0.5)'; c.lineWidth=1; c.stroke();
+    });
+  });
+
+  // Venus
+  drawPlanet('venus', (c, r) => {
+    const g = c.createRadialGradient(-r*0.3,-r*0.3, r*0.05, 0, 0, r);
+    g.addColorStop(0,   '#fff5d0');
+    g.addColorStop(0.4, '#e8c87a');
+    g.addColorStop(0.8, '#b8860b');
+    g.addColorStop(1,   '#7a5000');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle = g; c.fill();
+    // cloud bands
+    for (let i = -3; i <= 3; i++) {
+      c.save();
+      c.clip();
+      c.beginPath();
+      c.ellipse(0, i*r*0.25, r*1.0, r*0.08, 0, 0, Math.PI*2);
+      c.fillStyle = 'rgba(255,230,150,0.12)';
+      c.fill();
+      c.restore();
+    }
+  });
+
+  // Earth
+  drawPlanet('earth', (c, r) => {
+    // Ocean
+    const g = c.createRadialGradient(-r*0.3,-r*0.3, r*0.05, 0, 0, r);
+    g.addColorStop(0,   '#7adcff');
+    g.addColorStop(0.5, '#1e88e5');
+    g.addColorStop(1,   '#0a3a6e');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fillStyle = g; c.fill();
+    // Continents (rough blobs)
+    c.save(); c.clip();
+    const lands = [
+      {x:-r*0.1, y:-r*0.2, rx:r*0.45, ry:r*0.35, rot: 0.3},
+      {x: r*0.3, y: r*0.1,  rx:r*0.25, ry:r*0.45, rot:-0.4},
+      {x:-r*0.5, y: r*0.2,  rx:r*0.18, ry:r*0.20, rot: 0.1},
+    ];
+    lands.forEach(l => {
+      c.save();
+      c.translate(l.x, l.y); c.rotate(l.rot);
+      c.beginPath(); c.ellipse(0, 0, l.rx, l.ry, 0, 0, Math.PI*2);
+      c.fillStyle = 'rgba(56,142,60,0.75)'; c.fill();
+      c.restore();
+    });
+    // Polar caps
+    c.beginPath(); c.ellipse(0, -r*0.85, r*0.5, r*0.22, 0, 0, Math.PI*2);
+    c.fillStyle = 'rgba(240,248,255,0.7)'; c.fill();
+    c.beginPath(); c.ellipse(0,  r*0.88, r*0.35, r*0.15, 0, 0, Math.PI*2);
+    c.fillStyle = 'rgba(220,235,255,0.6)'; c.fill();
+    // Cloud wisps
+    c.globalAlpha = 0.35;
+    [{x:-r*0.2,y:-r*0.1,w:r*0.7,h:r*0.1},{x:r*0.1,y:r*0.3,w:r*0.55,h:r*0.08}].forEach(cl => {
+      c.beginPath(); c.ellipse(cl.x, cl.y, cl.w, cl.h, 0.3, 0, Math.PI*2);
+      c.fillStyle='#fff'; c.fill();
+    });
+    c.restore();
+    // Atmosphere rim
+    const atm = c.createRadialGradient(0,0,r*0.85, 0,0,r*1.25);
+    atm.addColorStop(0,   'rgba(100,180,255,0.18)');
+    atm.addColorStop(0.6, 'rgba(60,130,220,0.06)');
+    atm.addColorStop(1,   'transparent');
+    c.beginPath(); c.arc(0,0,r*1.25,0,Math.PI*2);
+    c.fillStyle=atm; c.fill();
+  });
+
+  // Mars
+  drawPlanet('mars', (c, r) => {
+    const g = c.createRadialGradient(-r*0.3,-r*0.3, r*0.05, 0, 0, r);
+    g.addColorStop(0,   '#ff7043');
+    g.addColorStop(0.5, '#c62828');
+    g.addColorStop(1,   '#7f0000');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle = g; c.fill();
+    c.save(); c.clip();
+    // Surface feature — Valles Marineris
+    c.beginPath(); c.ellipse(r*0.1, r*0.05, r*0.6, r*0.06, -0.2, 0, Math.PI*2);
+    c.fillStyle='rgba(100,0,0,0.3)'; c.fill();
+    // Polar cap
+    c.beginPath(); c.ellipse(0, -r*0.82, r*0.4, r*0.18, 0, 0, Math.PI*2);
+    c.fillStyle='rgba(255,245,230,0.65)'; c.fill();
+    c.restore();
+  });
+
+  // Jupiter
+  drawPlanet('jupiter', (c, r) => {
+    const base = c.createRadialGradient(-r*0.25,-r*0.25, r*0.1, 0, 0, r);
+    base.addColorStop(0,   '#f5deb3');
+    base.addColorStop(0.6, '#d2954a');
+    base.addColorStop(1,   '#9e5a1e');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle=base; c.fill();
+    // Bands
+    c.save(); c.clip();
+    const bands = [
+      {y:-r*0.72, h:r*0.18, color:'rgba(160,80,30,0.40)'},
+      {y:-r*0.48, h:r*0.14, color:'rgba(220,170,90,0.30)'},
+      {y:-r*0.28, h:r*0.20, color:'rgba(140,60,20,0.38)'},
+      {y: r*0.02, h:r*0.15, color:'rgba(200,130,60,0.28)'},
+      {y: r*0.26, h:r*0.20, color:'rgba(130,55,15,0.36)'},
+      {y: r*0.52, h:r*0.14, color:'rgba(215,165,80,0.28)'},
+      {y: r*0.72, h:r*0.18, color:'rgba(150,70,25,0.38)'},
+    ];
+    bands.forEach(b => {
+      c.beginPath();
+      c.ellipse(0, b.y + b.h*0.5, r, b.h*0.5, 0, 0, Math.PI*2);
+      c.fillStyle=b.color; c.fill();
+    });
+    // Great Red Spot
+    c.save();
+    c.translate(r*0.3, r*0.28);
+    c.scale(1, 0.55);
+    const grs = c.createRadialGradient(0,0,0, 0,0,r*0.22);
+    grs.addColorStop(0,   'rgba(180,40,20,0.7)');
+    grs.addColorStop(0.6, 'rgba(160,50,10,0.4)');
+    grs.addColorStop(1,   'transparent');
+    c.beginPath(); c.arc(0,0,r*0.22,0,Math.PI*2);
+    c.fillStyle=grs; c.fill();
+    c.restore();
+    c.restore();
+    // Limb darkening
+    const ld = c.createRadialGradient(0,0,r*0.5, 0,0,r);
+    ld.addColorStop(0.7,'transparent');
+    ld.addColorStop(1,'rgba(0,0,0,0.35)');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle=ld; c.fill();
+  });
+
+  // Saturn
+  drawPlanet('saturn', (c, r) => {
+    // Rings (behind planet, lower half)
+    function drawRings(clip) {
+      c.save();
+      c.scale(1, 0.28);
+      const rings = [
+        { rIn: r*1.25, rOut: r*1.55, color: 'rgba(210,195,140,0.55)' },
+        { rIn: r*1.58, rOut: r*1.82, color: 'rgba(200,185,120,0.40)' },
+        { rIn: r*1.86, rOut: r*2.10, color: 'rgba(190,175,105,0.30)' },
+      ];
+      rings.forEach(rg => {
+        c.beginPath();
+        c.arc(0,0,rg.rOut,0,Math.PI*2);
+        c.arc(0,0,rg.rIn, 0,Math.PI*2,true);
+        c.fillStyle = rg.color;
+        if (clip) { c.save(); c.clip(); } // clip to upper/lower half separately
+        c.fill();
+        if (clip) c.restore();
+      });
+      c.restore();
+    }
+    // Back rings
+    drawRings(false);
+
+    // Planet body
+    const g = c.createRadialGradient(-r*0.25,-r*0.3,r*0.05, 0,0,r);
+    g.addColorStop(0,   '#f0e0a0');
+    g.addColorStop(0.5, '#c8a84b');
+    g.addColorStop(1,   '#7a5a10');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle=g; c.fill();
+
+    c.save(); c.clip();
+    // Subtle bands
+    [-0.5,-0.2,0.2,0.5].forEach(yf => {
+      c.beginPath(); c.ellipse(0,r*yf,r,r*0.06,0,0,Math.PI*2);
+      c.fillStyle='rgba(160,120,30,0.15)'; c.fill();
+    });
+    c.restore();
+
+    // Limb darkening
+    const ld = c.createRadialGradient(0,0,r*0.5,0,0,r);
+    ld.addColorStop(0.7,'transparent');
+    ld.addColorStop(1,'rgba(0,0,0,0.3)');
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2);
+    c.fillStyle=ld; c.fill();
+
+    // Front rings (over planet)
+    c.save();
+    c.scale(1, 0.28);
+    c.beginPath(); c.arc(0,0,r*2.1,0,Math.PI*2);
+    c.arc(0,0,r*1.25,0,Math.PI*2,true);
+    c.clip();
+    // Only upper half visible in front
+    c.beginPath(); c.rect(-r*3, -r*2.2, r*6, r*2.2);
+    c.clip();
+    [[r*1.25,r*1.55,'rgba(210,195,140,0.5)'],[r*1.58,r*1.82,'rgba(200,185,120,0.35)']].forEach(([ri,ro,col]) => {
+      c.beginPath(); c.arc(0,0,ro,0,Math.PI*2); c.arc(0,0,ri,0,Math.PI*2,true);
+      c.fillStyle=col; c.fill();
+    });
+    c.restore();
+
+    // Ring shadow on planet
+    c.save(); c.clip();
+    const rs = c.createLinearGradient(0, -r*0.28, 0, r*0.1);
+    rs.addColorStop(0, 'rgba(80,60,10,0.25)');
+    rs.addColorStop(1, 'transparent');
+    c.fillStyle=rs; c.fillRect(-r,-r*0.28,r*2,r*0.38);
+    c.restore();
+  });
+
+  // ── 8. Planet glow ──
+  Object.entries(PLANETS).forEach(([name, p]) => {
+    if (name === 'sun') return;
+    const glowColors = {
+      mercury: 'rgba(200,200,200,',
+      venus:   'rgba(255,220,100,',
+      earth:   'rgba(60,160,255,',
+      mars:    'rgba(220,80,50,',
+      jupiter: 'rgba(210,150,80,',
+      saturn:  'rgba(200,180,80,',
+    };
+    const gc = glowColors[name];
+    const glow = ctx.createRadialGradient(p.x, p.y, p.r*0.5, p.x, p.y, p.r*3.5);
+    glow.addColorStop(0, gc + '0.12)');
+    glow.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = glow;
+    ctx.fill();
+  });
+
+  // ── 9. Earth's Moon ──
+  ;(function drawMoon() {
+    const e = PLANETS.earth;
+    const moonX = e.x + e.r * 2.8;
+    const moonY = e.y - e.r * 1.6;
+    const mr = 4.5;
+    const g = ctx.createRadialGradient(moonX-mr*0.3, moonY-mr*0.3, mr*0.05, moonX, moonY, mr);
+    g.addColorStop(0, '#d0d0d0');
+    g.addColorStop(1, '#888');
+    ctx.beginPath(); ctx.arc(moonX, moonY, mr, 0, Math.PI*2);
+    ctx.fillStyle = g; ctx.fill();
+  })();
+
+  // ── 10. Subtle Milky Way band ──
+  ctx.save();
+  ctx.translate(W*0.5, H*0.5);
+  ctx.rotate(-0.35);
+  const mw = ctx.createLinearGradient(-W, 0, W, 0);
+  mw.addColorStop(0,   'transparent');
+  mw.addColorStop(0.35,'rgba(160,160,220,0.03)');
+  mw.addColorStop(0.5, 'rgba(180,180,240,0.05)');
+  mw.addColorStop(0.65,'rgba(160,160,220,0.03)');
+  mw.addColorStop(1,   'transparent');
+  ctx.fillStyle = mw;
+  ctx.fillRect(-W, -H*0.18, W*2, H*0.36);
+  ctx.restore();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SECTIONS: Camera targets + UI data
+//  Camera formula: tx = -scale * (2 * pctX - 100)
+//  where pctX = (canvasX / CANVAS_W) * 100
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function cam(cx, cy, scale) {
+  const px = (cx / CANVAS_W) * 100;
+  const py = (cy / CANVAS_H) * 100;
+  return {
+    x:     -scale * (2 * px - 100),
+    y:     -scale * (2 * py - 100),
+    scale,
+  };
+}
+
+const P = PLANETS;
+
+const sections = [
+  {
+    id: 'intro',
+    camera: cam(1630, 1000, 0.65),   // overview: center between Sun and Jupiter
+    area: null,
+    titleEn: 'SOLAR SYSTEM',
+    titleJa: '太陽系',
+    orbitDist: '—',
+    panel: null,
+  },
+  {
+    id: 'mercury',
+    camera: cam(P.mercury.x, P.mercury.y, 5.5),
+    area: 'hs-mercury',
+    titleEn: 'MERCURY',
+    titleJa: '水星',
+    orbitDist: '0.39 AU',
+    panel: {
+      tag: 'PLANET 01 / MERCURY',
+      tagColor: 'rgba(160,160,160,0.2)',
+      tagTextColor: '#ccc',
+      dotColor: '#aaa',
+      title: '水星',
+      sub: '最も太陽に近い惑星',
+      desc: '太陽系最小の惑星。昼夜の温度差は約620℃に達し、大気がほぼ存在しないため熱を保てない。表面はクレーターだらけの荒涼とした世界。',
+      stats: [
+        { num: '4,879km', label: '直径' },
+        { num: '88日',    label: '公転周期' },
+        { num: '0個',     label: '衛星数' },
+      ],
+    },
+  },
+  {
+    id: 'venus',
+    camera: cam(P.venus.x, P.venus.y, 4.2),
+    area: 'hs-venus',
+    titleEn: 'VENUS',
+    titleJa: '金星',
+    orbitDist: '0.72 AU',
+    panel: {
+      tag: 'PLANET 02 / VENUS',
+      tagColor: 'rgba(232,200,122,0.2)',
+      tagTextColor: '#e8c87a',
+      dotColor: '#e8c87a',
+      title: '金星',
+      sub: '地球の双子と呼ばれる惑星',
+      desc: '濃密な二酸化炭素大気による温室効果で表面温度は約465℃。太陽系で最も熱い惑星。夜空では最も明るく輝く「宵の明星」。',
+      stats: [
+        { num: '12,104km', label: '直径' },
+        { num: '225日',    label: '公転周期' },
+        { num: '0個',      label: '衛星数' },
+      ],
+    },
+  },
+  {
+    id: 'earth',
+    camera: cam(P.earth.x, P.earth.y, 4.2),
+    area: 'hs-earth',
+    titleEn: 'EARTH',
+    titleJa: '地球',
+    orbitDist: '1.00 AU',
+    panel: {
+      tag: 'PLANET 03 / EARTH',
+      tagColor: 'rgba(79,195,247,0.15)',
+      tagTextColor: '#4fc3f7',
+      dotColor: '#4fc3f7',
+      title: '地球',
+      sub: '生命が宿る、青い星',
+      desc: '太陽系で唯一、生命が存在する惑星。表面の71%が海で覆われ、豊かな大気と液体の水が生命を育む。月という大型の衛星を持つ。',
+      stats: [
+        { num: '12,742km', label: '直径' },
+        { num: '365.25日', label: '公転周期' },
+        { num: '1個',      label: '衛星数' },
+      ],
+    },
+  },
+  {
+    id: 'mars',
+    camera: cam(P.mars.x, P.mars.y, 4.2),
+    area: 'hs-mars',
+    titleEn: 'MARS',
+    titleJa: '火星',
+    orbitDist: '1.52 AU',
+    panel: {
+      tag: 'PLANET 04 / MARS',
+      tagColor: 'rgba(239,83,80,0.15)',
+      tagTextColor: '#ef5350',
+      dotColor: '#ef5350',
+      title: '火星',
+      sub: '人類が目指す、赤い惑星',
+      desc: '赤錆（酸化鉄）に覆われた地表が特徴。太陽系最大の火山「オリンポス山」と深さ8kmの谷「マリネリス峡谷」を持つ。移住候補として注目される。',
+      stats: [
+        { num: '6,779km', label: '直径' },
+        { num: '687日',   label: '公転周期' },
+        { num: '2個',     label: '衛星数' },
+      ],
+    },
+  },
+  {
+    id: 'jupiter',
+    camera: cam(P.jupiter.x, P.jupiter.y, 2.2),
+    area: 'hs-jupiter',
+    titleEn: 'JUPITER',
+    titleJa: '木星',
+    orbitDist: '5.20 AU',
+    panel: {
+      tag: 'PLANET 05 / JUPITER',
+      tagColor: 'rgba(212,149,106,0.15)',
+      tagTextColor: '#d4956a',
+      dotColor: '#d4956a',
+      title: '木星',
+      sub: '太陽系最大の惑星',
+      desc: '地球の1,300倍以上の体積を持つガス惑星。300年以上続く大赤班（巨大嵐）が特徴。95個以上の衛星を持ち、太陽系最大の嵐が渦巻く。',
+      stats: [
+        { num: '139,820km', label: '直径' },
+        { num: '12年',      label: '公転周期' },
+        { num: '95個',      label: '衛星数' },
+      ],
+    },
+  },
+  {
+    id: 'saturn',
+    camera: cam(P.saturn.x, P.saturn.y, 1.9),
+    area: 'hs-saturn',
+    titleEn: 'SATURN',
+    titleJa: '土星',
+    orbitDist: '9.58 AU',
+    panel: {
+      tag: 'PLANET 06 / SATURN',
+      tagColor: 'rgba(200,181,96,0.15)',
+      tagTextColor: '#c8b560',
+      dotColor: '#c8b560',
+      title: '土星',
+      sub: '壮大なリングをまとう惑星',
+      desc: '太陽系で最も美しい惑星と称される。無数の氷と岩石片からなるリングは幅27万kmに及ぶ。密度が非常に低く、水に浮くほど軽い惑星。',
+      stats: [
+        { num: '116,460km', label: '直径' },
+        { num: '29年',      label: '公転周期' },
+        { num: '146個',     label: '衛星数' },
+      ],
+    },
+  },
+];
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CAMERA ENGINE: rAF lerp loop
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LERP = 0.07;   // smoothness factor
+
+let targetCam  = { ...sections[0].camera };
+let currentCam = { ...sections[0].camera };
+let rawProgress = 0;         // 0 … sections.length-1
+let currentSectionIdx = 0;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function smoothstep(t) {
+  const c = Math.max(0, Math.min(1, t));
+  return c * c * (3 - 2 * c);
+}
+
+function calcTargetCamera(raw) {
+  const maxIdx = sections.length - 1;
+  const clamped = Math.max(0, Math.min(maxIdx, raw));
+  const fromIdx = Math.min(Math.floor(clamped), maxIdx - 1);
+  const toIdx   = fromIdx + 1;
+  const t       = smoothstep(clamped - fromIdx);
+  const A = sections[fromIdx].camera;
+  const B = sections[toIdx].camera;
+  return {
+    x:     lerp(A.x,     B.x,     t),
+    y:     lerp(A.y,     B.y,     t),
+    scale: lerp(A.scale, B.scale, t),
+  };
+}
+
+// ── DOM refs ──
+const bgWrap     = document.getElementById('bg-wrap');
+const hero       = document.getElementById('hero');
+const infoPanel  = document.getElementById('info-panel');
+const secTitle   = document.getElementById('section-title');
+const titleEnEl  = document.getElementById('title-en');
+const titleJaEl  = document.getElementById('title-ja');
+const scrollHint = document.getElementById('scroll-hint');
+const navDots    = document.querySelectorAll('.nav-dot');
+const orbitStrip = document.getElementById('orbit-strip');
+const orbitDist  = document.getElementById('orbit-dist');
+const scrollDrv  = document.getElementById('scroll-driver');
+
+const panelTag      = document.getElementById('panel-tag-text');
+const panelDot      = document.getElementById('panel-dot');
+const panelTitle    = document.getElementById('panel-title');
+const panelSub      = document.getElementById('panel-sub');
+const panelDesc     = document.getElementById('panel-desc');
+const panelStats    = document.getElementById('panel-stats');
+
+// ── Hotspot toggle ──
+const ALL_AREAS = ['hs-mercury','hs-venus','hs-earth','hs-mars','hs-jupiter','hs-saturn'];
+function setActiveArea(id) {
+  ALL_AREAS.forEach(a => {
+    document.getElementById(a)?.querySelectorAll('.hs-ring,.hs-ring-outer,.hs-dot,.hs-label')
+      .forEach(el => el.classList.remove('active'));
+  });
+  if (id) {
+    document.getElementById(id)?.querySelectorAll('.hs-ring,.hs-ring-outer,.hs-dot,.hs-label')
+      .forEach(el => el.classList.add('active'));
+  }
+}
+
+// ── Panel update ──
+function updatePanel(s) {
+  if (!s.panel) {
+    infoPanel.classList.remove('visible');
+    return;
+  }
+  const p = s.panel;
+  panelTag.textContent   = p.tag;
+  panelDot.style.background = p.dotColor;
+  document.getElementById('panel-tag').style.background = p.tagColor;
+  document.getElementById('panel-tag').style.color      = p.tagTextColor;
+  panelTitle.textContent = p.title;
+  panelSub.textContent   = p.sub;
+  panelDesc.textContent  = p.desc;
+  panelStats.innerHTML   = p.stats.map(st =>
+    `<div class="stat-item"><div class="stat-num">${st.num}</div><div class="stat-label">${st.label}</div></div>`
+  ).join('');
+  requestAnimationFrame(() => infoPanel.classList.add('visible'));
+}
+
+// ── Section UI update ──
+function onSectionChange(idx) {
+  currentSectionIdx = idx;
+  const s = sections[idx];
+
+  hero.style.opacity       = idx === 0 ? '1' : '0';
+  hero.style.pointerEvents = idx === 0 ? 'auto' : 'none';
+
+  scrollHint.style.opacity = idx === sections.length - 1 ? '0' : '1';
+
+  setActiveArea(s.area);
+
+  infoPanel.classList.remove('visible');
+  setTimeout(() => updatePanel(s), 380);
+
+  secTitle.classList.remove('visible');
+  titleEnEl.textContent = s.titleEn;
+  titleJaEl.textContent = s.titleJa;
+  if (s.titleJa) setTimeout(() => secTitle.classList.add('visible'), 300);
+
+  navDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
+  orbitDist.textContent = s.orbitDist || '—';
+  if (idx > 0) orbitStrip.classList.add('visible');
+  else         orbitStrip.classList.remove('visible');
+}
+
+// ── Scroll → rawProgress ──
+window.addEventListener('scroll', () => {
+  const max = scrollDrv.offsetHeight - window.innerHeight;
+  rawProgress = max > 0
+    ? (window.scrollY / max) * (sections.length - 1)
+    : 0;
+}, { passive: true });
+
+// ── rAF tick ──
+function tick() {
+  targetCam = calcTargetCamera(rawProgress);
+
+  currentCam.x     = lerp(currentCam.x,     targetCam.x,     LERP);
+  currentCam.y     = lerp(currentCam.y,     targetCam.y,     LERP);
+  currentCam.scale = lerp(currentCam.scale, targetCam.scale, LERP);
+
+  bgWrap.style.transform =
+    `translate(${currentCam.x}%, ${currentCam.y}%) scale(${currentCam.scale})`;
+
+  const newIdx = Math.min(sections.length - 1, Math.round(rawProgress));
+  if (newIdx !== currentSectionIdx) onSectionChange(newIdx);
+
+  requestAnimationFrame(tick);
+}
+
+// ── Nav dot click ──
+navDots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const idx = parseInt(dot.dataset.section, 10);
+    const max = scrollDrv.offsetHeight - window.innerHeight;
+    window.scrollTo({ top: (idx / (sections.length - 1)) * max, behavior: 'smooth' });
+  });
+});
+
+// ── Init ──
+initCanvas();
+onSectionChange(0);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
