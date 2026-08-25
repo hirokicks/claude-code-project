@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meridian — Non-Alcoholic Wine for the Considered Lunch</title>
+  <meta name="description" content="Three wines. Zero alcohol. One hour that actually recharges you.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Design tokens ─── */
+    :root {
+      --bg:          #F8F5F0;
+      --bg-alt:      #F0EDE7;
+      --bg-dark:     #1A1A18;
+      --ink:         #1A1A1A;
+      --ink-60:      rgba(26,26,26,0.6);
+      --ink-35:      rgba(26,26,26,0.35);
+      --rule:        #E0DDD7;
+      --rouge:       #8B1A2F;
+      --rouge-mid:   #B52240;
+      --rouge-light: #F5E8EB;
+      --blanc:       #C9A84C;
+      --blanc-deep:  #9C7A28;
+      --blanc-light: #FAF5E8;
+      --rose:        #D4788A;
+      --rose-deep:   #A8455A;
+      --rose-light:  #FBF0F2;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans:  'DM Sans', system-ui, sans-serif;
+      --max:   1280px;
+      --pad:   2.5rem;
+    }
+
+    /* ─── Reset ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    img, svg { display: block; }
+    a { color: inherit; }
+
+    /* ─── Grain overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 900;
+      opacity: 0.038;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* ─── Typography helpers ─── */
+    .label {
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .label--light { color: rgba(248,245,240,0.38); }
+
+    .label-rule {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .label-rule::before {
+      content: attr(data-num);
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 300;
+      color: rgba(26,26,26,0.22);
+    }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+      font-weight: 300;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+    }
+    h2 em { font-style: italic; }
+    h3 {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      font-weight: 400;
+      line-height: 1.25;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.95rem 2.1rem;
+      transition: background 0.25s, color 0.25s, transform 0.2s, border-color 0.25s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn svg { flex-shrink: 0; transition: transform 0.2s; }
+    .btn:hover svg { transform: translateX(3px); }
+
+    .btn-dark {
+      background: var(--ink);
+      color: var(--bg);
+    }
+    .btn-dark:hover {
+      background: var(--blanc);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--rule);
+    }
+    .btn-outline:hover {
+      border-color: var(--ink);
+      background: rgba(26,26,26,0.04);
+    }
+
+    .btn-ghost {
+      padding: 0;
+      font-size: 0.76rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: gap 0.2s;
+    }
+    .btn-ghost:hover { gap: 0.8rem; }
+
+    /* ─── NAV ─── */
+    #nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1.2rem var(--pad);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
+      border-bottom: 1px solid transparent;
+    }
+    #nav.scrolled {
+      background: rgba(248,245,240,0.9);
+      border-color: var(--rule);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .nav-brand {
+      font-family: var(--serif);
+      font-size: 1.05rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .nav-links {
+      display: flex;
+      gap: 2.25rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 8rem var(--pad) 4rem;
+    }
+
+    /* Animated blobs */
+    .hero-bg { position: absolute; inset: 0; z-index: 0; }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.24;
+    }
+    .blob-a {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, #C9A84C 0%, transparent 70%);
+      top: -8%; right: 8%;
+      animation: drift 14s ease-in-out infinite;
+    }
+    .blob-b {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, #8B1A2F 0%, transparent 70%);
+      bottom: 8%; right: 22%;
+      animation: drift 11s ease-in-out infinite reverse;
+      animation-delay: -5s;
+    }
+    .blob-c {
+      width: 340px; height: 340px;
+      background: radial-gradient(circle, #D4788A 0%, transparent 70%);
+      top: 35%; right: -2%;
+      animation: drift 9s ease-in-out infinite;
+      animation-delay: -9s;
+    }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%       { transform: translate(-28px, 18px) scale(1.06); }
+      66%       { transform: translate(22px, -22px) scale(0.96); }
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: var(--max);
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .hero-label-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .hero-label-row::before {
+      content: '';
+      display: inline-block;
+      width: 28px;
+      height: 1px;
+      background: var(--ink-60);
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(4.5rem, 9vw, 8.5rem);
+      font-weight: 300;
+      line-height: 0.92;
+      letter-spacing: -0.025em;
+      margin-bottom: 2.25rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--blanc);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--ink-60);
+      max-width: 430px;
+      line-height: 1.7;
+      margin-bottom: 0.6rem;
+    }
+    .hero-tagline {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--ink-35);
+      margin-bottom: 2.75rem;
+    }
+    .hero-rule {
+      width: 36px;
+      height: 1px;
+      background: var(--rule);
+      margin-bottom: 2.75rem;
+    }
+
+    /* CSS wine bottles */
+    .bottles {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 1.25rem;
+    }
+    .bottle { display: flex; flex-direction: column; align-items: center; }
+    .bottle-cap {
+      width: 14px;
+      height: 10px;
+      border-radius: 3px 3px 0 0;
+      margin-bottom: -1px;
+    }
+    .bottle-neck {
+      width: 26px;
+      height: 78px;
+      border-radius: 13px 13px 3px 3px;
+    }
+    .bottle-body {
+      width: 82px;
+      height: 210px;
+      border-radius: 42px 42px 18px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .bottle-body::after {
+      content: '';
+      position: absolute;
+      top: 28%;
+      left: 12%;
+      right: 12%;
+      bottom: 18%;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 4px;
+    }
+
+    /* Bottle color variants */
+    .b-rouge .bottle-cap  { background: #3D0812; }
+    .b-rouge .bottle-neck { background: linear-gradient(175deg, #B52240 0%, #5C0E1C 100%); }
+    .b-rouge .bottle-body { background: linear-gradient(160deg, #B52240 0%, #6B1022 55%, #3D0812 100%); }
+
+    .b-blanc .bottle-cap  { background: #7A5A18; }
+    .b-blanc .bottle-neck { background: linear-gradient(175deg, #DFC060 0%, #A07828 100%); }
+    .b-blanc .bottle-body { background: linear-gradient(160deg, #E8C96A 0%, #C9A84C 45%, #9C7A28 100%); }
+
+    .b-rose .bottle-cap   { background: #7A2A38; }
+    .b-rose .bottle-neck  { background: linear-gradient(175deg, #E895A8 0%, #B05068 100%); }
+    .b-rose .bottle-body  { background: linear-gradient(160deg, #E895A8 0%, #D4788A 48%, #A8455A 100%); }
+
+    .bottle {
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: default;
+    }
+    .bottle:hover { transform: translateY(-14px); }
+
+    .bottle-b { margin-bottom: 18px; }
+    .bottle-c { margin-bottom: 36px; }
+    .bottle-b .bottle-body { height: 190px; }
+    .bottle-c .bottle-body { height: 175px; }
+
+    /* ─── MANIFESTO BAND ─── */
+    .manifesto {
+      background: var(--bg-dark);
+      color: var(--bg);
+      padding: 4.5rem var(--pad);
+    }
+    .manifesto-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 6rem;
+      align-items: center;
+    }
+    .manifesto-side {
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(248,245,240,0.3);
+      line-height: 2;
+    }
+    .manifesto-text {
+      font-family: var(--serif);
+      font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: rgba(248,245,240,0.88);
+    }
+    .manifesto-text strong {
+      font-weight: 500;
+      color: var(--blanc);
+    }
+
+    /* ─── SECTION HEADER (shared) ─── */
+    .section-hd {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: end;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 2.5rem;
+      margin-bottom: 5rem;
+    }
+    .section-hd-desc {
+      font-size: 0.94rem;
+      color: var(--ink-60);
+      line-height: 1.72;
+      max-width: 390px;
+    }
+
+    /* ─── PRODUCTS ─── */
+    .products {
+      padding: 7rem var(--pad);
+    }
+
+    .products-grid {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--rule);
+    }
+
+    .p-card {
+      border-right: 1px solid var(--rule);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.45s ease;
+      background: var(--bg);
+    }
+    .p-card:last-child { border-right: none; }
+    .p-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 36px 72px rgba(26,26,26,0.13);
+      z-index: 2;
+      position: relative;
+    }
+
+    /* Card visual */
+    .p-card-visual {
+      height: 300px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      padding: 1.75rem;
+    }
+    /* Top accent line */
+    .p-card-visual::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      z-index: 2;
+    }
+
+    .p-rouge .p-card-visual {
+      background:
+        radial-gradient(ellipse at 75% 15%, rgba(139,26,47,0.28) 0%, transparent 55%),
+        radial-gradient(ellipse at 25% 85%, rgba(92,14,28,0.45) 0%, transparent 55%),
+        linear-gradient(145deg, #F5E8EB 0%, #EDD5DA 45%, #D9B0BB 100%);
+    }
+    .p-rouge .p-card-visual::before { background: var(--rouge); }
+
+    .p-blanc .p-card-visual {
+      background:
+        radial-gradient(ellipse at 75% 15%, rgba(201,168,76,0.28) 0%, transparent 55%),
+        radial-gradient(ellipse at 25% 85%, rgba(156,122,40,0.38) 0%, transparent 55%),
+        linear-gradient(145deg, #FAF5E8 0%, #F0E5C4 45%, #D8C285 100%);
+    }
+    .p-blanc .p-card-visual::before { background: var(--blanc); }
+
+    .p-rose .p-card-visual {
+      background:
+        radial-gradient(ellipse at 75% 15%, rgba(212,120,138,0.28) 0%, transparent 55%),
+        radial-gradient(ellipse at 25% 85%, rgba(168,69,90,0.3) 0%, transparent 55%),
+        linear-gradient(145deg, #FBF0F2 0%, #F0D4DA 45%, #DCABB6 100%);
+    }
+    .p-rose .p-card-visual::before { background: var(--rose); }
+
+    /* Variant name on card visual */
+    .p-name {
+      font-family: var(--serif);
+      font-size: 3.8rem;
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1;
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.75rem;
+      z-index: 2;
+    }
+    .p-rouge .p-name { color: var(--rouge); }
+    .p-blanc .p-name { color: var(--blanc-deep); }
+    .p-rose  .p-name { color: var(--rose-deep); }
+
+    /* Mini bottle on card visual */
+    .p-bottle-mini {
+      position: absolute;
+      bottom: 0;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1;
+    }
+    .mn { width: 16px; height: 48px; border-radius: 8px 8px 2px 2px; }
+    .mb { width: 50px; height: 145px; border-radius: 25px 25px 12px 12px; }
+    .p-rouge .mn, .p-rouge .mb { background: linear-gradient(160deg, #C02545 0%, #4A0A18 100%); }
+    .p-blanc .mn, .p-blanc .mb { background: linear-gradient(160deg, #DFC060 0%, #8C6820 100%); }
+    .p-rose  .mn, .p-rose  .mb { background: linear-gradient(160deg, #E895A8 0%, #8C3248 100%); }
+
+    /* Card content */
+    .p-card-body {
+      padding: 2rem 2rem 2.25rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .p-tagline {
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .p-copy {
+      font-size: 0.93rem;
+      line-height: 1.78;
+      color: var(--ink);
+      flex: 1;
+      margin-bottom: 1.5rem;
+    }
+    .p-notes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .p-note {
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      padding: 0.28rem 0.7rem;
+      border-radius: 100px;
+      border: 1px solid;
+    }
+    .p-rouge .p-note { color: var(--rouge);      border-color: rgba(139,26,47,0.28); background: var(--rouge-light); }
+    .p-blanc .p-note { color: var(--blanc-deep); border-color: rgba(201,168,76,0.28); background: var(--blanc-light); }
+    .p-rose  .p-note { color: var(--rose-deep);  border-color: rgba(212,120,138,0.28); background: var(--rose-light); }
+
+    /* ─── RITUAL ─── */
+    .ritual {
+      padding: 7rem var(--pad);
+      background: var(--bg-dark);
+      color: var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+    .ritual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 8% 50%,  rgba(201,168,76,0.07) 0%, transparent 50%),
+        radial-gradient(circle at 92% 50%,  rgba(139,26,47,0.07) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .ritual-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 7rem;
+      align-items: start;
+    }
+    .ritual-sticky { position: sticky; top: 7rem; }
+    .ritual h2 { color: var(--bg); margin-top: 1.25rem; margin-bottom: 2.75rem; }
+
+    .ritual-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      border: 1px solid rgba(248,245,240,0.1);
+    }
+    .rstat {
+      padding: 1.75rem;
+      border-right: 1px solid rgba(248,245,240,0.1);
+      border-bottom: 1px solid rgba(248,245,240,0.1);
+    }
+    .rstat:nth-child(2n)  { border-right: none; }
+    .rstat:nth-child(3),
+    .rstat:nth-child(4)   { border-bottom: none; }
+    .rstat-n {
+      font-family: var(--serif);
+      font-size: 2.6rem;
+      font-weight: 300;
+      color: var(--blanc);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .rstat-l {
+      font-size: 0.78rem;
+      color: rgba(248,245,240,0.45);
+      line-height: 1.45;
+    }
+
+    .ritual-prose p {
+      font-size: 1.02rem;
+      line-height: 1.88;
+      color: rgba(248,245,240,0.68);
+    }
+    .ritual-prose p + p { margin-top: 1.25rem; }
+
+    .pull-quote {
+      margin-top: 3.5rem;
+      padding: 2.5rem;
+      border: 1px solid rgba(248,245,240,0.1);
+      background: rgba(248,245,240,0.04);
+    }
+    .pull-quote blockquote {
+      font-family: var(--serif);
+      font-size: 1.45rem;
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.42;
+      color: rgba(248,245,240,0.9);
+    }
+    .pull-quote cite {
+      display: block;
+      margin-top: 1.1rem;
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(248,245,240,0.3);
+      font-style: normal;
+    }
+
+    /* ─── SOCIAL / USE CASES ─── */
+    .social { padding: 7rem var(--pad); }
+    .social-inner { max-width: var(--max); margin: 0 auto; }
+
+    .use-cases {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--rule);
+    }
+    .uc {
+      padding: 3rem 2.5rem;
+      border-right: 1px solid var(--rule);
+      transition: background 0.3s;
+    }
+    .uc:last-child { border-right: none; }
+    .uc:hover { background: rgba(201,168,76,0.04); }
+
+    .uc-icon {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 1.5rem;
+      color: var(--ink-60);
+    }
+    .uc h3 { margin-bottom: 0.75rem; }
+    .uc p {
+      font-size: 0.9rem;
+      color: var(--ink-60);
+      line-height: 1.68;
+    }
+
+    .social-coda {
+      margin-top: 4rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+    .social-coda p {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-style: italic;
+      color: var(--ink-60);
+      max-width: 500px;
+    }
+
+    /* ─── FAQ ─── */
+    .faq {
+      padding: 7rem var(--pad);
+      background: var(--bg-alt);
+    }
+    .faq-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 8rem;
+      align-items: start;
+    }
+    .faq-left h2 { margin-top: 1.25rem; }
+    .faq-left-note {
+      margin-top: 1.25rem;
+      font-size: 0.88rem;
+      color: var(--ink-60);
+      line-height: 1.7;
+    }
+
+    .faq-list { padding-top: 0.25rem; }
+    .faq-item { border-bottom: 1px solid var(--rule); }
+    .faq-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 1.75rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2rem;
+      cursor: pointer;
+      font-family: var(--serif);
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--ink);
+      text-align: left;
+    }
+    .faq-btn span { flex: 1; }
+    .faq-icon {
+      width: 22px; height: 22px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .faq-icon::before, .faq-icon::after {
+      content: '';
+      position: absolute;
+      background: var(--ink);
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .faq-icon::before { width: 14px; height: 1px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .faq-icon::after  { width: 1px; height: 14px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .faq-item.open .faq-icon::after { opacity: 0; transform: translate(-50%,-50%) rotate(90deg); }
+
+    .faq-ans {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.38s ease;
+    }
+    .faq-item.open .faq-ans { grid-template-rows: 1fr; }
+    .faq-ans-inner { overflow: hidden; }
+    .faq-ans p {
+      font-size: 0.93rem;
+      color: var(--ink-60);
+      line-height: 1.78;
+      padding-bottom: 1.75rem;
+      max-width: 580px;
+    }
+
+    /* ─── CTA ─── */
+    .cta-section {
+      padding: 8rem var(--pad);
+      text-align: center;
+    }
+    .cta-inner { max-width: 680px; margin: 0 auto; }
+    .cta-section .label { margin-bottom: 1.5rem; }
+    .cta-section h2 { font-size: clamp(2.8rem, 5.5vw, 4.5rem); margin-bottom: 1.25rem; }
+    .cta-section p {
+      font-size: 1rem;
+      color: var(--ink-60);
+      line-height: 1.72;
+      margin-bottom: 3rem;
+    }
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--bg-dark);
+      color: rgba(248,245,240,0.55);
+      padding: 5rem var(--pad) 3rem;
+    }
+    .footer-inner { max-width: var(--max); margin: 0 auto; }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 4rem;
+      padding-bottom: 4rem;
+      border-bottom: 1px solid rgba(248,245,240,0.09);
+      margin-bottom: 2.25rem;
+    }
+    .footer-brand-name {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(248,245,240,0.88);
+      margin-bottom: 0.6rem;
+    }
+    .footer-brand-tagline {
+      font-size: 0.8rem;
+      color: rgba(248,245,240,0.35);
+      margin-bottom: 1.75rem;
+    }
+    .footer-brand-about {
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: rgba(248,245,240,0.3);
+      max-width: 270px;
+    }
+    .footer-col-title {
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(248,245,240,0.3);
+      margin-bottom: 1.25rem;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col li + li { margin-top: 0.7rem; }
+    .footer-col a {
+      font-size: 0.83rem;
+      color: rgba(248,245,240,0.55);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: rgba(248,245,240,0.9); }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-legal {
+      font-size: 0.72rem;
+      color: rgba(248,245,240,0.22);
+    }
+
+    /* ─── SCROLL REVEAL ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.72s ease, transform 0.72s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .delay-1 { transition-delay: 0.10s; }
+    .delay-2 { transition-delay: 0.20s; }
+    .delay-3 { transition-delay: 0.32s; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1200px) {
+      :root { --pad: 2rem; }
+      .hero-inner          { grid-template-columns: 1fr; }
+      .bottles             { justify-content: flex-start; margin-top: 3rem; }
+      .manifesto-inner     { grid-template-columns: 1fr; gap: 2rem; }
+      .section-hd          { grid-template-columns: 1fr; gap: 1.5rem; }
+      .ritual-inner        { grid-template-columns: 1fr; gap: 4rem; }
+      .ritual-sticky       { position: static; }
+      .faq-inner           { grid-template-columns: 1fr; gap: 3rem; }
+      .footer-grid         { grid-template-columns: 1fr 1fr; gap: 3rem; }
+    }
+
+    @media (max-width: 768px) {
+      :root { --pad: 1.5rem; }
+      #nav { padding: 1rem var(--pad); }
+      .nav-links { display: none; }
+      .hero { padding: 6.5rem var(--pad) 3rem; }
+      .hero h1 { font-size: 3.8rem; }
+      .bottles { gap: 0.9rem; }
+      .bottle-body { height: 165px !important; width: 68px !important; }
+      .bottle-neck { width: 22px !important; height: 64px !important; }
+      .products-grid { grid-template-columns: 1fr; }
+      .p-card { border-right: none; border-bottom: 1px solid var(--rule); }
+      .p-card:last-child { border-bottom: none; }
+      .p-card:hover { transform: none; box-shadow: none; }
+      .use-cases { grid-template-columns: 1fr; }
+      .uc { border-right: none; border-bottom: 1px solid var(--rule); }
+      .uc:last-child { border-bottom: none; }
+      .social-coda { flex-direction: column; align-items: flex-start; }
+      .ritual-stats { grid-template-columns: 1fr 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .cta-section { padding: 5rem var(--pad); }
+      .faq { padding: 5rem var(--pad); }
+      .ritual { padding: 5rem var(--pad); }
+      .social { padding: 5rem var(--pad); }
+      .products { padding: 5rem var(--pad); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav id="nav" role="navigation" aria-label="Main navigation">
+    <a href="#" class="nav-brand" aria-label="Meridian — home">Meridian</a>
+    <ul class="nav-links" role="list">
+      <li><a href="#collection">Collection</a></li>
+      <li><a href="#ritual">The ritual</a></li>
+      <li><a href="#together">Use cases</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#shop">Shop</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="blob blob-a"></div>
+      <div class="blob blob-b"></div>
+      <div class="blob blob-c"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <p class="label hero-label-row">Non-alcoholic wine · Est. 2024</p>
+        <h1 id="hero-heading">
+          Lunch.<br>
+          <em>Elevated.</em>
+        </h1>
+        <p class="hero-sub">Three wines. Zero alcohol. One hour that actually recharges you.</p>
+        <p class="hero-tagline">Because what you do with your midday hour quietly shapes the rest of it.</p>
+        <div class="hero-rule" aria-hidden="true"></div>
+        <a href="#collection" class="btn btn-dark">
+          Meet the collection
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+      <div class="bottles" aria-hidden="true">
+        <div class="bottle b-rouge bottle-a">
+          <div class="bottle-cap"></div>
+          <div class="bottle-neck"></div>
+          <div class="bottle-body"></div>
+        </div>
+        <div class="bottle b-blanc bottle-b">
+          <div class="bottle-cap"></div>
+          <div class="bottle-neck"></div>
+          <div class="bottle-body"></div>
+        </div>
+        <div class="bottle b-rose bottle-c">
+          <div class="bottle-cap"></div>
+          <div class="bottle-neck"></div>
+          <div class="bottle-body"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MANIFESTO BAND ── -->
+  <section class="manifesto" aria-label="Brand manifesto">
+    <div class="manifesto-inner">
+      <p class="manifesto-side">Our belief<br>2024<br>Meridian</p>
+      <p class="manifesto-text">
+        The lunch break is not a <strong>productivity hack</strong>. It is not a wellness initiative. It is simply the part of the day where being human takes precedence — and that, quietly, is what makes everything afterwards possible.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── PRODUCTS ── -->
+  <section class="products" id="collection" aria-labelledby="products-heading">
+    <div class="section-hd reveal">
+      <div>
+        <p class="label label-rule" data-num="01">Collection</p>
+        <h2 id="products-heading">Three wines.<br><em>One ritual.</em></h2>
+      </div>
+      <p class="section-hd-desc">Each bottle in the Meridian collection is built around a mood, not a menu. Choose the one that fits where you are in the day — and open it with someone worth stopping for.</p>
+    </div>
+
+    <div class="products-grid" role="list">
+
+      <!-- ROUGE -->
+      <article class="p-card p-rouge reveal" role="listitem">
+        <div class="p-card-visual" aria-hidden="true">
+          <span class="p-name">Rouge</span>
+          <div class="p-bottle-mini">
+            <div class="mn"></div>
+            <div class="mb"></div>
+          </div>
+        </div>
+        <div class="p-card-body">
+          <p class="p-tagline">For those who want to push harder this afternoon</p>
+          <p class="p-copy">Your 2pm meeting doesn't stand a chance. Rich, round, and quietly confident — exactly like you'll feel after lunch. There is something reassuring about a glass of Rouge. It suggests you've earned this. Which you have.</p>
+          <div class="p-notes" aria-label="Tasting notes">
+            <span class="p-note">Dark cherry</span>
+            <span class="p-note">Warm spice</span>
+            <span class="p-note">Long finish</span>
+          </div>
+          <a href="#" class="btn-ghost">
+            Explore Rouge
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- BLANC -->
+      <article class="p-card p-blanc reveal delay-1" role="listitem">
+        <div class="p-card-visual" aria-hidden="true">
+          <span class="p-name">Blanc</span>
+          <div class="p-bottle-mini">
+            <div class="mn"></div>
+            <div class="mb"></div>
+          </div>
+        </div>
+        <div class="p-card-body">
+          <p class="p-tagline">A reward for everything you accomplished this morning</p>
+          <p class="p-copy">You shipped three things before noon. This one's on the house. Crisp, clean, with a finish that says "I've got this." Blanc is for the kind of morning that earns its afternoon. Restrained. Precise. Quietly pleased with itself.</p>
+          <div class="p-notes" aria-label="Tasting notes">
+            <span class="p-note">Green apple</span>
+            <span class="p-note">Citrus zest</span>
+            <span class="p-note">Mineral close</span>
+          </div>
+          <a href="#" class="btn-ghost">
+            Explore Blanc
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- ROSÉ -->
+      <article class="p-card p-rose reveal delay-2" role="listitem">
+        <div class="p-card-visual" aria-hidden="true">
+          <span class="p-name">Rosé</span>
+          <div class="p-bottle-mini">
+            <div class="mn"></div>
+            <div class="mb"></div>
+          </div>
+        </div>
+        <div class="p-card-body">
+          <p class="p-tagline">For a day you want to make truly count</p>
+          <p class="p-copy">For the kind of day you'll actually remember. Light enough to think, beautiful enough to notice. Rosé is what you open when the day is already good and you want to make sure it stays that way through to close of business.</p>
+          <div class="p-notes" aria-label="Tasting notes">
+            <span class="p-note">Wild strawberry</span>
+            <span class="p-note">Lychee</span>
+            <span class="p-note">Soft rose</span>
+          </div>
+          <a href="#" class="btn-ghost">
+            Explore Rosé
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── RITUAL ── -->
+  <section class="ritual" id="ritual" aria-labelledby="ritual-heading">
+    <div class="ritual-inner">
+      <div class="ritual-sticky">
+        <p class="label label-rule label--light" data-num="02">The ritual</p>
+        <h2 id="ritual-heading" class="reveal">The Lunch Break<br><em>Worth Taking</em></h2>
+        <div class="ritual-stats reveal delay-1">
+          <div class="rstat">
+            <div class="rstat-n">60</div>
+            <div class="rstat-l">minutes. All you need. All that's required.</div>
+          </div>
+          <div class="rstat">
+            <div class="rstat-n">0%</div>
+            <div class="rstat-l">alcohol. Full ritual. No compromises.</div>
+          </div>
+          <div class="rstat">
+            <div class="rstat-n">3×</div>
+            <div class="rstat-l">sharper in the afternoon, say people who actually stopped for lunch.</div>
+          </div>
+          <div class="rstat">
+            <div class="rstat-n">∞</div>
+            <div class="rstat-l">excuses to eat at your desk. None of them hold up.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="ritual-prose reveal">
+          <p>Somewhere between the tenth browser tab and the afternoon standup, there is a small window of genuine time. Not scheduled time. Not productive time. Just — yours.</p>
+          <p>The evidence is embarrassingly clear: the people who actually stop for lunch come back sharper, calmer, and less likely to send emails they'll regret at 4pm. It is not a controversial finding. It is just one that is very easy to ignore when the notifications don't pause.</p>
+          <p>Meridian was built for exactly this window. Not as an alternative to alcohol — alcohol was never really the point of a lunch ritual — but as a reason to pause properly. Something worth opening. Something that signals to everyone at the table: this hour is intentional.</p>
+          <p>The best conversations of your career probably happened over a long lunch. This is a hypothesis worth testing.</p>
+        </div>
+        <div class="pull-quote reveal delay-1">
+          <blockquote>"The most productive thing you can do at noon is actually stop."</blockquote>
+          <cite>Meridian — on the subject of lunch</cite>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SOCIAL / USE CASES ── -->
+  <section class="social" id="together" aria-labelledby="social-heading">
+    <div class="social-inner">
+      <div class="section-hd reveal">
+        <div>
+          <p class="label label-rule" data-num="03">How it works</p>
+          <h2 id="social-heading">Better<br><em>With Others</em></h2>
+        </div>
+        <p class="section-hd-desc">Non-alcoholic wine works exactly like regular wine at a table — it gives everyone something to hold, sip, and gather around. The format is familiar. The afternoon is functional.</p>
+      </div>
+
+      <div class="use-cases reveal">
+        <!-- Team lunch -->
+        <div class="uc">
+          <svg class="uc-icon" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <circle cx="14" cy="13" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="30" cy="13" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M3 34c0-7.2 5-11 11-11h16c6 0 11 3.8 11 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <h3>Team lunch</h3>
+          <p>When you want the energy of after-work drinks, during work hours. Nobody has to navigate the "I'll just have water" moment. Everyone gets the ritual.</p>
+        </div>
+        <!-- 1:1 -->
+        <div class="uc">
+          <svg class="uc-icon" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <circle cx="22" cy="14" r="7" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M9 36c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <h3>A proper 1:1</h3>
+          <p>Less awkward than coffee. More intentional than a salad. A glass of Blanc or Rosé at a 1:1 suggests you're taking the conversation — and the person — seriously.</p>
+        </div>
+        <!-- Friday -->
+        <div class="uc">
+          <svg class="uc-icon" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <rect x="7" y="7" width="30" height="26" rx="3" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M15 40h14M22 33v7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M14 18h16M14 24h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <h3>Friday wrap-up</h3>
+          <p>Wind down without actually winding down. A bottle of Rouge at the end-of-week debrief hits different when you still have a drive home ahead of you.</p>
+        </div>
+      </div>
+
+      <div class="social-coda reveal">
+        <p>"We built this for tables, not desks. But we understand if the desk is where the table is right now."</p>
+        <a href="#shop" class="btn btn-dark">
+          Shop the collection
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ ── -->
+  <section class="faq" id="faq" aria-labelledby="faq-heading">
+    <div class="faq-inner">
+      <div class="faq-left">
+        <p class="label label-rule" data-num="04">Questions</p>
+        <h2 id="faq-heading" class="reveal">Things people<br><em>ask us</em></h2>
+        <p class="faq-left-note reveal delay-1">We've compiled the ones we hear most. If yours isn't here, we're genuinely interested.</p>
+      </div>
+
+      <div class="faq-list" role="list">
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-btn" aria-expanded="false" aria-controls="faq-a1">
+            <span>Is it actually wine?</span>
+            <div class="faq-icon" aria-hidden="true"></div>
+          </button>
+          <div class="faq-ans" id="faq-a1" role="region">
+            <div class="faq-ans-inner">
+              <p>Yes. Real grapes, properly fermented, then carefully dealcoholized using a process that preserves the aromatic compounds that make wine interesting. It tastes like wine because it is wine — minus the part that makes you sleepy and vaguely regretful at 3pm.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-btn" aria-expanded="false" aria-controls="faq-a2">
+            <span>Will it affect my afternoon?</span>
+            <div class="faq-icon" aria-hidden="true"></div>
+          </button>
+          <div class="faq-ans" id="faq-a2" role="region">
+            <div class="faq-ans-inner">
+              <p>The opposite, actually. No alcohol means no post-lunch fog, no recalibration lag, no staring at a Jira board waiting for your brain to reconvene. Just the ritual, the flavour, and whatever you've got on the calendar at 2pm.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-btn" aria-expanded="false" aria-controls="faq-a3">
+            <span>Is this just fancy grape juice?</span>
+            <div class="faq-icon" aria-hidden="true"></div>
+          </button>
+          <div class="faq-ans" id="faq-a3" role="region">
+            <div class="faq-ans-inner">
+              <p>We get this a lot, and we understand the skepticism. The fermentation process creates aromatic complexity — esters, phenols, structural tannins in the Rouge — that no amount of concentrate can replicate. Try it before you file it. The first glass is usually the end of the conversation.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-btn" aria-expanded="false" aria-controls="faq-a4">
+            <span>Can I expense this?</span>
+            <div class="faq-icon" aria-hidden="true"></div>
+          </button>
+          <div class="faq-ans" id="faq-a4" role="region">
+            <div class="faq-ans-inner">
+              <p>That's between you and your manager. We make the wine, you make the case. For what it's worth: a bottle of Meridian shared over a working lunch is a significantly better use of budget than another team Zoom background or a branded tote nobody asked for.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="cta-section" id="shop" aria-labelledby="cta-heading">
+    <div class="cta-inner reveal">
+      <p class="label">Ready?</p>
+      <h2 id="cta-heading">Your next lunch<br>is <em>waiting</em></h2>
+      <p>Three bottles. One for Monday optimism, one for Wednesday certainty, one for Friday — just because. Delivered to your office or your door, ready for the hour that deserves it.</p>
+      <div class="btn-group">
+        <a href="#" class="btn btn-dark">
+          Shop the collection
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href="#ritual" class="btn btn-outline">Read the story</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand-name">Meridian</div>
+          <div class="footer-brand-tagline">Non-alcoholic. Always.</div>
+          <p class="footer-brand-about">Crafted for the considered lunch break. Real wine, real craft, zero alcohol. For everyone who believes the midday hour deserves more than a desk and a disappointing sandwich.</p>
+        </div>
+        <div class="footer-col">
+          <p class="footer-col-title">Shop</p>
+          <ul role="list">
+            <li><a href="#">All bottles</a></li>
+            <li><a href="#">Rouge</a></li>
+            <li><a href="#">Blanc</a></li>
+            <li><a href="#">Rosé</a></li>
+            <li><a href="#">Gift sets</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-col-title">Company</p>
+          <ul role="list">
+            <li><a href="#">Our story</a></li>
+            <li><a href="#">The process</a></li>
+            <li><a href="#">Press</a></li>
+            <li><a href="#">Wholesale</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-col-title">Support</p>
+          <ul role="list">
+            <li><a href="#">FAQ</a></li>
+            <li><a href="#">Shipping</a></li>
+            <li><a href="#">Returns</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-legal">© 2024 Meridian. Non-alcoholic. Always. · Privacy · Terms of Service</p>
+        <p class="footer-legal">Crafted with intention. Enjoyed with company.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Nav: add scrolled class ──
+    const nav = document.getElementById('nav');
+    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ── Scroll reveal ──
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -44px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+    // ── FAQ accordion ──
+    document.querySelectorAll('.faq-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item   = btn.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(i => {
+          i.classList.remove('open');
+          i.querySelector('.faq-btn').setAttribute('aria-expanded', 'false');
+        });
+        // Toggle clicked
+        if (!isOpen) {
+          item.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+
+    // ── Smooth scroll (fallback for older Safari) ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href').slice(1);
+        if (!id) return;
+        const target = document.getElementById(id);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
