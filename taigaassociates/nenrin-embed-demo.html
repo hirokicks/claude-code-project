@@ -144,16 +144,18 @@
     });
   }
 
+  var MODE_LABEL = { morph: 'モーフ', forced: '強制モーフ', crossfade: 'クロスフェード' };
+
   function go(key) {
     if (key === current || art.isTransitioning()) return;
-    // 事前にどちらの方式になるか判定できる
-    var willMorph = NenrinArt.canMorph(art.state, CONFIGS[key]);
     var mode = art.transitionTo(CONFIGS[key], {
       duration: 1400,
       easing: 'easeInOutCubic',
-      onComplete: function () { modeEl.textContent = mode + ' 完了'; }
+      // 構造が違っても、ほぼ全編モーフで繋ぐ
+      force: true,
+      onComplete: function () { modeEl.textContent = MODE_LABEL[mode] + ' 完了'; }
     });
-    modeEl.textContent = (willMorph ? '⟶ モーフ変形中' : '⟶ クロスフェード中') + ' (' + mode + ')';
+    modeEl.textContent = '⟶ ' + MODE_LABEL[mode] + '中';
     current = key;
     syncButtons();
 

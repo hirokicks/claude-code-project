@@ -277,6 +277,7 @@
           </label>
           <button id="scenePlay" class="small">▶ 順に再生</button>
         </div>
+        <label class="chk"><input type="checkbox" id="sceneForce" checked> 強制モーフ（構造が違ってもモーフで繋ぐ）</label>
         <div class="label-row" style="margin-top:4px;"><span id="sceneMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
       </div>
 
@@ -377,6 +378,8 @@
       }
     }
   );
+  // handy for inspecting or scripting the piece from the console
+  window.nenrinArt = art;
   var state = art.state;
   var regenLayerGeometry = art.regenLayer;
   var regenAll = art.regenAll;
@@ -460,15 +463,15 @@
     body.appendChild(el('div', 'subgroup-label', '量 / Density'));
     body.appendChild(slider('本数（リング数）', 'ringCount', 6, 300, 1, layer.ringCount, function(v){ layer.ringCount = v; regen(); }, fmt0));
     body.appendChild(slider('分割数（滑らかさ）', 'segments', 16, 360, 2, layer.segments, function(v){ layer.segments = v; regen(); }, fmt0));
-    body.appendChild(slider('基準半径', 'baseRadius', 0, 400, 1, layer.baseRadius, function(v){ layer.baseRadius = v; regen(); }, fmt0));
-    body.appendChild(slider('間隔', 'spacing', 0.5, 30, 0.1, layer.spacing, function(v){ layer.spacing = v; regen(); }, fmt1));
+    body.appendChild(slider('基準半径', 'baseRadius', 0, 400, 1, layer.baseRadius, function(v){ layer.baseRadius = v; }, fmt0));
+    body.appendChild(slider('間隔', 'spacing', 0.5, 30, 0.1, layer.spacing, function(v){ layer.spacing = v; }, fmt1));
     body.appendChild(slider('螺旋化（0=同心円 / 1=連続螺旋、中間値は継ぎ目が出ます）', 'spiralBlend', 0, 1, 0.01, layer.spiralBlend, function(v){ layer.spiralBlend = v; regen(); }, fmt2));
 
     body.appendChild(el('div', 'subgroup-label', '有機的なばらつき / Organic Variance'));
-    body.appendChild(slider('年輪の粗密（ばらつき量）', 'spacingVarAmt', 0, 1, 0.01, layer.spacingVarAmt, function(v){ layer.spacingVarAmt = v; regen(); }, fmt2));
+    body.appendChild(slider('年輪の粗密（ばらつき量）', 'spacingVarAmt', 0, 1, 0.01, layer.spacingVarAmt, function(v){ layer.spacingVarAmt = v; }, fmt2));
     body.appendChild(slider('ばらつきの周波数', 'spacingVarFreq', 0.05, 5, 0.05, layer.spacingVarFreq, function(v){ layer.spacingVarFreq = v; regen(); }, fmt2));
-    body.appendChild(slider('偏心量（芯のずれ）', 'eccentricity', 0, 200, 1, layer.eccentricity, function(v){ layer.eccentricity = v; regen(); }, fmt0));
-    body.appendChild(slider('偏心角度', 'eccentricityAngle', 0, 360, 1, layer.eccentricityAngle, function(v){ layer.eccentricityAngle = v; regen(); }, fmt0));
+    body.appendChild(slider('偏心量（芯のずれ）', 'eccentricity', 0, 200, 1, layer.eccentricity, function(v){ layer.eccentricity = v; }, fmt0));
+    body.appendChild(slider('偏心角度', 'eccentricityAngle', 0, 360, 1, layer.eccentricityAngle, function(v){ layer.eccentricityAngle = v; }, fmt0));
 
     body.appendChild(el('div', 'subgroup-label', '年輪の個体差 / Ring Individuality'));
     body.appendChild(slider('線幅のばらつき（1本ずつ）', 'ringWidthVar', 0, 1, 0.01, layer.ringWidthVar, function(v){ layer.ringWidthVar = v; }, fmt2));
@@ -810,6 +813,9 @@
   var sceneDurVal = document.getElementById('v-sceneDur');
   var sceneEaseEl = document.getElementById('sceneEase');
   var scenePlayBtn = document.getElementById('scenePlay');
+  var sceneForceEl = document.getElementById('sceneForce');
+
+  var MODE_LABEL = { morph: 'モーフ', forced: '強制モーフ', crossfade: 'クロスフェード' };
 
   function persistScenes(){
     try { localStorage.setItem(SCENES_KEY, JSON.stringify(scenes)); } catch(e){}
@@ -844,15 +850,16 @@
     var mode = art.transitionTo(sc.config, {
       duration: parseInt(sceneDurEl.value, 10),
       easing: sceneEaseEl.value,
+      force: sceneForceEl.checked,
       onComplete: function(){
         afterTransition();
-        sceneMsgEl.textContent = '「' + sc.name + '」へ ' + (mode === 'morph' ? 'モーフ' : 'クロスフェード') + 'で切り替えました';
+        sceneMsgEl.textContent = '「' + sc.name + '」へ ' + MODE_LABEL[mode] + 'で切り替えました';
         if (playing) playTimer = setTimeout(playStep, 900);
       }
     });
     activeScene = i;
     renderSceneList();
-    sceneMsgEl.textContent = '「' + sc.name + '」へ ' + (mode === 'morph' ? 'モーフ変形中…' : 'クロスフェード中…');
+    sceneMsgEl.textContent = '「' + sc.name + '」へ ' + MODE_LABEL[mode] + '中…';
     trackTransition();
   }
 
@@ -891,10 +898,17 @@
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;gap:4px;align-items:center;margin-bottom:4px;';
 
-      var badge = el('span', '', willMorph ? 'M' : '×');
-      badge.title = willMorph ? '現在の状態からモーフで繋がります' : '構造が異なるためクロスフェードになります';
+      var forced = !willMorph && sceneForceEl.checked;
+      var badge = el('span', '', willMorph ? 'M' : (forced ? 'F' : '×'));
+      badge.title = willMorph
+        ? '構造が一致しているので、そのままモーフで繋がります'
+        : (forced
+            ? '構造は異なりますが、強制モーフで繋ぎます（終盤だけ短く入れ替わります）'
+            : '構造が異なるためクロスフェードになります');
       badge.style.cssText = 'flex:0 0 18px;text-align:center;font-size:9px;font-weight:700;border-radius:4px;padding:3px 0;'
-        + (willMorph ? 'background:#2f5d46;color:#9fe0bf;' : 'background:#4a3a2a;color:#e0bb8f;');
+        + (willMorph ? 'background:#2f5d46;color:#9fe0bf;'
+                     : (forced ? 'background:#2f4a5d;color:#9fc8e0;'
+                               : 'background:#4a3a2a;color:#e0bb8f;'));
 
       var go = document.createElement('button');
       go.className = 'small' + (i === activeScene ? ' primary' : '');
@@ -976,6 +990,7 @@
     if (e.key === 'Enter') document.getElementById('sceneSave').click();
   });
   sceneDurEl.addEventListener('input', function(){ sceneDurVal.textContent = sceneDurEl.value; });
+  sceneForceEl.addEventListener('change', function(){ renderSceneList(); });
 
   restoreScenes();
   renderSceneList();

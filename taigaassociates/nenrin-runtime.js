@@ -50,27 +50,45 @@
     var segments = Math.max(8, p.segments|0);
     var eccRad = p.eccentricityAngle * Math.PI / 180;
     var ecx = Math.cos(eccRad), ecy = Math.sin(eccRad);
+    var eccDenomInv = 1 / Math.max(1, ringCount - 1);
 
-    // growth/center are sampled at both the ring's integer index (the
-    // "stepped" concentric value) and at the continuous spiral position u —
-    // the noise itself is a smooth function, but sampling it only once per
-    // ring for the stepped case makes it jump at every ring boundary. Mixing
-    // the two by spiralBlend keeps stepped rings blocky (as intended) while
-    // spiralBlend===1 uses growthAt(u) alone, which never jumps, so a fully
-    // chained spiral has no more per-ring "kink" for the joins to reveal.
-    function growthAt(u){
-      return noise(u * p.spacingVarFreq * 0.5 + 100, p.seed * 0.017) * p.spacing * p.spacingVarAmt * u * 0.02;
+    // What actually gets baked is the pair (ringPos, growth) rather than a
+    // finished x/y, because radius and centre are *affine* in baseRadius,
+    // spacing, spacingVarAmt, eccentricity and eccentricityAngle:
+    //
+    //   r      = baseRadius + ringPos*spacing + growth*spacing*spacingVarAmt
+    //   centre = eccDir * eccentricity * ringPos * eccDenomInv
+    //
+    // So those five are evaluated in the vertex shader from uniforms and stay
+    // freely tweenable — which is what lets two arts differing in them morph
+    // instead of crossfading. Only seed, spacingVarFreq and spiralBlend (which
+    // pick *which* noise and how the rings chain) have to be baked here.
+    //
+    // growth is sampled at both the ring's integer index (the "stepped"
+    // concentric value) and at the continuous spiral position u — the noise
+    // itself is smooth, but sampling it once per ring makes it jump at every
+    // ring boundary. Mixing the two by spiralBlend keeps stepped rings blocky
+    // (as intended) while spiralBlend===1 uses the u sample alone, which never
+    // jumps, so a fully chained spiral has no per-ring "kink" for the joins
+    // to reveal.
+    function growthNorm(u){
+      return noise(u * p.spacingVarFreq * 0.5 + 100, p.seed * 0.017) * u * 0.02;
     }
-    function radiusAt(i, u){
-      var stepped = p.baseRadius + i * p.spacing + growthAt(i);
-      var continuous = p.baseRadius + u * p.spacing + growthAt(u);
-      return Math.max(0.4, stepped + (continuous - stepped) * spiralBlend);
+    function radialAt(i, u){
+      var ringPos = i + (u - i) * spiralBlend;
+      var gi = growthNorm(i), gu = growthNorm(u);
+      return [ringPos, gi + (gu - gi) * spiralBlend];
     }
-    function centerAt(i, u){
-      var dStepped = p.eccentricity * (i / Math.max(1, ringCount - 1));
-      var dCont = p.eccentricity * (u / Math.max(1, ringCount - 1));
-      var d = dStepped + (dCont - dStepped) * spiralBlend;
-      return [ecx * d, ecy * d];
+    // Where the vertex lands at the layer's *authored* parameter values. Used
+    // only to derive the extrusion normal: the normal is perpendicular to the
+    // ring's tangent, and none of the five shader-side parameters rotate that
+    // tangent (they scale the radius or translate the ring centre), so a
+    // normal baked here stays correct while they are tweened.
+    function toXY(radial, dirx, diry){
+      var r = Math.max(0.4, p.baseRadius + radial[0] * p.spacing
+                            + radial[1] * p.spacing * p.spacingVarAmt);
+      var d = p.eccentricity * radial[0] * eccDenomInv;
+      return [ecx * d + dirx * r, ecy * d + diry * r];
     }
 
     // Every sample point also gets a small round "joint" fan (see pushJoint).
@@ -95,6 +113,7 @@
     var o = 0;
 
     var prevX = null, prevY = null, prevDx = null, prevDy = null, prevRing = 0, prevU = 0;
+    var prevR0 = 0, prevR1 = 0;
     for (var i = 0; i < ringCount; i++){
       if (!chainRings){ prevX = null; prevY = null; prevDx = null; prevDy = null; }
       for (var j = 0; j <= segments; j++){
@@ -113,12 +132,10 @@
         // value at 0 while staying equal to u at 1, where rings truly chain.
         var wobbleU = i + spiralBlend * (j / segments);
         var theta = (j / segments) * Math.PI * 2;
-        var c = centerAt(i, u);
-        var cx = c[0], cy = c[1];
-        var r = radiusAt(i, u);
         var dirx = Math.cos(theta), diry = Math.sin(theta);
-        var x = cx + dirx * r;
-        var y = cy + diry * r;
+        var radial = radialAt(i, u);
+        var xy = toXY(radial, dirx, diry);
+        var x = xy[0], y = xy[1];
         if (prevX !== null){
           var dx = x - prevX, dy = y - prevY;
           var len = Math.hypot(dx, dy);
@@ -140,32 +157,35 @@
           // growth/twist/etc) identically to how ring i-1 itself rendered
           // it, or the bridge would re-introduce its own seam.
           // A(prev,+1) B(prev,-1) C(cur,+1) D(cur,-1) -> A,B,C, C,B,D
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, 1);
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
-          o = pushV(buf, o, x, y, dirx, diry, i, wobbleU, nx, ny, 1);
-          o = pushV(buf, o, x, y, dirx, diry, i, wobbleU, nx, ny, 1);
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
-          o = pushV(buf, o, x, y, dirx, diry, i, wobbleU, nx, ny, -1);
+          o = pushV(buf, o, prevR0, prevR1, prevDx, prevDy, prevRing, prevU, nx, ny, 1);
+          o = pushV(buf, o, prevR0, prevR1, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
+          o = pushV(buf, o, radial[0], radial[1], dirx, diry, i, wobbleU, nx, ny, 1);
+          o = pushV(buf, o, radial[0], radial[1], dirx, diry, i, wobbleU, nx, ny, 1);
+          o = pushV(buf, o, prevR0, prevR1, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
+          o = pushV(buf, o, radial[0], radial[1], dirx, diry, i, wobbleU, nx, ny, -1);
         }
-        o = pushJoint(buf, o, x, y, dirx, diry, i, wobbleU);
+        o = pushJoint(buf, o, radial[0], radial[1], dirx, diry, i, wobbleU);
         prevX = x; prevY = y; prevDx = dirx; prevDy = diry; prevRing = i; prevU = wobbleU;
+        prevR0 = radial[0]; prevR1 = radial[1];
       }
     }
     return buf;
   }
-  function pushV(buf, o, x, y, dx, dy, ring, u, nx, ny, side){
-    buf[o] = x; buf[o+1] = y; buf[o+2] = dx; buf[o+3] = dy; buf[o+4] = ring;
+  // r0/r1 are the baked radial pair (ringPos, growth) — the shader turns them
+  // into an x/y using the current uniforms. See buildRingGeometry.
+  function pushV(buf, o, r0, r1, dx, dy, ring, u, nx, ny, side){
+    buf[o] = r0; buf[o+1] = r1; buf[o+2] = dx; buf[o+3] = dy; buf[o+4] = ring;
     buf[o+5] = u; buf[o+6] = nx; buf[o+7] = ny; buf[o+8] = side;
     return o + 9;
   }
   var JOIN_SIDES = 5, JOIN_VERTS = JOIN_SIDES * 3;
-  function pushJoint(buf, o, x, y, dx, dy, ring, u){
+  function pushJoint(buf, o, r0, r1, dx, dy, ring, u){
     for (var k = 0; k < JOIN_SIDES; k++){
       var a0 = (k / JOIN_SIDES) * Math.PI * 2;
       var a1 = ((k + 1) / JOIN_SIDES) * Math.PI * 2;
-      o = pushV(buf, o, x, y, dx, dy, ring, u, 0, 0, 0);
-      o = pushV(buf, o, x, y, dx, dy, ring, u, Math.cos(a0), Math.sin(a0), 1);
-      o = pushV(buf, o, x, y, dx, dy, ring, u, Math.cos(a1), Math.sin(a1), 1);
+      o = pushV(buf, o, r0, r1, dx, dy, ring, u, 0, 0, 0);
+      o = pushV(buf, o, r0, r1, dx, dy, ring, u, Math.cos(a0), Math.sin(a0), 1);
+      o = pushV(buf, o, r0, r1, dx, dy, ring, u, Math.cos(a1), Math.sin(a1), 1);
     }
     return o;
   }
@@ -248,10 +268,15 @@
   // Baked into the vertex buffer by buildRingGeometry: changing any of
   // these requires regenerating geometry, so two configs that differ here
   // cannot morph into each other and are crossfaded instead.
+  //
+  // ringCount / segments change the vertex count outright, spiralBlend
+  // changes whether rings are separate loops or one chained spiral, and
+  // seed / spacingVarFreq pick which noise gets sampled. Everything that used
+  // to live here — baseRadius, spacing, spacingVarAmt, eccentricity,
+  // eccentricityAngle — is now resolved in the vertex shader and tweens
+  // freely, which is what makes most pairs of arts morphable.
   var STRUCTURAL_KEYS = [
-    'ringCount', 'segments', 'baseRadius', 'spacing',
-    'spacingVarAmt', 'spacingVarFreq', 'eccentricity', 'eccentricityAngle',
-    'spiralBlend', 'seed'
+    'ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed'
   ];
 
   // Non-numeric / non-interpolatable: snapped at the midpoint of a morph.
@@ -351,7 +376,7 @@
   if (!gl) throw new Error('NenrinArt: WebGL is not supported in this browser.');
 
   var VERT_SRC = [
-    "attribute vec2 aPos;",
+    "attribute vec2 aRadial;",   // x = ringPos, y = growth (see buildRingGeometry)
     "attribute vec2 aDir;",
     "attribute float aRing;",
     "attribute float aU;",
@@ -377,6 +402,12 @@
     "uniform float uSpiralZ;",
     "uniform float uDepthOffset;",
     "uniform float uRingCountInv;",
+    "uniform float uBaseRadius;",
+    "uniform float uSpacing;",
+    "uniform float uSpacingVarAmt;",
+    "uniform float uEccentricity;",
+    "uniform float uEccDenomInv;",
+    "uniform vec2 uEccDir;",
     "uniform float uBulgeAmt;",
     "uniform float uTwistPerRing;",
     "uniform float uMobiusAmt;",
@@ -442,8 +473,16 @@
     "  float ny = aDir.y * uIrregFreq + aU * 0.37 + uSeedOffset.y - ringDrift * 0.53;",
     "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
     "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt * ringWobbleMod;",
-    "  vec2 animated = aPos + aDir * wob;",
-    "  vec2 smoothPos = aPos;",
+    // Ring placement is resolved here rather than baked, so baseRadius /
+    // spacing / spacingVarAmt / eccentricity / eccentricityAngle can be
+    // interpolated between two arts (see buildRingGeometry).
+    "  float ringPos = aRadial.x;",
+    "  float ringR = max(0.4, uBaseRadius + ringPos * uSpacing",
+    "                  + aRadial.y * uSpacing * uSpacingVarAmt);",
+    "  vec2 ringCenter = uEccDir * (uEccentricity * ringPos * uEccDenomInv);",
+    "  vec2 basePos = ringCenter + aDir * ringR;",
+    "  vec2 animated = basePos + aDir * wob;",
+    "  vec2 smoothPos = basePos;",
     "  float ringN = clamp(aRing * uRingCountInv, 0.0, 1.0);",
     "  float ripplePhase = ringN * uRippleFreq - uTime * uRippleSpeed;",
     "  float ripple = uRippleAmt * sin(ripplePhase * 6.28318530718);",
@@ -624,7 +663,7 @@
   }
   gl.useProgram(prog);
 
-  var locPos = gl.getAttribLocation(prog, 'aPos');
+  var locPos = gl.getAttribLocation(prog, 'aRadial');
   var locDir = gl.getAttribLocation(prog, 'aDir');
   var locRing = gl.getAttribLocation(prog, 'aRing');
   var locU = gl.getAttribLocation(prog, 'aU');
@@ -651,6 +690,12 @@
   var locSpiralZ = gl.getUniformLocation(prog, 'uSpiralZ');
   var locDepthOffset = gl.getUniformLocation(prog, 'uDepthOffset');
   var locRingCountInv = gl.getUniformLocation(prog, 'uRingCountInv');
+  var locBaseRadius = gl.getUniformLocation(prog, 'uBaseRadius');
+  var locSpacing = gl.getUniformLocation(prog, 'uSpacing');
+  var locSpacingVarAmt = gl.getUniformLocation(prog, 'uSpacingVarAmt');
+  var locEccentricity = gl.getUniformLocation(prog, 'uEccentricity');
+  var locEccDenomInv = gl.getUniformLocation(prog, 'uEccDenomInv');
+  var locEccDir = gl.getUniformLocation(prog, 'uEccDir');
   var locBulgeAmt = gl.getUniformLocation(prog, 'uBulgeAmt');
   var locTwistPerRing = gl.getUniformLocation(prog, 'uTwistPerRing');
   var locMobiusAmt = gl.getUniformLocation(prog, 'uMobiusAmt');
@@ -938,6 +983,13 @@
       gl.uniform1f(locSpiralZ, layer.spiralZ * s);
       gl.uniform1f(locDepthOffset, layer.depthOffset * dpr);
       gl.uniform1f(locRingCountInv, 1 / Math.max(1, layer.ringCount - 1));
+      gl.uniform1f(locBaseRadius, layer.baseRadius);
+      gl.uniform1f(locSpacing, layer.spacing);
+      gl.uniform1f(locSpacingVarAmt, layer.spacingVarAmt);
+      gl.uniform1f(locEccentricity, layer.eccentricity);
+      gl.uniform1f(locEccDenomInv, 1 / Math.max(1, layer.ringCount - 1));
+      var eccRad = (layer.eccentricityAngle || 0) * Math.PI / 180;
+      gl.uniform2f(locEccDir, Math.cos(eccRad), Math.sin(eccRad));
       gl.uniform1f(locBulgeAmt, layer.bulgeAmt);
       gl.uniform1f(locTwistPerRing, (layer.twistPerRing || 0) * Math.PI / 180);
       gl.uniform1f(locMobiusAmt, (layer.mobiusAmt || 0) * s);
@@ -1024,6 +1076,10 @@
         });
       });
     } else {
+      // both 'crossfade' and 'forced' land on the real target layers
+      if (!tr.blending && tr.mode === 'forced') {
+        tr.incoming.forEach(function (l) { regenLayerGeometry(l); });
+      }
       _freeLayerGeometry(state.layers);
       state.layers = tr.incoming;
       _scenes = [{ layers: state.layers, alpha: 1 }];
@@ -1049,31 +1105,26 @@
     if (e >= 0.5) CAM_BOOL_KEYS.forEach(function (k) { state[k] = _tr.toCam[k]; });
 
     if (_tr.mode === 'morph') {
-      _tr.pairs.forEach(function (p) {
-        var swapsShape = p.from.shapeMode !== p.to.shapeMode;
-        LAYER_NUM_KEYS.forEach(function (k) {
-          if (swapsShape && k === 'shapeMorph') return;
-          p.live[k] = p.from[k] + (p.to[k] - p.from[k]) * e;
-        });
-        // A shape-mode change cannot be interpolated, so unfold back toward
-        // the plain ring form first, swap, then fold into the new shape.
-        if (swapsShape) {
-          if (e < 0.5) {
-            p.live.shapeMode = p.from.shapeMode;
-            p.live.shapeMorph = p.from.shapeMorph * (1 - e * 2);
-          } else {
-            p.live.shapeMode = p.to.shapeMode;
-            p.live.shapeMorph = p.to.shapeMorph * ((e - 0.5) * 2);
-          }
+      _morphPairs(_tr.pairs, e);
+    } else if (_tr.mode === 'forced') {
+      // Morph as far as the shared parameters allow, then hand over to the
+      // real target with a short crossfade. By the handover both sides agree
+      // on colour, radius, spacing, eccentricity and shape — only the baked
+      // ring structure still differs — so the swap is hard to see.
+      _morphPairs(_tr.pairs, _tr.ease(Math.min(1, t / _tr.split)));
+      if (t > _tr.split) {
+        if (!_tr.blending) {
+          _tr.blending = true;
+          _tr.incoming.forEach(function (l) { regenLayerGeometry(l); });
+          _scenes = [
+            { layers: state.layers, alpha: 1 },
+            { layers: _tr.incoming, alpha: 0 }
+          ];
         }
-        LAYER_COLOR_KEYS.forEach(function (k) { p.live[k] = mixHex(p.from[k], p.to[k], e); });
-        if (e >= 0.5) {
-          LAYER_DISCRETE_KEYS.forEach(function (k) {
-            if (k === 'id' || (swapsShape && k === 'shapeMode')) return;
-            p.live[k] = p.to[k];
-          });
-        }
-      });
+        var bt = (t - _tr.split) / (1 - _tr.split);
+        _scenes[0].alpha = 1 - bt;
+        _scenes[1].alpha = bt;
+      }
     } else {
       _scenes[0].alpha = 1 - e;
       _scenes[1].alpha = e;
@@ -1082,12 +1133,41 @@
     if (t >= 1) _finishTransition();
   }
 
+  function _morphPairs(pairs, e) {
+    pairs.forEach(function (p) {
+      var swapsShape = p.from.shapeMode !== p.to.shapeMode;
+      LAYER_NUM_KEYS.forEach(function (k) {
+        if (swapsShape && k === 'shapeMorph') return;
+        p.live[k] = p.from[k] + (p.to[k] - p.from[k]) * e;
+      });
+      // A shape-mode change cannot be interpolated, so unfold back toward
+      // the plain ring form first, swap, then fold into the new shape.
+      if (swapsShape) {
+        if (e < 0.5) {
+          p.live.shapeMode = p.from.shapeMode;
+          p.live.shapeMorph = p.from.shapeMorph * (1 - e * 2);
+        } else {
+          p.live.shapeMode = p.to.shapeMode;
+          p.live.shapeMorph = p.to.shapeMorph * ((e - 0.5) * 2);
+        }
+      }
+      LAYER_COLOR_KEYS.forEach(function (k) { p.live[k] = mixHex(p.from[k], p.to[k], e); });
+      if (e >= 0.5) {
+        LAYER_DISCRETE_KEYS.forEach(function (k) {
+          if (k === 'id' || (swapsShape && k === 'shapeMode')) return;
+          p.live[k] = p.to[k];
+        });
+      }
+    });
+  }
+
   function cancelTransition() {
     if (!_tr) return;
-    if (_tr.mode === 'crossfade') _freeLayerGeometry(_tr.incoming);
+    if (_tr.incoming) _freeLayerGeometry(_tr.incoming);
     _tr = null;
     _scenes = [{ layers: state.layers, alpha: 1 }];
   }
+
 
   // Animates from the current look to `target`. Structural parameters decide
   // automatically whether this is a true morph or a crossfade; the camera is
@@ -1105,6 +1185,8 @@
     });
 
     var mode = canMorph(state, to) ? 'morph' : 'crossfade';
+    if (mode === 'crossfade' && o.force) mode = 'forced';
+
     var tr = {
       mode: mode, start: performance.now(), duration: duration, ease: ease,
       fromCam: fromCam, toCam: toCam, onComplete: o.onComplete || null
@@ -1114,9 +1196,29 @@
       tr.pairs = state.layers.map(function (live, i) {
         return { live: live, from: Object.assign({}, live), to: to.layers[i] };
       });
+    } else if (mode === 'forced') {
+      tr.split = o.split === undefined ? 0.82 : o.split;
+      tr.incoming = to.layers;
+      // Pad the live list so every target layer has a partner to morph into.
+      // Added slots start invisible and fade in; live layers the target has no
+      // counterpart for fade out — so a change in layer count is absorbed by
+      // opacity rather than popping at t=0.
+      while (state.layers.length < to.layers.length) {
+        var src = state.layers[state.layers.length - 1] || defaultLayer();
+        var clone = defaultLayer(Object.assign({}, src));
+        clone.id = 'L' + (Math.random() * 1e6 | 0);
+        clone.opacity = 0;
+        regenLayerGeometry(clone);
+        state.layers.push(clone);
+      }
+      _scenes = [{ layers: state.layers, alpha: 1 }];
+      tr.pairs = state.layers.map(function (live, i) {
+        var tgt = to.layers[i] || Object.assign({}, live, { opacity: 0 });
+        return { live: live, from: Object.assign({}, live), to: tgt };
+      });
     } else {
       tr.incoming = to.layers;
-      tr.incoming.forEach(regenLayerGeometry);
+      tr.incoming.forEach(function (l) { regenLayerGeometry(l); });
       _scenes = [
         { layers: state.layers, alpha: 1 },
         { layers: tr.incoming, alpha: 0 }
