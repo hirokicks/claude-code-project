@@ -237,6 +237,7 @@
           <button id="preset-spin" class="small">回転 / Spin</button>
           <button id="preset-ripplesphere" class="small">波打つ球体 / Sphere</button>
           <button id="preset-cube" class="small">キューブ / Cube</button>
+          <button id="preset-trusknot" class="small">トーラスノット / trusknot</button>
         </div>
       </div>
 
@@ -452,7 +453,7 @@
     "      Xt = (cxr / m) * shapeR;",
     "      Yt = (cyr / m) * shapeR;",
     "      Zt = (ringN - 0.5) * uShapeHeight;",
-    "    } else {",
+    "    } else if (uShapeMode == 5) {",
     "      float angle8 = tAlong * 6.28318530718;",
     "      float ca8 = cos(angle8), sa8 = sin(angle8);",
     "      float cx8 = shapeR * ca8;",
@@ -467,6 +468,20 @@
     "      Xt = cx8 + w8 * cos(bandAngle8) * nrm8.x;",
     "      Yt = cy8 + w8 * cos(bandAngle8) * nrm8.y;",
     "      Zt = w8 * sin(bandAngle8);",
+    "    } else {",
+    "      float tk = tAlong * 6.28318530718;",
+    "      float mainAngle = tk * uShapeTurns;",
+    "      float tubeAngle = tk * uShapeTwist;",
+    "      float ctb = cos(tubeAngle), stb = sin(tubeAngle);",
+    "      float cma = cos(mainAngle), sma = sin(mainAngle);",
+    "      float coreX = (shapeR + uShapeRadius2 * ctb) * cma;",
+    "      float coreY = (shapeR + uShapeRadius2 * ctb) * sma;",
+    "      float coreZ = uShapeRadius2 * stb;",
+    "      vec3 knotDir = vec3(ctb * cma, ctb * sma, stb);",
+    "      float wk = (ringN - 0.5) * 2.0 * uShapeRadius2 * 0.75;",
+    "      Xt = coreX + wk * knotDir.x;",
+    "      Yt = coreY + wk * knotDir.y;",
+    "      Zt = coreZ + wk * knotDir.z;",
     "    }",
     "    animated = mix(animated, vec2(Xt, Yt), uShapeMorph);",
     "    smoothPos = mix(smoothPos, vec2(Xt, Yt), uShapeMorph);",
@@ -1021,7 +1036,7 @@
     gl.uniform1f(locFocal, focal);
 
     var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
-    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4, infinity: 5 };
+    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4, infinity: 5, torusknot: 6 };
 
     state.layers.forEach(function(layer, idx){
       if (!layer.enabled) return;
@@ -1276,7 +1291,7 @@
     body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
 
     body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
-    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）']], function(v){ layer.shapeMode = v; }));
+    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット']], function(v){ layer.shapeMode = v; }));
     body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
     body.appendChild(slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0));
     body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
@@ -1685,6 +1700,12 @@
       defaultLayer({ name:'キューブ — 主', ringCount:60, segments:60, baseRadius:20, spacing:3, irregAmt:1, irregFreq:2, lineWidth:0.6, opacity:0.85, color:'#2c2925', blend:'normal', seed:281, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'cube', shapeMorph:1, shapeRadius:190, shapeHeight:380 }),
       defaultLayer({ name:'キューブ — 陰影', ringCount:48, segments:50, baseRadius:18, spacing:3, rotation:12, lineWidth:0.4, opacity:0.35, color:'#9b8f78', blend:'multiply', seed:282, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'cube', shapeMorph:1, shapeRadius:184, shapeHeight:370 })
     ], { bgColor:'#f2f0e9', tiltX:28, tiltY:-32, perspective:16 });
+  });
+  document.getElementById('preset-trusknot').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'トーラスノット — 主', ringCount:70, segments:260, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:1.5, irregFreq:2.5, lineWidth:0.5, opacity:0.85, color:'#1f3a63', blend:'normal', seed:291, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, shapeMode:'torusknot', shapeMorph:1, shapeRadius:170, shapeRadius2:55, shapeTurns:1, shapeTwist:7 }),
+      defaultLayer({ name:'トーラスノット — 陰影', ringCount:56, segments:240, baseRadius:45, spacing:4, rotation:6, lineWidth:0.35, opacity:0.4, color:'#7d90b8', blend:'multiply', seed:292, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, shapeMode:'torusknot', shapeMorph:1, shapeRadius:165, shapeRadius2:52, shapeTurns:1, shapeTwist:7 })
+    ], { bgColor:'#f4f6fa', tiltX:12, tiltY:-6, perspective:10 });
   });
   // ---------------------------------------------------------------
   // Init
