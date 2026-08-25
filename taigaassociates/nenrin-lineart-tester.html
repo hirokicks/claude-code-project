@@ -591,17 +591,27 @@
     // straight extent — the joint disc bridges that gap and rounds the corner,
     // and since it shares the same aPos/aDir/aRing as the segment endpoint it
     // sits on, it animates identically (wobble/deform/twist all happen on GPU).
-    var vertsPerRing = segments * 6 + (segments + 1) * JOIN_VERTS;
-    var totalVerts = ringCount * vertsPerRing;
+    //
+    // At spiralBlend===1 each ring's end radius is meant to hand off to the
+    // next ring's start, but per-ring growth-variance noise means they don't
+    // land on exactly the same point — left as separate arcs that only looked
+    // "close enough", the gap reads as a seam. So at full spiral blend the
+    // rings are chained into one continuous polyline (prevX carries over
+    // instead of resetting), and an explicit quad bridges the two points.
+    var spiralBlend = p.spiralBlend || 0;
+    var chainRings = spiralBlend >= 0.999;
+    var quadCount = ringCount * segments + (chainRings ? Math.max(0, ringCount - 1) : 0);
+    var joinCount = ringCount * (segments + 1);
+    var totalVerts = quadCount * 6 + joinCount * JOIN_VERTS;
     var buf = new Float32Array(totalVerts * 8);
     var o = 0;
 
-    var spiralBlend = p.spiralBlend || 0;
+    var prevX = null, prevY = null, prevDx = null, prevDy = null, prevRing = 0;
     for (var i = 0; i < ringCount; i++){
       var c = centerAt(i);
       var cx = c[0], cy = c[1];
       var rBase = baseRadiusAt(i);
-      var prevX = null, prevY = null, prevDx = null, prevDy = null;
+      if (!chainRings){ prevX = null; prevY = null; prevDx = null; prevDy = null; }
       for (var j = 0; j <= segments; j++){
         var theta = (j / segments) * Math.PI * 2;
         // spiralBlend>0 lets radius climb continuously across the ring so
@@ -614,16 +624,21 @@
           var dx = x - prevX, dy = y - prevY;
           var len = Math.hypot(dx, dy) || 1e-6;
           var nx = -dy / len, ny = dx / len;
+          // prevRing differs from i only for the one bridging quad that
+          // chains ring i-1's last point to ring i's first (chainRings) —
+          // keep that vertex's aRing correct so it animates (wobble/growth/
+          // twist/etc, all aRing-driven) identically to how ring i-1 itself
+          // rendered it, or the bridge would re-introduce its own seam.
           // A(prev,+1) B(prev,-1) C(cur,+1) D(cur,-1) -> A,B,C, C,B,D
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, 1);
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, -1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, nx, ny, 1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, nx, ny, -1);
           o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, 1);
           o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, 1);
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, i, nx, ny, -1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, nx, ny, -1);
           o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, -1);
         }
         o = pushJoint(buf, o, x, y, dirx, diry, i);
-        prevX = x; prevY = y; prevDx = dirx; prevDy = diry;
+        prevX = x; prevY = y; prevDx = dirx; prevDy = diry; prevRing = i;
       }
     }
     return buf;
