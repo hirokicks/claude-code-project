@@ -1730,9 +1730,9 @@
   });
   document.getElementById('preset-mirror').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'ミラー — 縦（エッジ像）', ringCount:60, segments:180, baseRadius:22, spacing:3, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, scale:1.35, lineWidth:0.45, opacity:0.8, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, offsetX:55, offsetY:-55, rot3DY:88 }),
-      defaultLayer({ name:'ミラー — 横（正面像）', ringCount:60, segments:180, baseRadius:22, spacing:3, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, lineWidth:0.45, opacity:0.8, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, offsetX:-55, offsetY:55, rot3DY:0 })
-    ], { bgColor:'#fafaf7', globalScale:0.72, tiltX:14, tiltY:-8, perspective:14 });
+      defaultLayer({ name:'ミラー — 主', ringCount:70, segments:280, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, rotation:135, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:160, shapeRadius2:145 }),
+      defaultLayer({ name:'ミラー — 陰影', ringCount:56, segments:240, baseRadius:36, spacing:3.5, rotation:141, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:302, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:155, shapeRadius2:138 })
+    ], { bgColor:'#fafaf7', globalScale:1, tiltX:32, tiltY:-26, perspective:18 });
   });
   // ---------------------------------------------------------------
   // Init
