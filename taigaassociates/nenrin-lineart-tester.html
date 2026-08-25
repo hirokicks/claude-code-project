@@ -629,12 +629,17 @@
         // u is the continuous "how far around the whole spiral" position —
         // radiusAt/centerAt use it (vs. the ring's fixed integer index) for
         // the spiralBlend===1 continuous case so nothing jumps at ring seams.
-        // It's also threaded into the shader as aU (see uIrregFreq/wobble)
-        // instead of aRing there specifically: aRing still steps discretely
-        // per ring (growth-wave bands, twist, bulge, mobius all want that),
-        // but the fine wobble noise needs a coordinate that doesn't jump at
-        // a ring boundary or the "grain" texture itself re-creates the seam.
         var u = i + j / segments;
+        // wobbleU is what actually goes to the shader as aU, for the fine
+        // wobble noise specifically (see uIrregFreq/wobble in the shader —
+        // aRing itself stays discrete there, since growth-wave/twist/bulge/
+        // mobius all want to step per ring). It must NOT just be u: at
+        // spiralBlend 0 a ring is its own closed loop, so its own j=0 and
+        // j=segments (both angle 0) need the SAME wobble coordinate (u would
+        // give i vs i+1 — different lattice cell, a fresh seam). Scaling the
+        // fractional part by spiralBlend collapses that back to a single
+        // value at 0 while staying equal to u at 1, where rings truly chain.
+        var wobbleU = i + spiralBlend * (j / segments);
         var theta = (j / segments) * Math.PI * 2;
         var c = centerAt(i, u);
         var cx = c[0], cy = c[1];
@@ -665,13 +670,13 @@
           // A(prev,+1) B(prev,-1) C(cur,+1) D(cur,-1) -> A,B,C, C,B,D
           o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, 1);
           o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
-          o = pushV(buf, o, x, y, dirx, diry, i, u, nx, ny, 1);
-          o = pushV(buf, o, x, y, dirx, diry, i, u, nx, ny, 1);
+          o = pushV(buf, o, x, y, dirx, diry, i, wobbleU, nx, ny, 1);
+          o = pushV(buf, o, x, y, dirx, diry, i, wobbleU, nx, ny, 1);
           o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
-          o = pushV(buf, o, x, y, dirx, diry, i, u, nx, ny, -1);
+          o = pushV(buf, o, x, y, dirx, diry, i, wobbleU, nx, ny, -1);
         }
-        o = pushJoint(buf, o, x, y, dirx, diry, i, u);
-        prevX = x; prevY = y; prevDx = dirx; prevDy = diry; prevRing = i; prevU = u;
+        o = pushJoint(buf, o, x, y, dirx, diry, i, wobbleU);
+        prevX = x; prevY = y; prevDx = dirx; prevDy = diry; prevRing = i; prevU = wobbleU;
       }
     }
     return buf;
