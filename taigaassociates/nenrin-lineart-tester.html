@@ -233,6 +233,12 @@
           <button id="preset-sphere" class="small">球体 / Sphere</button>
           <button id="preset-tubebundle" class="small">螺旋の束 / Tube</button>
           <button id="preset-mobiusbundle" class="small">メビウスの束 / M-Band</button>
+          <button id="preset-nautilus" class="small">貝殻 / Nautilus</button>
+          <button id="preset-dna" class="small">DNA / Double Helix</button>
+          <button id="preset-galaxy" class="small">銀河 / Galaxy</button>
+          <button id="preset-saturn" class="small">土星の輪 / Saturn</button>
+          <button id="preset-cocoon" class="small">繭 / Cocoon</button>
+          <button id="preset-crystal" class="small">結晶 / Crystal</button>
         </div>
       </div>
 
@@ -385,20 +391,6 @@
     "  float twistAng = aRing * uTwistPerRing;",
     "  float twc = cos(twistAng), tws = sin(twistAng);",
     "  animated = vec2(animated.x*twc - animated.y*tws, animated.x*tws + animated.y*twc);",
-    "  float d = distance(animated, uAnchorLocal);",
-    "  float influence = exp(-(d*d) / (2.0 * uDeformRadius * uDeformRadius + 0.001));",
-    "  vec2 rel = animated - uAnchorLocal;",
-    "  float rlen = length(rel);",
-    "  vec2 rdir = rlen > 0.0001 ? rel / rlen : vec2(0.0, 1.0);",
-    "  if (uDeformType == 1) {",
-    "    animated -= rdir * uDeformStrength * influence;",
-    "  } else if (uDeformType == 2) {",
-    "    float ang = uDeformStrength * influence * 0.02;",
-    "    float ca = cos(ang), sa = sin(ang);",
-    "    animated = uAnchorLocal + vec2(rel.x*ca - rel.y*sa, rel.x*sa + rel.y*ca);",
-    "  } else {",
-    "    animated += rdir * uDeformStrength * influence;",
-    "  }",
     "  float theta = atan(aDir.y, aDir.x);",
     "  float mobiusPhase = theta * uMobiusFreq + aRing * uMobiusRingTwist;",
     "  float existingZ = aRing * uSpiralZ + uDepthOffset + sin(mobiusPhase) * uMobiusAmt;",
@@ -433,6 +425,20 @@
     "    }",
     "    animated = mix(animated, vec2(Xt, Yt), uShapeMorph);",
     "    shapeZ = mix(existingZ, Zt * uShapeScale, uShapeMorph);",
+    "  }",
+    "  float d = distance(animated, uAnchorLocal);",
+    "  float influence = exp(-(d*d) / (2.0 * uDeformRadius * uDeformRadius + 0.001));",
+    "  vec2 rel = animated - uAnchorLocal;",
+    "  float rlen = length(rel);",
+    "  vec2 rdir = rlen > 0.0001 ? rel / rlen : vec2(0.0, 1.0);",
+    "  if (uDeformType == 1) {",
+    "    animated -= rdir * uDeformStrength * influence;",
+    "  } else if (uDeformType == 2) {",
+    "    float ang = uDeformStrength * influence * 0.02;",
+    "    float ca = cos(ang), sa = sin(ang);",
+    "    animated = uAnchorLocal + vec2(rel.x*ca - rel.y*sa, rel.x*sa + rel.y*ca);",
+    "  } else {",
+    "    animated += rdir * uDeformStrength * influence;",
     "  }",
     "  vec3 pos = uTransform * vec3(animated, 1.0);",
     "  vec2 nrm = uRotMat * aNormal;",
@@ -1569,6 +1575,40 @@
     applyPreset([
       defaultLayer({ name:'メビウスの束', ringCount:40, segments:300, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:2, irregFreq:3, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#2c2925', blend:'normal', seed:181, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:150, shapeRadius2:65 })
     ], { bgColor:'#f2f0e9', tiltX:26, tiltY:-18, perspective:22 });
+  });
+  document.getElementById('preset-nautilus').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'貝殻 — 主', ringCount:70, segments:220, baseRadius:6, spacing:3.6, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:1.5, irregFreq:2.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.9, color:'#4a3320', blend:'normal', seed:191, wobbleSpeed:0.12, deformStrength:0, spiralBlend:1, spiralZ:1.6 }),
+      defaultLayer({ name:'貝殻 — 陰影', ringCount:56, segments:200, baseRadius:5, spacing:3.1, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:1.3, irregFreq:2.5, eccentricity:0, rotation:15, scale:0.96, lineWidth:0.4, opacity:0.35, color:'#c9a876', blend:'multiply', seed:192, wobbleSpeed:0.12, deformStrength:0, spiralBlend:1, spiralZ:1.2 })
+    ], { bgColor:'#f4ecdf', tiltX:35, tiltY:-20, perspective:22 });
+  });
+  document.getElementById('preset-dna').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'DNA — 鎖A', ringCount:6, segments:220, baseRadius:20, spacing:3, irregAmt:1, irregFreq:2, lineWidth:1.0, opacity:0.9, color:'#1f6f5c', blend:'normal', seed:201, deformStrength:0, spiralBlend:0, shapeMode:'helix', shapeMorph:1, shapeRadius:90, shapeRadius2:14, shapeTurns:4, shapeHeight:420, shapeTwist:0 }),
+      defaultLayer({ name:'DNA — 鎖B', ringCount:6, segments:220, baseRadius:20, spacing:3, irregAmt:1, irregFreq:2, rotation:180, lineWidth:1.0, opacity:0.9, color:'#b34a3a', blend:'normal', seed:202, deformStrength:0, spiralBlend:0, shapeMode:'helix', shapeMorph:1, shapeRadius:90, shapeRadius2:14, shapeTurns:4, shapeHeight:420, shapeTwist:0 })
+    ], { bgColor:'#f2f0e9', tiltX:12, tiltY:-6, perspective:10 });
+  });
+  document.getElementById('preset-galaxy').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'銀河 — 金', ringCount:60, segments:240, baseRadius:50, spacing:4, spacingVarAmt:0.2, spacingVarFreq:0.5, irregAmt:3, irregFreq:3, lineWidth:0.5, opacity:0.85, color:'#f0d9a0', blend:'screen', seed:211, wobbleSpeed:0.2, spiralBlend:0, shapeMode:'sphere', shapeMorph:0.62, shapeRadius:220, deformType:'swirl', deformMode:'fixed', anchorX:0, anchorY:0, deformStrength:60, deformRadius:260 }),
+      defaultLayer({ name:'銀河 — 青', ringCount:50, segments:220, baseRadius:45, spacing:4, spacingVarAmt:0.2, spacingVarFreq:0.5, irregAmt:3, irregFreq:3.4, rotation:50, lineWidth:0.4, opacity:0.5, color:'#7fb6d9', blend:'screen', seed:212, wobbleSpeed:0.22, spiralBlend:0, shapeMode:'sphere', shapeMorph:0.58, shapeRadius:210, deformType:'swirl', deformMode:'fixed', anchorX:0, anchorY:0, deformStrength:80, deformRadius:240 })
+    ], { bgColor:'#0c0d16', tiltX:20, tiltY:-10, perspective:16 });
+  });
+  document.getElementById('preset-saturn').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'土星の輪', ringCount:90, segments:200, baseRadius:120, spacing:5, spacingVarAmt:0.1, spacingVarFreq:0.3, irregAmt:0.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.4, opacity:0.6, color:'#8a8272', blend:'normal', seed:221, wobbleSpeed:0.05, deformStrength:0, growthAmt:0.15, spiralBlend:0 })
+    ], { bgColor:'#eeece3', tiltX:72, tiltY:-6, perspective:14 });
+  });
+  document.getElementById('preset-cocoon').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'繭', ringCount:55, segments:220, baseRadius:50, spacing:4, irregAmt:2, irregFreq:2.5, lineWidth:0.55, opacity:0.85, color:'#4a3524', blend:'normal', seed:231, wobbleSpeed:0.12, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:200, deformType:'pull', deformMode:'fixed', anchorX:0, anchorY:-260, deformStrength:90, deformRadius:260 })
+    ], { bgColor:'#f4ede0', tiltX:14, tiltY:-8, perspective:10 });
+  });
+  document.getElementById('preset-crystal').addEventListener('click', function(){
+    applyPreset([
+      defaultLayer({ name:'結晶', ringCount:14, segments:12, baseRadius:50, spacing:4, irregAmt:0, irregFreq:1, lineWidth:0.7, opacity:0.9, color:'#2a3f4a', blend:'normal', seed:241, wobbleSpeed:0, deformStrength:0, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:210 }),
+      defaultLayer({ name:'結晶 — 反射', ringCount:11, segments:9, baseRadius:45, spacing:4, irregAmt:0, irregFreq:1, rotation:35, lineWidth:0.5, opacity:0.45, color:'#8fbcd0', blend:'screen', seed:242, wobbleSpeed:0, deformStrength:0, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:205 })
+    ], { bgColor:'#101820', tiltX:22, tiltY:-16, perspective:18 });
   });
 
   // ---------------------------------------------------------------
