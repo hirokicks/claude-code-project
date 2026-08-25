@@ -480,6 +480,65 @@
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.CULL_FACE);
 
+  // ---------------------------------------------------------------
+  // Offscreen compositing: a translucent stroke is built from many
+  // overlapping triangles (segment quads + round joint fans). Blending
+  // them straight onto the canvas double-darkens every joint where they
+  // overlap. Instead each layer is first rendered into its own texture
+  // with MAX blending (which resolves the overlaps into a clean coverage
+  // mask, since the color is constant across a layer), then that texture
+  // is composited onto the canvas exactly once with the layer's real
+  // blend mode/opacity — eliminating the beaded/dashed seam artifact.
+  var extMax = gl.getExtension('EXT_blend_minmax');
+  var MAX_EQ = extMax ? extMax.MAX_EXT : gl.FUNC_ADD;
+
+  var fbo = gl.createFramebuffer();
+  var fboTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, fboTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  var fboW = 0, fboH = 0;
+  function ensureFBO(w, h){
+    if (fboW === w && fboH === h) return;
+    fboW = w; fboH = h;
+    gl.bindTexture(gl.TEXTURE_2D, fboTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  var BLIT_VERT_SRC = [
+    "attribute vec2 aQuadPos;",
+    "varying vec2 vUv;",
+    "void main(){",
+    "  vUv = aQuadPos * 0.5 + 0.5;",
+    "  gl_Position = vec4(aQuadPos, 0.0, 1.0);",
+    "}"
+  ].join("\n");
+  var BLIT_FRAG_SRC = [
+    "precision mediump float;",
+    "uniform sampler2D uTex;",
+    "varying vec2 vUv;",
+    "void main(){",
+    "  gl_FragColor = texture2D(uTex, vUv);",
+    "}"
+  ].join("\n");
+  var blitProg = gl.createProgram();
+  gl.attachShader(blitProg, compile(gl.VERTEX_SHADER, BLIT_VERT_SRC));
+  gl.attachShader(blitProg, compile(gl.FRAGMENT_SHADER, BLIT_FRAG_SRC));
+  gl.linkProgram(blitProg);
+  if (!gl.getProgramParameter(blitProg, gl.LINK_STATUS)){
+    console.error(gl.getProgramInfoLog(blitProg));
+  }
+  var locQuadPos = gl.getAttribLocation(blitProg, 'aQuadPos');
+  var locBlitTex = gl.getUniformLocation(blitProg, 'uTex');
+  var quadBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
   var STRIDE = 32; // 8 floats * 4 bytes
 
   function setupAttribs(){
@@ -664,7 +723,7 @@
         color: '#35322d', blend: 'normal', seed: 7,
         wobbleSpeed: 0.14, breatheAmp: 0.012, breatheSpeed: 0.32,
         deformStrength: 26, deformRadius: 260, deformMode: 'mouse', deformType: 'push',
-        spiralBlend: 0.35, spiralZ: 1.1, depthOffset: 0
+        spiralBlend: 0, spiralZ: 1.1, depthOffset: 0
       }),
       defaultLayer({
         name: '重なり層 — モアレ', ringCount: 65, segments: 100, baseRadius: 42, spacing: 5.4,
@@ -674,7 +733,7 @@
         color: '#8a8272', blend: 'multiply', seed: 23,
         wobbleSpeed: 0.24, breatheAmp: 0.02, breatheSpeed: 0.5,
         deformStrength: 42, deformRadius: 190, deformMode: 'mouse', deformType: 'swirl',
-        spiralBlend: 0.5, spiralZ: -0.8, depthOffset: -60
+        spiralBlend: 0, spiralZ: -0.8, depthOffset: -60
       })
     ];
   }
@@ -736,13 +795,19 @@
 
   function render(){
     var dpr = resize();
+    if (canvas.width <= 0 || canvas.height <= 0){
+      requestAnimationFrame(render);
+      return;
+    }
+    ensureFBO(canvas.width, canvas.height);
+    gl.useProgram(prog);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     var bg = hexToRgb(state.bgColor);
     gl.clearColor(bg[0], bg[1], bg[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.uniform2f(locResolution, canvas.width, canvas.height);
-    setupAttribs();
 
     var elapsed = (performance.now() - startTime) / 1000;
     var cxPx = canvas.width / 2, cyPx = canvas.height / 2;
@@ -779,6 +844,8 @@
       if (!layer.enabled) return;
       var entry = geomCache[layer.id];
       if (!entry || !entry.count) return;
+
+      gl.useProgram(prog);
 
       var angleDeg = layer.rotation + (state.autoRotate ? layer.rotateSpeed * elapsed * 6 : 0);
       var angle = angleDeg * Math.PI / 180;
@@ -841,12 +908,36 @@
       gl.uniform1f(locGrowthWaveCount, Math.max(0.01, layer.growthWaveCount || 0.01));
       gl.uniform1f(locGrowthAmt, Math.min(1, Math.max(0, layer.growthAmt || 0)));
 
-      var bm = BLEND_MODES[layer.blend] || BLEND_MODES.normal;
-      gl.blendFunc(bm[0], bm[1]);
-
+      // Pass 1: draw this layer's segment quads + round joints into an
+      // offscreen texture with MAX blending. Color is constant across the
+      // layer, so taking the max alpha at every overlap resolves the
+      // segment/joint double-coverage into a single clean coverage mask.
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.blendEquation(MAX_EQ);
       gl.bindBuffer(gl.ARRAY_BUFFER, entry.vbo);
       setupAttribs();
       gl.drawArrays(gl.TRIANGLES, 0, entry.count);
+
+      // Pass 2: composite the resolved layer texture onto the canvas once,
+      // using this layer's actual blend mode (opacity is already baked
+      // into the texture's alpha from uColor.a in pass 1).
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.blendEquation(gl.FUNC_ADD);
+      var bm = BLEND_MODES[layer.blend] || BLEND_MODES.normal;
+      gl.blendFunc(bm[0], bm[1]);
+      gl.useProgram(blitProg);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+      gl.vertexAttribPointer(locQuadPos, 2, gl.FLOAT, false, 8, 0);
+      gl.enableVertexAttribArray(locQuadPos);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fboTex);
+      gl.uniform1i(locBlitTex, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
     });
 
     requestAnimationFrame(render);
@@ -929,7 +1020,7 @@
     body.appendChild(slider('分割数（滑らかさ）', 'segments', 16, 360, 2, layer.segments, function(v){ layer.segments = v; regen(); }, fmt0));
     body.appendChild(slider('基準半径', 'baseRadius', 0, 400, 1, layer.baseRadius, function(v){ layer.baseRadius = v; regen(); }, fmt0));
     body.appendChild(slider('間隔', 'spacing', 0.5, 30, 0.1, layer.spacing, function(v){ layer.spacing = v; regen(); }, fmt1));
-    body.appendChild(slider('螺旋化（0=同心円 / 1=連続螺旋）', 'spiralBlend', 0, 1, 0.01, layer.spiralBlend, function(v){ layer.spiralBlend = v; regen(); }, fmt2));
+    body.appendChild(slider('螺旋化（0=同心円 / 1=連続螺旋、中間値は継ぎ目が出ます）', 'spiralBlend', 0, 1, 0.01, layer.spiralBlend, function(v){ layer.spiralBlend = v; regen(); }, fmt2));
 
     body.appendChild(el('div', 'subgroup-label', '有機的なばらつき / Organic Variance'));
     body.appendChild(slider('年輪の粗密（ばらつき量）', 'spacingVarAmt', 0, 1, 0.01, layer.spacingVarAmt, function(v){ layer.spacingVarAmt = v; regen(); }, fmt2));
@@ -1119,7 +1210,11 @@
         deformType: ['push','pull','swirl'][Math.random()*3|0],
         anchorX: (Math.random()-0.5)*300,
         anchorY: (Math.random()-0.5)*300,
-        spiralBlend: Math.random(),
+        // spiralBlend only closes without a seam at its two ends (pure
+        // concentric or pure continuous spiral); anywhere in between the
+        // ring's own start and end radii can't both match, so keep
+        // randomize to the two clean extremes.
+        spiralBlend: Math.random() < 0.5 ? 0 : 1,
         spiralZ: (Math.random()-0.5)*4,
         depthOffset: (Math.random()-0.5)*200,
         twistPerRing: (Math.random()-0.5)*2,
@@ -1266,7 +1361,7 @@
   });
   document.getElementById('preset-single').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'年輪', ringCount:75, segments:150, baseRadius:20, spacing:6, spacingVarAmt:0.45, spacingVarFreq:0.6, irregAmt:5, irregFreq:3.5, eccentricity:12, eccentricityAngle:80, rotation:0, scale:1, lineWidth:0.9, opacity:0.9, color:'#2f2c27', blend:'normal', seed:9, spiralBlend:0.85, spiralZ:1.6 })
+      defaultLayer({ name:'年輪', ringCount:75, segments:150, baseRadius:20, spacing:6, spacingVarAmt:0.45, spacingVarFreq:0.6, irregAmt:5, irregFreq:3.5, eccentricity:12, eccentricityAngle:80, rotation:0, scale:1, lineWidth:0.9, opacity:0.9, color:'#2f2c27', blend:'normal', seed:9, spiralBlend:1, spiralZ:1.6 })
     ], { bgColor:'#f2f0e9', tiltX:28, tiltY:-10, perspective:16 });
   });
   document.getElementById('preset-spiral').addEventListener('click', function(){
@@ -1293,12 +1388,12 @@
   });
   document.getElementById('preset-barrel').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'樽', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#3d3226', blend:'normal', seed:91, bulgeAmt:0.45, spiralZ:1.2, spiralBlend:0.3 })
+      defaultLayer({ name:'樽', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#3d3226', blend:'normal', seed:91, bulgeAmt:0.45, spiralZ:1.2, spiralBlend:0 })
     ], { bgColor:'#f2ece0', tiltX:38, tiltY:-12, perspective:30 });
   });
   document.getElementById('preset-hourglass').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'くびれ', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#332e26', blend:'normal', seed:92, bulgeAmt:-0.4, spiralZ:1.4, spiralBlend:0.3 })
+      defaultLayer({ name:'くびれ', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#332e26', blend:'normal', seed:92, bulgeAmt:-0.4, spiralZ:1.4, spiralBlend:0 })
     ], { bgColor:'#f2ece0', tiltX:38, tiltY:-12, perspective:30 });
   });
   document.getElementById('preset-eccentric').addEventListener('click', function(){
@@ -1313,8 +1408,8 @@
   });
   document.getElementById('preset-depth').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'深淵 — 手前', ringCount:60, segments:120, baseRadius:15, spacing:5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.8, color:'#2a2723', blend:'normal', seed:121, spiralZ:2.2, spiralBlend:0.6, depthOffset:0 }),
-      defaultLayer({ name:'深淵 — 奥', ringCount:60, segments:120, baseRadius:12, spacing:4.6, eccentricity:0, rotation:20, scale:0.96, lineWidth:0.5, opacity:0.5, color:'#77705f', blend:'multiply', seed:122, spiralZ:2.2, spiralBlend:0.6, depthOffset:-250 })
+      defaultLayer({ name:'深淵 — 手前', ringCount:60, segments:120, baseRadius:15, spacing:5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.8, color:'#2a2723', blend:'normal', seed:121, spiralZ:2.2, spiralBlend:1, depthOffset:0 }),
+      defaultLayer({ name:'深淵 — 奥', ringCount:60, segments:120, baseRadius:12, spacing:4.6, eccentricity:0, rotation:20, scale:0.96, lineWidth:0.5, opacity:0.5, color:'#77705f', blend:'multiply', seed:122, spiralZ:2.2, spiralBlend:1, depthOffset:-250 })
     ], { bgColor:'#efece2', tiltX:50, tiltY:-22, perspective:50 });
   });
   document.getElementById('preset-helix').addEventListener('click', function(){
