@@ -443,7 +443,7 @@
     "      Zt = czp + uShapeRadius2 * sin(strandAngle);",
     "    } else if (uShapeMode == 3) {",
     "      float angle = tAlong * 6.28318530718;",
-    "      float bandAngle = angle * 0.5;",
+    "      float bandAngle = angle * 0.5 * uShapeTwist;",
     "      float w = (ringN - 0.5) * 2.0 * uShapeRadius2;",
     "      float radialX = cos(angle), radialY = sin(angle);",
     "      Xt = shapeR * radialX + w * cos(bandAngle) * radialX;",
@@ -1318,7 +1318,7 @@
     body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
     body.appendChild(slider('巻き数（螺旋チューブ）', 'shapeTurns', 0.2, 12, 0.1, layer.shapeTurns, function(v){ layer.shapeTurns = v; }, fmt1));
     body.appendChild(slider('高さ（螺旋チューブ）', 'shapeHeight', 0, 800, 5, layer.shapeHeight, function(v){ layer.shapeHeight = v; }, fmt0));
-    body.appendChild(slider('束のねじれ（螺旋チューブ）', 'shapeTwist', -8, 8, 0.1, layer.shapeTwist, function(v){ layer.shapeTwist = v; }, fmt1));
+    body.appendChild(slider('束のねじれ／ひねりの数（螺旋チューブ・メビウス）', 'shapeTwist', -8, 8, 0.1, layer.shapeTwist, function(v){ layer.shapeTwist = v; }, fmt1));
 
     var actions = document.createElement('div'); actions.className = 'row';
     var seedBtn = document.createElement('button'); seedBtn.className = 'small'; seedBtn.textContent = '🎲 シードを変更';
@@ -1695,7 +1695,7 @@
   });
   document.getElementById('preset-mobiusbundle').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'メビウスの束', ringCount:40, segments:300, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:2, irregFreq:3, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#2c2925', blend:'normal', seed:181, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:150, shapeRadius2:65 })
+      defaultLayer({ name:'メビウスの束', ringCount:40, segments:300, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:2, irregFreq:3, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#2c2925', blend:'normal', seed:181, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:150, shapeRadius2:65, shapeTwist:1 })
     ], { bgColor:'#f2f0e9', tiltX:26, tiltY:-18, perspective:22 });
   });
   document.getElementById('preset-ripple').addEventListener('click', function(){
@@ -1730,8 +1730,8 @@
   });
   document.getElementById('preset-mirror').addEventListener('click', function(){
     applyPreset([
-      defaultLayer({ name:'ミラー — 主', ringCount:70, segments:280, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, rotation:135, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:160, shapeRadius2:145 }),
-      defaultLayer({ name:'ミラー — 陰影', ringCount:56, segments:240, baseRadius:36, spacing:3.5, rotation:141, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:302, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:155, shapeRadius2:138 })
+      defaultLayer({ name:'ミラー — 主', ringCount:70, segments:280, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, rotation:135, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:160, shapeRadius2:145, shapeTwist:1 }),
+      defaultLayer({ name:'ミラー — 陰影', ringCount:56, segments:240, baseRadius:36, spacing:3.5, rotation:141, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:302, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:155, shapeRadius2:138, shapeTwist:1 })
     ], { bgColor:'#fafaf7', globalScale:1, tiltX:32, tiltY:-26, perspective:18 });
   });
   // ---------------------------------------------------------------
