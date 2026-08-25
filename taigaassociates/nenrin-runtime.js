@@ -367,6 +367,8 @@
   function create(canvasEl, config, opts) {
     opts = opts || {};
     var onStats = opts.onStats || null;
+    // Idle motion left running under a transition (see render / transitionTo).
+    var defaultCalm = opts.calm === undefined ? 0.15 : Math.max(0, Math.min(1, opts.calm));
 
   // ---------------------------------------------------------------
   // WebGL setup
@@ -862,6 +864,9 @@
   window.addEventListener('mousemove', onMouseMove);
 
   var startTime = performance.now();
+  var lastFrameMs = startTime;   // for the damped ambient clock, see render()
+  var animTime = 0;              // idle-motion clock, advances at `ambient` rate
+  var ambient = 1;               // 1 = full idle motion, dips while transitioning
 
   function resize(){
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -890,7 +895,20 @@
 
     gl.uniform2f(locResolution, canvas.width, canvas.height);
 
-    var elapsed = (performance.now() - startTime) / 1000;
+    // The idle motion (tilt sway, layer spin, breathing, wobble, growth and
+    // ripple waves) runs off its own clock rather than raw elapsed time, so it
+    // can be slowed right down while a transition plays. Without this the
+    // morph competes with every ambient animation at once and reads as busy.
+    // Advancing the clock more slowly — rather than scaling amplitudes — keeps
+    // every phase continuous, so nothing jumps when the damping comes and goes.
+    var nowMs = performance.now();
+    var dt = Math.min(0.05, (nowMs - lastFrameMs) / 1000);
+    lastFrameMs = nowMs;
+    var ambientTarget = _tr ? _tr.calm : 1;
+    ambient += (ambientTarget - ambient) * Math.min(1, dt * 5);
+    animTime += dt * ambient;
+
+    var elapsed = animTime;
     var cxPx = canvas.width / 2, cyPx = canvas.height / 2;
 
     var rect = canvas.getBoundingClientRect();
@@ -1141,14 +1159,16 @@
         p.live[k] = p.from[k] + (p.to[k] - p.from[k]) * e;
       });
       // A shape-mode change cannot be interpolated, so unfold back toward
-      // the plain ring form first, swap, then fold into the new shape.
+      // the plain ring form first, swap, then fold into the new shape. Each
+      // half is eased so the fold settles to a stop at the midpoint instead
+      // of reversing direction at full speed.
       if (swapsShape) {
         if (e < 0.5) {
           p.live.shapeMode = p.from.shapeMode;
-          p.live.shapeMorph = p.from.shapeMorph * (1 - e * 2);
+          p.live.shapeMorph = p.from.shapeMorph * (1 - EASINGS.easeInOutQuad(e * 2));
         } else {
           p.live.shapeMode = p.to.shapeMode;
-          p.live.shapeMorph = p.to.shapeMorph * ((e - 0.5) * 2);
+          p.live.shapeMorph = p.to.shapeMorph * EASINGS.easeInOutQuad((e - 0.5) * 2);
         }
       }
       LAYER_COLOR_KEYS.forEach(function (k) { p.live[k] = mixHex(p.from[k], p.to[k], e); });
@@ -1189,7 +1209,10 @@
 
     var tr = {
       mode: mode, start: performance.now(), duration: duration, ease: ease,
-      fromCam: fromCam, toCam: toCam, onComplete: o.onComplete || null
+      fromCam: fromCam, toCam: toCam, onComplete: o.onComplete || null,
+      // how much idle motion to leave running underneath: 1 keeps the piece
+      // fully alive (busy), 0 freezes it so only the morph moves
+      calm: o.calm === undefined ? defaultCalm : Math.max(0, Math.min(1, o.calm))
     };
 
     if (mode === 'morph') {

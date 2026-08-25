@@ -278,6 +278,10 @@
           <button id="scenePlay" class="small">▶ 順に再生</button>
         </div>
         <label class="chk"><input type="checkbox" id="sceneForce" checked> 強制モーフ（構造が違ってもモーフで繋ぐ）</label>
+        <div class="field">
+          <div class="label-row"><span>遷移中に残す揺らぎ（0=静止して形の変化だけ）</span><span class="val" id="v-sceneCalm">0.15</span></div>
+          <input type="range" id="sceneCalm" min="0" max="1" step="0.05" value="0.15">
+        </div>
         <div class="label-row" style="margin-top:4px;"><span id="sceneMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
       </div>
 
@@ -814,6 +818,8 @@
   var sceneEaseEl = document.getElementById('sceneEase');
   var scenePlayBtn = document.getElementById('scenePlay');
   var sceneForceEl = document.getElementById('sceneForce');
+  var sceneCalmEl = document.getElementById('sceneCalm');
+  var sceneCalmVal = document.getElementById('v-sceneCalm');
 
   var MODE_LABEL = { morph: 'モーフ', forced: '強制モーフ', crossfade: 'クロスフェード' };
 
@@ -851,6 +857,7 @@
       duration: parseInt(sceneDurEl.value, 10),
       easing: sceneEaseEl.value,
       force: sceneForceEl.checked,
+      calm: parseFloat(sceneCalmEl.value),
       onComplete: function(){
         afterTransition();
         sceneMsgEl.textContent = '「' + sc.name + '」へ ' + MODE_LABEL[mode] + 'で切り替えました';
@@ -991,6 +998,7 @@
   });
   sceneDurEl.addEventListener('input', function(){ sceneDurVal.textContent = sceneDurEl.value; });
   sceneForceEl.addEventListener('change', function(){ renderSceneList(); });
+  sceneCalmEl.addEventListener('input', function(){ sceneCalmVal.textContent = parseFloat(sceneCalmEl.value).toFixed(2); });
 
   restoreScenes();
   renderSceneList();
