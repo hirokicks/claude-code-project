@@ -281,14 +281,13 @@
       </div>
 
       <div class="panel">
-        <h2>Settings <span class="tag">JSON 設定</span></h2>
-        <button id="showSettings" class="wide small">現在の設定を表示 / コピー</button>
+        <h2>Export / Restore <span class="tag">書き出し・復元</span></h2>
+        <div class="row">
+          <button id="modeExport" class="small">実装用コードを書き出し</button>
+          <button id="modeSettings" class="small">JSON で保存・復元</button>
+        </div>
         <div id="settingsBox" style="display:none;">
-          <div class="row" style="margin-top:8px;">
-            <button id="modeSettings" class="small">JSON（保存・復元用）</button>
-            <button id="modeExport" class="small primary">実装用コード</button>
-          </div>
-          <div class="label-row" style="margin-top:6px;">
+          <div class="label-row" style="margin-top:8px;">
             <input id="exportName" type="text" value="artA" spellcheck="false"
               style="width:100%;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:6px 8px;font-family:ui-monospace,monospace;font-size:11px;box-sizing:border-box;"
               placeholder="書き出し名（変数名に使われます）"></div>
@@ -296,8 +295,9 @@
           <div class="row" style="margin-top:8px;">
             <button id="copySettings" class="small primary">コピー</button>
             <button id="applySettings" class="small">貼り付けた内容を適用</button>
+            <button id="closeSettings" class="small">閉じる</button>
           </div>
-          <div class="label-row" style="margin-top:4px;"><span id="settingsMsg" style="color:#6fae8f;"></span></div>
+          <div class="label-row" style="margin-top:4px;"><span id="settingsMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
         </div>
       </div>
 
@@ -829,6 +829,15 @@
     renderSceneList();
   }
 
+  // transitionTo() drives the camera values itself, so mirror them into the
+  // global controls while it runs — the sliders visibly travel, which is most
+  // of what makes a morph readable as a demo.
+  function trackTransition(){
+    if (!art.isTransitioning()) return;
+    syncGlobalUI();
+    requestAnimationFrame(trackTransition);
+  }
+
   function goScene(i){
     var sc = scenes[i];
     if (!sc || art.isTransitioning()) return;
@@ -844,6 +853,7 @@
     activeScene = i;
     renderSceneList();
     sceneMsgEl.textContent = '「' + sc.name + '」へ ' + (mode === 'morph' ? 'モーフ変形中…' : 'クロスフェード中…');
+    trackTransition();
   }
 
   // Copies only the structural parameters from a scene onto the current
@@ -986,9 +996,13 @@
   // values that differ from the defaults are written out. That keeps the
   // handed-over code short and makes it obvious which knobs this particular
   // art actually uses.
-  function safeVarName(s){
-    var v = String(s || '').trim().replace(/[^A-Za-z0-9_$]/g, '_');
-    if (!v || /^[0-9]/.test(v)) v = 'art' + (v || '');
+  // Scene names are free text (often Japanese), so strip them down to a legal
+  // ASCII identifier for the variable and fall back to a positional name when
+  // nothing usable is left. The original name is kept verbatim as the
+  // NENRIN_SCENES key, so nothing is lost.
+  function safeVarName(s, fallback){
+    var v = String(s || '').trim().replace(/[^A-Za-z0-9_$]/g, '');
+    if (!v || /^[0-9]/.test(v)) v = fallback || ('art' + v);
     return v;
   }
   function jsValue(v){
@@ -1044,12 +1058,12 @@
 
     var used = {};
     var entries = scenes.map(function(sc, i){
-      var v = safeVarName(sc.name);
+      var v = safeVarName(sc.name, 'scene' + (i + 1));
       while (used[v]) v = v + '_' + (i + 1);
       used[v] = true;
       return { varName: v, label: sc.name, snap: sc.config };
     });
-    var first = entries[0].varName;
+    var first = entries[0].label;
 
     var head = [
       '/* 年輪ラインアート — 全 ' + entries.length + ' シーン',
@@ -1059,8 +1073,8 @@
       ' *   <script src="nenrin-runtime.js"><\/script>',
       ' *   <script src="このファイル"><\/script>',
       ' *   <script>',
-      ' *     var art = NenrinArt.create(document.getElementById(\'art\'), NENRIN_SCENES.' + first + ');',
-      ' *     art.transitionTo(NENRIN_SCENES.<別のシーン名>, { duration: '
+      ' *     var art = NenrinArt.create(document.getElementById(\'art\'), NENRIN_SCENES[' + jsValue(first) + ']);',
+      ' *     art.transitionTo(NENRIN_SCENES[<別のシーン名>], { duration: '
         + parseInt(sceneDurEl.value, 10) + ", easing: '" + sceneEaseEl.value + "' });",
       ' *   <\/script>',
       ' *',
@@ -1081,19 +1095,21 @@
       var cells = entries.map(function(b){
         return b.varName === a.varName ? '-' : (NenrinArt.canMorph(a.snap, b.snap) ? 'M' : 'X');
       });
-      matrix.push(' *   ' + a.varName + ': ' + cells.join(' '));
+      matrix.push(' *   ' + a.label + ': ' + cells.join(' '));
     });
     matrix.push(' */');
 
     var tail = [
       '',
       'var NENRIN_SCENES = {',
-      entries.map(function(e){ return '  ' + e.varName + ': ' + e.varName; }).join(',\n'),
+      entries.map(function(e){ return '  ' + jsValue(e.label) + ': ' + e.varName; }).join(',\n'),
       '};'
     ];
 
     return head.concat(body, matrix, tail).join('\n');
   }
+
+  function panelOpen(){ return settingsBox.style.display !== 'none'; }
 
   function refreshPanel(){
     var isExport = panelMode === 'export';
@@ -1103,25 +1119,36 @@
     // the name field only matters when there are no scenes to export
     exportName.parentNode.style.display = (isExport && !scenes.length) ? '' : 'none';
     applyBtn.style.display = isExport ? 'none' : '';
-    modeExportBtn.className = 'small' + (isExport ? ' primary' : '');
-    modeSettingsBtn.className = 'small' + (isExport ? '' : ' primary');
-    settingsMsg.textContent = isExport && scenes.length
-      ? '保存済み ' + scenes.length + ' シーンをまとめて書き出しています'
-      : '';
+    var open = panelOpen();
+    modeExportBtn.className = 'small' + (open && isExport ? ' primary' : '');
+    modeSettingsBtn.className = 'small' + (open && !isExport ? ' primary' : '');
+    settingsMsg.textContent = isExport
+      ? (scenes.length
+          ? '保存済み ' + scenes.length + ' シーンをまとめて書き出しています'
+          : 'いま画面に出ているアートを書き出しています')
+      : 'このJSONを保存しておけば、貼り付けて「適用」で同じアートを復元できます';
   }
-  modeSettingsBtn.addEventListener('click', function(){ panelMode = 'settings'; refreshPanel(); });
-  modeExportBtn.addEventListener('click', function(){ panelMode = 'export'; refreshPanel(); });
-  exportName.addEventListener('input', function(){ if (panelMode === 'export') settingsText.value = buildExportCode(); });
 
-  document.getElementById('showSettings').addEventListener('click', function(){
-    var opening = settingsBox.style.display === 'none';
-    if (opening){
-      settingsBox.style.display = 'block';
-      refreshPanel();
-    } else {
+  // Each button opens the box in its own mode, and closes it when pressed
+  // again in that same mode — so both features stay visible from the panel
+  // without needing to open something first to discover them.
+  function openPanel(mode){
+    if (panelOpen() && panelMode === mode){
       settingsBox.style.display = 'none';
+      refreshPanel();
+      return;
     }
+    panelMode = mode;
+    settingsBox.style.display = 'block';
+    refreshPanel();
+  }
+  modeExportBtn.addEventListener('click', function(){ openPanel('export'); });
+  modeSettingsBtn.addEventListener('click', function(){ openPanel('settings'); });
+  document.getElementById('closeSettings').addEventListener('click', function(){
+    settingsBox.style.display = 'none';
+    refreshPanel();
   });
+  exportName.addEventListener('input', function(){ if (panelMode === 'export') settingsText.value = buildExportCode(); });
   document.getElementById('copySettings').addEventListener('click', function(){
     settingsText.select();
     var ok = false;
