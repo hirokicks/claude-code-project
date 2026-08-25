@@ -303,6 +303,7 @@
     "attribute vec2 aPos;",
     "attribute vec2 aDir;",
     "attribute float aRing;",
+    "attribute float aU;",
     "attribute vec2 aNormal;",
     "attribute float aSide;",
     "uniform mat3 uTransform;",
@@ -359,8 +360,8 @@
     "  return mix(nxy0,nxy1,f.z) * 2.0 - 1.0;",
     "}",
     "void main(){",
-    "  float nx = aDir.x * uIrregFreq + aRing * 0.37 + uSeedOffset.x;",
-    "  float ny = aDir.y * uIrregFreq + aRing * 0.37 + uSeedOffset.y;",
+    "  float nx = aDir.x * uIrregFreq + aU * 0.37 + uSeedOffset.x;",
+    "  float ny = aDir.y * uIrregFreq + aU * 0.37 + uSeedOffset.y;",
     "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
     "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt;",
     "  vec2 animated = aPos + aDir * wob;",
@@ -444,6 +445,7 @@
   var locPos = gl.getAttribLocation(prog, 'aPos');
   var locDir = gl.getAttribLocation(prog, 'aDir');
   var locRing = gl.getAttribLocation(prog, 'aRing');
+  var locU = gl.getAttribLocation(prog, 'aU');
   var locNormal = gl.getAttribLocation(prog, 'aNormal');
   var locSide = gl.getAttribLocation(prog, 'aSide');
   var locTransform = gl.getUniformLocation(prog, 'uTransform');
@@ -539,17 +541,19 @@
   gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
 
-  var STRIDE = 32; // 8 floats * 4 bytes
+  var STRIDE = 36; // 9 floats * 4 bytes
 
   function setupAttribs(){
     gl.vertexAttribPointer(locPos, 2, gl.FLOAT, false, STRIDE, 0);
     gl.vertexAttribPointer(locDir, 2, gl.FLOAT, false, STRIDE, 8);
     gl.vertexAttribPointer(locRing, 1, gl.FLOAT, false, STRIDE, 16);
-    gl.vertexAttribPointer(locNormal, 2, gl.FLOAT, false, STRIDE, 20);
-    gl.vertexAttribPointer(locSide, 1, gl.FLOAT, false, STRIDE, 28);
+    gl.vertexAttribPointer(locU, 1, gl.FLOAT, false, STRIDE, 20);
+    gl.vertexAttribPointer(locNormal, 2, gl.FLOAT, false, STRIDE, 24);
+    gl.vertexAttribPointer(locSide, 1, gl.FLOAT, false, STRIDE, 32);
     gl.enableVertexAttribArray(locPos);
     gl.enableVertexAttribArray(locDir);
     gl.enableVertexAttribArray(locRing);
+    gl.enableVertexAttribArray(locU);
     gl.enableVertexAttribArray(locNormal);
     gl.enableVertexAttribArray(locSide);
   }
@@ -575,13 +579,25 @@
     var eccRad = p.eccentricityAngle * Math.PI / 180;
     var ecx = Math.cos(eccRad), ecy = Math.sin(eccRad);
 
-    function baseRadiusAt(i){
-      var base = p.baseRadius + i * p.spacing;
-      var growth = noise(i * p.spacingVarFreq * 0.5 + 100, p.seed * 0.017) * p.spacing * p.spacingVarAmt * i * 0.02;
-      return Math.max(0.4, base + growth);
+    // growth/center are sampled at both the ring's integer index (the
+    // "stepped" concentric value) and at the continuous spiral position u —
+    // the noise itself is a smooth function, but sampling it only once per
+    // ring for the stepped case makes it jump at every ring boundary. Mixing
+    // the two by spiralBlend keeps stepped rings blocky (as intended) while
+    // spiralBlend===1 uses growthAt(u) alone, which never jumps, so a fully
+    // chained spiral has no more per-ring "kink" for the joins to reveal.
+    function growthAt(u){
+      return noise(u * p.spacingVarFreq * 0.5 + 100, p.seed * 0.017) * p.spacing * p.spacingVarAmt * u * 0.02;
     }
-    function centerAt(i){
-      var d = p.eccentricity * (i / Math.max(1, ringCount - 1));
+    function radiusAt(i, u){
+      var stepped = p.baseRadius + i * p.spacing + growthAt(i);
+      var continuous = p.baseRadius + u * p.spacing + growthAt(u);
+      return Math.max(0.4, stepped + (continuous - stepped) * spiralBlend);
+    }
+    function centerAt(i, u){
+      var dStepped = p.eccentricity * (i / Math.max(1, ringCount - 1));
+      var dCont = p.eccentricity * (u / Math.max(1, ringCount - 1));
+      var d = dStepped + (dCont - dStepped) * spiralBlend;
       return [ecx * d, ecy * d];
     }
 
@@ -603,59 +619,76 @@
     var quadCount = ringCount * segments + (chainRings ? Math.max(0, ringCount - 1) : 0);
     var joinCount = ringCount * (segments + 1);
     var totalVerts = quadCount * 6 + joinCount * JOIN_VERTS;
-    var buf = new Float32Array(totalVerts * 8);
+    var buf = new Float32Array(totalVerts * 9);
     var o = 0;
 
-    var prevX = null, prevY = null, prevDx = null, prevDy = null, prevRing = 0;
+    var prevX = null, prevY = null, prevDx = null, prevDy = null, prevRing = 0, prevU = 0;
     for (var i = 0; i < ringCount; i++){
-      var c = centerAt(i);
-      var cx = c[0], cy = c[1];
-      var rBase = baseRadiusAt(i);
       if (!chainRings){ prevX = null; prevY = null; prevDx = null; prevDy = null; }
       for (var j = 0; j <= segments; j++){
+        // u is the continuous "how far around the whole spiral" position —
+        // radiusAt/centerAt use it (vs. the ring's fixed integer index) for
+        // the spiralBlend===1 continuous case so nothing jumps at ring seams.
+        // It's also threaded into the shader as aU (see uIrregFreq/wobble)
+        // instead of aRing there specifically: aRing still steps discretely
+        // per ring (growth-wave bands, twist, bulge, mobius all want that),
+        // but the fine wobble noise needs a coordinate that doesn't jump at
+        // a ring boundary or the "grain" texture itself re-creates the seam.
+        var u = i + j / segments;
         var theta = (j / segments) * Math.PI * 2;
-        // spiralBlend>0 lets radius climb continuously across the ring so
-        // consecutive rings fuse into one coiling spiral instead of closed loops
-        var r = rBase + spiralBlend * (j / segments) * p.spacing;
+        var c = centerAt(i, u);
+        var cx = c[0], cy = c[1];
+        var r = radiusAt(i, u);
         var dirx = Math.cos(theta), diry = Math.sin(theta);
         var x = cx + dirx * r;
         var y = cy + diry * r;
         if (prevX !== null){
           var dx = x - prevX, dy = y - prevY;
-          var len = Math.hypot(dx, dy) || 1e-6;
-          var nx = -dy / len, ny = dx / len;
-          // prevRing differs from i only for the one bridging quad that
-          // chains ring i-1's last point to ring i's first (chainRings) —
-          // keep that vertex's aRing correct so it animates (wobble/growth/
-          // twist/etc, all aRing-driven) identically to how ring i-1 itself
-          // rendered it, or the bridge would re-introduce its own seam.
+          var len = Math.hypot(dx, dy);
+          var nx, ny;
+          if (len > 1e-4){
+            nx = -dy / len; ny = dx / len;
+          } else {
+            // near-zero-length segment (the ring-to-ring bridge when
+            // spiralBlend===1 lands almost exactly on the next ring's start)
+            // — deriving a normal from dx/dy here is just floating-point
+            // noise, which showed up as a small per-ring notch. Falling back
+            // to this point's own radial-perpendicular direction keeps the
+            // (invisible, near-zero-width) bridge quad's orientation sane.
+            nx = -diry; ny = dirx;
+          }
+          // prevRing/prevU differ from i/u only for the one bridging quad
+          // that chains ring i-1's last point to ring i's first (chainRings)
+          // — keep that vertex's aRing/aU correct so it animates (wobble/
+          // growth/twist/etc) identically to how ring i-1 itself rendered
+          // it, or the bridge would re-introduce its own seam.
           // A(prev,+1) B(prev,-1) C(cur,+1) D(cur,-1) -> A,B,C, C,B,D
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, nx, ny, 1);
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, nx, ny, -1);
-          o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, 1);
-          o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, 1);
-          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, nx, ny, -1);
-          o = pushV(buf, o, x, y, dirx, diry, i, nx, ny, -1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, 1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
+          o = pushV(buf, o, x, y, dirx, diry, i, u, nx, ny, 1);
+          o = pushV(buf, o, x, y, dirx, diry, i, u, nx, ny, 1);
+          o = pushV(buf, o, prevX, prevY, prevDx, prevDy, prevRing, prevU, nx, ny, -1);
+          o = pushV(buf, o, x, y, dirx, diry, i, u, nx, ny, -1);
         }
-        o = pushJoint(buf, o, x, y, dirx, diry, i);
-        prevX = x; prevY = y; prevDx = dirx; prevDy = diry; prevRing = i;
+        o = pushJoint(buf, o, x, y, dirx, diry, i, u);
+        prevX = x; prevY = y; prevDx = dirx; prevDy = diry; prevRing = i; prevU = u;
       }
     }
     return buf;
   }
-  function pushV(buf, o, x, y, dx, dy, ring, nx, ny, side){
+  function pushV(buf, o, x, y, dx, dy, ring, u, nx, ny, side){
     buf[o] = x; buf[o+1] = y; buf[o+2] = dx; buf[o+3] = dy; buf[o+4] = ring;
-    buf[o+5] = nx; buf[o+6] = ny; buf[o+7] = side;
-    return o + 8;
+    buf[o+5] = u; buf[o+6] = nx; buf[o+7] = ny; buf[o+8] = side;
+    return o + 9;
   }
   var JOIN_SIDES = 5, JOIN_VERTS = JOIN_SIDES * 3;
-  function pushJoint(buf, o, x, y, dx, dy, ring){
+  function pushJoint(buf, o, x, y, dx, dy, ring, u){
     for (var k = 0; k < JOIN_SIDES; k++){
       var a0 = (k / JOIN_SIDES) * Math.PI * 2;
       var a1 = ((k + 1) / JOIN_SIDES) * Math.PI * 2;
-      o = pushV(buf, o, x, y, dx, dy, ring, 0, 0, 0);
-      o = pushV(buf, o, x, y, dx, dy, ring, Math.cos(a0), Math.sin(a0), 1);
-      o = pushV(buf, o, x, y, dx, dy, ring, Math.cos(a1), Math.sin(a1), 1);
+      o = pushV(buf, o, x, y, dx, dy, ring, u, 0, 0, 0);
+      o = pushV(buf, o, x, y, dx, dy, ring, u, Math.cos(a0), Math.sin(a0), 1);
+      o = pushV(buf, o, x, y, dx, dy, ring, u, Math.cos(a1), Math.sin(a1), 1);
     }
     return o;
   }
@@ -764,7 +797,7 @@
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, entry.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, buf, gl.DYNAMIC_DRAW);
-    entry.count = buf.length / 8;
+    entry.count = buf.length / 9;
   }
 
   function regenAll(){
