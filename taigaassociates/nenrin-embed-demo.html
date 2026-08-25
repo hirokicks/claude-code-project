@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>年輪アート 組み込みデモ / TAIGA ASSOCIATES</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Segoe UI', sans-serif;
+    background: #fafaf7; color: #2c2925;
+  }
+
+  /* この art-block が、実際のページ内で使う想定のブロック単位 */
+  .art-block { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+  .art-block canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .art-copy {
+    position: absolute; top: 50%; left: 0; transform: translateY(-50%);
+    padding: 0 clamp(20px, 5vw, 64px); pointer-events: none; z-index: 2;
+  }
+  .art-copy h2 { font-size: clamp(40px, 8vw, 96px); font-weight: 300; line-height: 1; letter-spacing: -.01em; }
+  .art-copy p  { font-size: clamp(15px, 2.2vw, 24px); font-weight: 500; margin-top: 14px; }
+
+  .panel {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+    background: rgba(20,19,17,.88); color: #eee; padding: 10px 14px; border-radius: 999px;
+    z-index: 10; font-size: 12px; letter-spacing: .04em;
+    box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  }
+  .panel button {
+    font: inherit; color: #eee; background: #333130; border: 1px solid #4a4745;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer;
+  }
+  .panel button:hover { background: #444140; }
+  .panel button[aria-current="true"] { background: #eee; color: #1a1917; border-color: #eee; }
+  .panel .mode { opacity: .65; min-width: 190px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="art-block" id="block">
+  <canvas id="art"></canvas>
+  <div class="art-copy">
+    <h2 id="headline">Discover New Way</h2>
+    <p id="subline">新しい価値を紡ぐ</p>
+  </div>
+</div>
+
+<div class="panel">
+  <button data-key="calm">静 / Calm</button>
+  <button data-key="sphere">球 / Sphere</button>
+  <button data-key="wave">波 / Wave</button>
+  <span class="mode" id="mode">—</span>
+</div>
+
+<script src="nenrin-runtime.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var L = NenrinArt.defaultLayer;
+
+  // 構造パラメータ（ringCount / segments / baseRadius / spacing /
+  // spacingVar* / eccentricity* / spiralBlend / seed）を共有させておくと、
+  // その2つは「モーフ」で形そのものが連続変形して繋がります。
+  var SHARED = {
+    ringCount: 70, segments: 240, baseRadius: 40, spacing: 3.5,
+    spacingVarAmt: 0.1, spacingVarFreq: 0.4,
+    eccentricity: 0, eccentricityAngle: 0, spiralBlend: 0
+  };
+  function shared(seed, extra) {
+    return L(Object.assign({}, SHARED, { seed: seed }, extra));
+  }
+
+  var CONFIGS = {
+    // --- A: 年輪そのまま ---
+    calm: {
+      bgColor: '#f4f2ec', textColor: '#2c2925',
+      tiltX: 24, tiltY: -10, perspective: 14, globalScale: 1,
+      layers: [
+        shared(401, { name: '主', irregAmt: 3, irregFreq: 2.2, lineWidth: 0.5,
+                      opacity: 0.85, color: '#2c2925', blend: 'normal', wobbleSpeed: 0.1 }),
+        shared(402, { name: '陰影', irregAmt: 2, irregFreq: 2.6, rotation: 6, lineWidth: 0.35,
+                      opacity: 0.4, color: '#8f8778', blend: 'multiply', wobbleSpeed: 0.1 })
+      ]
+    },
+
+    // --- B: A と構造は同一、形状ターゲットだけ球体 → モーフで繋がる ---
+    sphere: {
+      bgColor: '#eef1f6', textColor: '#1f3a63',
+      tiltX: 46, tiltY: -24, perspective: 22, globalScale: 1,
+      layers: [
+        shared(401, { name: '主', irregAmt: 3, irregFreq: 2.2, lineWidth: 0.5,
+                      opacity: 0.85, color: '#1f3a63', blend: 'normal', wobbleSpeed: 0.1,
+                      shapeMode: 'sphere', shapeMorph: 1, shapeRadius: 210,
+                      rippleAmt: 24, rippleFreq: 5, rippleSpeed: 0.2 }),
+        shared(402, { name: '陰影', irregAmt: 2, irregFreq: 2.6, rotation: 6, lineWidth: 0.35,
+                      opacity: 0.4, color: '#7d90b8', blend: 'multiply', wobbleSpeed: 0.1,
+                      shapeMode: 'sphere', shapeMorph: 1, shapeRadius: 204,
+                      rippleAmt: 20, rippleFreq: 5, rippleSpeed: 0.2 })
+      ]
+    },
+
+    // --- C: 構造（ringCount / segments / baseRadius …）が違う → クロスフェード ---
+    wave: {
+      bgColor: '#fafaf7', textColor: '#232019',
+      tiltX: 20, tiltY: -24, perspective: 16, globalScale: 0.85,
+      layers: [
+        L({ name: 'ウェーブ — 主', ringCount: 70, segments: 260, baseRadius: 40, spacing: 3.5,
+            spacingVarAmt: 0.1, spacingVarFreq: 0.4, irregAmt: 1, irregFreq: 2, eccentricity: 0,
+            lineWidth: 0.5, opacity: 0.85, color: '#232019', blend: 'normal', seed: 311,
+            wobbleSpeed: 0.08, deformStrength: 0, spiralBlend: 0,
+            shapeMode: 'wave', shapeMorph: 1, shapeRadius: 130, shapeRadius2: 80,
+            shapeTurns: 1, shapeHeight: 380, shapeTwist: 1.5 }),
+        L({ name: 'ウェーブ — 陰影', ringCount: 56, segments: 220, baseRadius: 36, spacing: 3.5,
+            rotation: 4, lineWidth: 0.35, opacity: 0.4, color: '#6b6a63', blend: 'multiply',
+            seed: 312, wobbleSpeed: 0.08, deformStrength: 0, spiralBlend: 0,
+            shapeMode: 'wave', shapeMorph: 1, shapeRadius: 125, shapeRadius2: 75,
+            shapeTurns: 1, shapeHeight: 370, shapeTwist: 1.5 })
+      ]
+    }
+  };
+
+  var COPY = {
+    calm:   ['Discover New Way', '新しい価値を紡ぐ'],
+    sphere: ['Expand Horizons',  '視野をひろげる'],
+    wave:   ['Flow Forward',     '流れをつくる']
+  };
+
+  // --- 起動 ---
+  var current = 'calm';
+  var art = NenrinArt.create(document.getElementById('art'), CONFIGS.calm);
+
+  var headline = document.getElementById('headline');
+  var subline = document.getElementById('subline');
+  var modeEl = document.getElementById('mode');
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.panel button'));
+
+  function syncButtons() {
+    buttons.forEach(function (b) {
+      b.setAttribute('aria-current', String(b.dataset.key === current));
+    });
+  }
+
+  function go(key) {
+    if (key === current || art.isTransitioning()) return;
+    // 事前にどちらの方式になるか判定できる
+    var willMorph = NenrinArt.canMorph(art.state, CONFIGS[key]);
+    var mode = art.transitionTo(CONFIGS[key], {
+      duration: 1400,
+      easing: 'easeInOutCubic',
+      onComplete: function () { modeEl.textContent = mode + ' 完了'; }
+    });
+    modeEl.textContent = (willMorph ? '⟶ モーフ変形中' : '⟶ クロスフェード中') + ' (' + mode + ')';
+    current = key;
+    syncButtons();
+
+    // テキストは背景色に追従（文字色も設定に含まれる）
+    headline.textContent = COPY[key][0];
+    subline.textContent = COPY[key][1];
+  }
+
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { go(b.dataset.key); });
+  });
+  syncButtons();
+
+  // 文字色は state.textColor を毎フレーム反映（遷移中も補間される）
+  (function tick() {
+    document.querySelector('.art-copy').style.color = art.state.textColor;
+    document.body.style.background = art.state.bgColor;
+    requestAnimationFrame(tick);
+  })();
+
+  // デバッグ／検証用
+  window.demo = { art: art, configs: CONFIGS, go: go };
+})();
+</script>
+</body>
+</html>
