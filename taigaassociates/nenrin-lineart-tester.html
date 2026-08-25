@@ -233,12 +233,6 @@
           <button id="preset-sphere" class="small">球体 / Sphere</button>
           <button id="preset-tubebundle" class="small">螺旋の束 / Tube</button>
           <button id="preset-mobiusbundle" class="small">メビウスの束 / M-Band</button>
-          <button id="preset-nautilus" class="small">貝殻 / Nautilus</button>
-          <button id="preset-dna" class="small">DNA / Double Helix</button>
-          <button id="preset-galaxy" class="small">銀河 / Galaxy</button>
-          <button id="preset-saturn" class="small">土星の輪 / Saturn</button>
-          <button id="preset-cocoon" class="small">繭 / Cocoon</button>
-          <button id="preset-crystal" class="small">結晶 / Crystal</button>
         </div>
       </div>
 
@@ -351,6 +345,10 @@
     "uniform float uShapeHeight;",
     "uniform float uShapeTwist;",
     "uniform float uShapeScale;",
+    "uniform float uRippleAmt;",
+    "uniform float uRippleFreq;",
+    "uniform float uRippleSpeed;",
+    "uniform float uTwistSpeed;",
     "varying float vEdge;",
     "varying float vGrowth;",
     "float hash3(vec3 p){",
@@ -383,12 +381,15 @@
     "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt;",
     "  vec2 animated = aPos + aDir * wob;",
     "  float ringN = clamp(aRing * uRingCountInv, 0.0, 1.0);",
+    "  float ripplePhase = ringN * uRippleFreq - uTime * uRippleSpeed;",
+    "  float ripple = uRippleAmt * sin(ripplePhase * 6.28318530718);",
+    "  animated += aDir * ripple;",
     "  float growthPhase = ringN * uGrowthWaveCount - uTime * uGrowthSpeed;",
     "  float growthWave = 0.5 + 0.5 * cos(growthPhase * 6.28318530718);",
     "  vGrowth = mix(1.0, growthWave, uGrowthAmt);",
     "  float bulgeScale = 1.0 + uBulgeAmt * sin(ringN * 3.14159265);",
     "  animated *= bulgeScale;",
-    "  float twistAng = aRing * uTwistPerRing;",
+    "  float twistAng = aRing * uTwistPerRing + uTime * uTwistSpeed;",
     "  float twc = cos(twistAng), tws = sin(twistAng);",
     "  animated = vec2(animated.x*twc - animated.y*tws, animated.x*tws + animated.y*twc);",
     "  float theta = atan(aDir.y, aDir.x);",
@@ -398,30 +399,38 @@
     "  if (uShapeMode != 0) {",
     "    float tAlong = theta / 6.28318530718;",
     "    if (tAlong < 0.0) tAlong += 1.0;",
+    "    float shapeR = uShapeRadius + ripple;",
     "    float Xt = 0.0, Yt = 0.0, Zt = 0.0;",
     "    if (uShapeMode == 1) {",
     "      float phi = ringN * 3.14159265;",
     "      float sinPhi = sin(phi), cosPhi = cos(phi);",
-    "      Xt = uShapeRadius * sinPhi * aDir.x;",
-    "      Yt = uShapeRadius * sinPhi * aDir.y;",
-    "      Zt = uShapeRadius * cosPhi;",
+    "      Xt = shapeR * sinPhi * aDir.x;",
+    "      Yt = shapeR * sinPhi * aDir.y;",
+    "      Zt = shapeR * cosPhi;",
     "    } else if (uShapeMode == 2) {",
     "      float mainAngle = tAlong * uShapeTurns * 6.28318530718;",
-    "      float cxp = uShapeRadius * cos(mainAngle);",
-    "      float cyp = uShapeRadius * sin(mainAngle);",
+    "      float cxp = shapeR * cos(mainAngle);",
+    "      float cyp = shapeR * sin(mainAngle);",
     "      float czp = (tAlong - 0.5) * uShapeHeight;",
     "      float strandAngle = ringN * 6.28318530718 + tAlong * uShapeTwist * 6.28318530718;",
     "      Xt = cxp + uShapeRadius2 * cos(strandAngle) * cos(mainAngle);",
     "      Yt = cyp + uShapeRadius2 * cos(strandAngle) * sin(mainAngle);",
     "      Zt = czp + uShapeRadius2 * sin(strandAngle);",
-    "    } else {",
+    "    } else if (uShapeMode == 3) {",
     "      float angle = tAlong * 6.28318530718;",
     "      float bandAngle = angle * 0.5;",
     "      float w = (ringN - 0.5) * 2.0 * uShapeRadius2;",
     "      float radialX = cos(angle), radialY = sin(angle);",
-    "      Xt = uShapeRadius * radialX + w * cos(bandAngle) * radialX;",
-    "      Yt = uShapeRadius * radialY + w * cos(bandAngle) * radialY;",
+    "      Xt = shapeR * radialX + w * cos(bandAngle) * radialX;",
+    "      Yt = shapeR * radialY + w * cos(bandAngle) * radialY;",
     "      Zt = w * sin(bandAngle);",
+    "    } else {",
+    "      float cxr = aDir.x, cyr = aDir.y;",
+    "      float m = max(abs(cxr), abs(cyr));",
+    "      if (m < 0.0001) m = 0.0001;",
+    "      Xt = (cxr / m) * shapeR;",
+    "      Yt = (cyr / m) * shapeR;",
+    "      Zt = (ringN - 0.5) * uShapeHeight;",
     "    }",
     "    animated = mix(animated, vec2(Xt, Yt), uShapeMorph);",
     "    shapeZ = mix(existingZ, Zt * uShapeScale, uShapeMorph);",
@@ -535,6 +544,10 @@
   var locShapeHeight = gl.getUniformLocation(prog, 'uShapeHeight');
   var locShapeTwist = gl.getUniformLocation(prog, 'uShapeTwist');
   var locShapeScale = gl.getUniformLocation(prog, 'uShapeScale');
+  var locRippleAmt = gl.getUniformLocation(prog, 'uRippleAmt');
+  var locRippleFreq = gl.getUniformLocation(prog, 'uRippleFreq');
+  var locRippleSpeed = gl.getUniformLocation(prog, 'uRippleSpeed');
+  var locTwistSpeed = gl.getUniformLocation(prog, 'uTwistSpeed');
 
   gl.enable(gl.BLEND);
   gl.disable(gl.DEPTH_TEST);
@@ -810,7 +823,11 @@
       shapeRadius2: 40,
       shapeTurns: 4,
       shapeHeight: 320,
-      shapeTwist: 3
+      shapeTwist: 3,
+      rippleAmt: 0,
+      rippleFreq: 4,
+      rippleSpeed: 0.15,
+      twistSpeed: 0
     };
     for (var k in overrides) d[k] = overrides[k];
     return d;
@@ -957,7 +974,7 @@
     gl.uniform1f(locFocal, focal);
 
     var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
-    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3 };
+    var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4 };
 
     state.layers.forEach(function(layer, idx){
       if (!layer.enabled) return;
@@ -1034,6 +1051,10 @@
       gl.uniform1f(locShapeHeight, layer.shapeHeight || 0);
       gl.uniform1f(locShapeTwist, layer.shapeTwist || 0);
       gl.uniform1f(locShapeScale, s);
+      gl.uniform1f(locRippleAmt, layer.rippleAmt || 0);
+      gl.uniform1f(locRippleFreq, layer.rippleFreq || 0);
+      gl.uniform1f(locRippleSpeed, layer.rippleSpeed || 0);
+      gl.uniform1f(locTwistSpeed, (layer.twistSpeed || 0) * Math.PI / 180);
 
       // Pass 1: draw this layer's segment quads + round joints into an
       // offscreen texture with MAX blending. Color is constant across the
@@ -1164,6 +1185,9 @@
     body.appendChild(slider('成長波の速度（中心→外側）', 'growthSpeed', 0, 1, 0.01, layer.growthSpeed, function(v){ layer.growthSpeed = v; }, fmt2));
     body.appendChild(slider('成長波の本数', 'growthWaveCount', 0.5, 10, 0.5, layer.growthWaveCount, function(v){ layer.growthWaveCount = v; }, fmt1));
     body.appendChild(slider('成長波の強さ', 'growthAmt', 0, 1, 0.01, layer.growthAmt, function(v){ layer.growthAmt = v; }, fmt2));
+    body.appendChild(slider('波紋の振幅（中心から実際に波打つ）', 'rippleAmt', -60, 60, 1, layer.rippleAmt, function(v){ layer.rippleAmt = v; }, fmt0));
+    body.appendChild(slider('波紋の本数', 'rippleFreq', 0.5, 16, 0.5, layer.rippleFreq, function(v){ layer.rippleFreq = v; }, fmt1));
+    body.appendChild(slider('波紋の速度（中心→外側）', 'rippleSpeed', 0, 1.5, 0.01, layer.rippleSpeed, function(v){ layer.rippleSpeed = v; }, fmt2));
 
     body.appendChild(el('div', 'subgroup-label', '変形（メッセージ表現）/ Deform'));
     var g3 = document.createElement('div'); g3.className = 'grid2';
@@ -1188,13 +1212,14 @@
     body.appendChild(slider('螺旋の奥行き（リング毎のZ変化）', 'spiralZ', -5, 5, 0.05, layer.spiralZ, function(v){ layer.spiralZ = v; }, fmt2));
     body.appendChild(slider('奥行きオフセット', 'depthOffset', -400, 400, 1, layer.depthOffset, function(v){ layer.depthOffset = v; }, fmt0));
     body.appendChild(slider('ひねり（リング毎の回転角度）', 'twistPerRing', -3, 3, 0.02, layer.twistPerRing, function(v){ layer.twistPerRing = v; }, fmt2));
+    body.appendChild(slider('ひねりの回転速度（Z軸を中心に常時回転）', 'twistSpeed', -60, 60, 0.5, layer.twistSpeed, function(v){ layer.twistSpeed = v; }, fmt1));
     body.appendChild(slider('膨らみ（樽型 / くびれ）', 'bulgeAmt', -0.6, 0.6, 0.01, layer.bulgeAmt, function(v){ layer.bulgeAmt = v; }, fmt2));
     body.appendChild(slider('メビウス振幅（輪自体のうねり）', 'mobiusAmt', -200, 200, 1, layer.mobiusAmt, function(v){ layer.mobiusAmt = v; }, fmt0));
     body.appendChild(slider('メビウス周波数（一周の波の数）', 'mobiusFreq', 0, 6, 0.1, layer.mobiusFreq, function(v){ layer.mobiusFreq = v; }, fmt1));
     body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
 
     body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
-    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面']], function(v){ layer.shapeMode = v; }));
+    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ']], function(v){ layer.shapeMode = v; }));
     body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
     body.appendChild(slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0));
     body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
@@ -1360,7 +1385,11 @@
         mobiusRingTwist: (Math.random()-0.5)*16,
         growthSpeed: Math.random()*0.4,
         growthWaveCount: 1 + Math.random()*7,
-        growthAmt: Math.random()*0.7
+        growthAmt: Math.random()*0.7,
+        rippleAmt: (Math.random()-0.5)*40,
+        rippleFreq: 1 + Math.random()*8,
+        rippleSpeed: Math.random()*0.5,
+        twistSpeed: (Math.random()-0.5)*20
       });
     });
     rebuildLayersUI();
@@ -1576,41 +1605,6 @@
       defaultLayer({ name:'メビウスの束', ringCount:40, segments:300, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:2, irregFreq:3, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#2c2925', blend:'normal', seed:181, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:150, shapeRadius2:65 })
     ], { bgColor:'#f2f0e9', tiltX:26, tiltY:-18, perspective:22 });
   });
-  document.getElementById('preset-nautilus').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'貝殻 — 主', ringCount:70, segments:220, baseRadius:6, spacing:3.6, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:1.5, irregFreq:2.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.9, color:'#4a3320', blend:'normal', seed:191, wobbleSpeed:0.12, deformStrength:0, spiralBlend:1, spiralZ:1.6 }),
-      defaultLayer({ name:'貝殻 — 陰影', ringCount:56, segments:200, baseRadius:5, spacing:3.1, spacingVarAmt:0.3, spacingVarFreq:0.5, irregAmt:1.3, irregFreq:2.5, eccentricity:0, rotation:15, scale:0.96, lineWidth:0.4, opacity:0.35, color:'#c9a876', blend:'multiply', seed:192, wobbleSpeed:0.12, deformStrength:0, spiralBlend:1, spiralZ:1.2 })
-    ], { bgColor:'#f4ecdf', tiltX:35, tiltY:-20, perspective:22 });
-  });
-  document.getElementById('preset-dna').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'DNA — 鎖A', ringCount:6, segments:220, baseRadius:20, spacing:3, irregAmt:1, irregFreq:2, lineWidth:1.0, opacity:0.9, color:'#1f6f5c', blend:'normal', seed:201, deformStrength:0, spiralBlend:0, shapeMode:'helix', shapeMorph:1, shapeRadius:90, shapeRadius2:14, shapeTurns:4, shapeHeight:420, shapeTwist:0 }),
-      defaultLayer({ name:'DNA — 鎖B', ringCount:6, segments:220, baseRadius:20, spacing:3, irregAmt:1, irregFreq:2, rotation:180, lineWidth:1.0, opacity:0.9, color:'#b34a3a', blend:'normal', seed:202, deformStrength:0, spiralBlend:0, shapeMode:'helix', shapeMorph:1, shapeRadius:90, shapeRadius2:14, shapeTurns:4, shapeHeight:420, shapeTwist:0 })
-    ], { bgColor:'#f2f0e9', tiltX:12, tiltY:-6, perspective:10 });
-  });
-  document.getElementById('preset-galaxy').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'銀河 — 金', ringCount:60, segments:240, baseRadius:50, spacing:4, spacingVarAmt:0.2, spacingVarFreq:0.5, irregAmt:3, irregFreq:3, lineWidth:0.5, opacity:0.85, color:'#f0d9a0', blend:'screen', seed:211, wobbleSpeed:0.2, spiralBlend:0, shapeMode:'sphere', shapeMorph:0.62, shapeRadius:220, deformType:'swirl', deformMode:'fixed', anchorX:0, anchorY:0, deformStrength:60, deformRadius:260 }),
-      defaultLayer({ name:'銀河 — 青', ringCount:50, segments:220, baseRadius:45, spacing:4, spacingVarAmt:0.2, spacingVarFreq:0.5, irregAmt:3, irregFreq:3.4, rotation:50, lineWidth:0.4, opacity:0.5, color:'#7fb6d9', blend:'screen', seed:212, wobbleSpeed:0.22, spiralBlend:0, shapeMode:'sphere', shapeMorph:0.58, shapeRadius:210, deformType:'swirl', deformMode:'fixed', anchorX:0, anchorY:0, deformStrength:80, deformRadius:240 })
-    ], { bgColor:'#0c0d16', tiltX:20, tiltY:-10, perspective:16 });
-  });
-  document.getElementById('preset-saturn').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'土星の輪', ringCount:90, segments:200, baseRadius:120, spacing:5, spacingVarAmt:0.1, spacingVarFreq:0.3, irregAmt:0.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.4, opacity:0.6, color:'#8a8272', blend:'normal', seed:221, wobbleSpeed:0.05, deformStrength:0, growthAmt:0.15, spiralBlend:0 })
-    ], { bgColor:'#eeece3', tiltX:72, tiltY:-6, perspective:14 });
-  });
-  document.getElementById('preset-cocoon').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'繭', ringCount:55, segments:220, baseRadius:50, spacing:4, irregAmt:2, irregFreq:2.5, lineWidth:0.55, opacity:0.85, color:'#4a3524', blend:'normal', seed:231, wobbleSpeed:0.12, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:200, deformType:'pull', deformMode:'fixed', anchorX:0, anchorY:-260, deformStrength:90, deformRadius:260 })
-    ], { bgColor:'#f4ede0', tiltX:14, tiltY:-8, perspective:10 });
-  });
-  document.getElementById('preset-crystal').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'結晶', ringCount:14, segments:12, baseRadius:50, spacing:4, irregAmt:0, irregFreq:1, lineWidth:0.7, opacity:0.9, color:'#2a3f4a', blend:'normal', seed:241, wobbleSpeed:0, deformStrength:0, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:210 }),
-      defaultLayer({ name:'結晶 — 反射', ringCount:11, segments:9, baseRadius:45, spacing:4, irregAmt:0, irregFreq:1, rotation:35, lineWidth:0.5, opacity:0.45, color:'#8fbcd0', blend:'screen', seed:242, wobbleSpeed:0, deformStrength:0, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:205 })
-    ], { bgColor:'#101820', tiltX:22, tiltY:-16, perspective:18 });
-  });
-
   // ---------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------
