@@ -166,6 +166,14 @@
   }
   body.sidebar-hidden #sidebar { display: none; }
   body.sidebar-hidden #toggle-sidebar { display: flex; }
+
+  #typeOverlay {
+    position: absolute; top: 50%; left: 0; transform: translateY(-50%);
+    padding: 0 26px; pointer-events: none; z-index: 3;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  #typeOverlay .line1 { font-size: 96px; font-weight: 600; line-height: 1; letter-spacing: -.01em; }
+  #typeOverlay .line2 { font-size: 24px; font-weight: 500; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -183,6 +191,9 @@
         <div class="row between">
           <label class="chk">背景色 <input type="color" id="bgColor"></label>
           <label class="chk">全体スケール</label>
+        </div>
+        <div class="row between">
+          <label class="chk">文字色 <input type="color" id="textColor"></label>
         </div>
         <div class="field">
           <div class="label-row"><span>全体スケール</span><span class="val" id="v-globalScale">1.00</span></div>
@@ -276,6 +287,10 @@
     <div id="topbar">
       <div class="mark">TAIGA ASSOCIATES</div>
       <div class="meta">年輪 LINE STUDY<br><span id="statsLine">—</span></div>
+    </div>
+    <div id="typeOverlay">
+      <div class="line1">Discover New Way</div>
+      <div class="line2">新しい価値を紡ぐ</div>
     </div>
   </div>
 
@@ -929,6 +944,7 @@
 
   var state = {
     bgColor: '#f2f0e9',
+    textColor: '#2c2925',
     globalScale: 1,
     autoRotate: true,
     mouseReact: true,
@@ -1431,6 +1447,12 @@
   document.getElementById('bgColor').value = state.bgColor;
   document.getElementById('bgColor').addEventListener('input', function(e){ state.bgColor = e.target.value; });
 
+  var typeOverlay = document.getElementById('typeOverlay');
+  function applyTextColor(){ typeOverlay.style.color = state.textColor; }
+  document.getElementById('textColor').value = state.textColor;
+  document.getElementById('textColor').addEventListener('input', function(e){ state.textColor = e.target.value; applyTextColor(); });
+  applyTextColor();
+
   var gs = document.getElementById('globalScale');
   var gsVal = document.getElementById('v-globalScale');
   gs.addEventListener('input', function(){ state.globalScale = parseFloat(gs.value); gsVal.textContent = state.globalScale.toFixed(2); });
@@ -1509,6 +1531,7 @@
   document.getElementById('resetAll').addEventListener('click', function(){
     applyLayers(defaultLayers());
     state.bgColor = '#f2f0e9'; document.getElementById('bgColor').value = state.bgColor;
+    state.textColor = '#2c2925'; document.getElementById('textColor').value = state.textColor; applyTextColor();
     state.globalScale = 1; gs.value = 1; gsVal.textContent = '1.00';
     state.autoRotate = true; document.getElementById('autoRotate').checked = true;
     state.mouseReact = true; document.getElementById('mouseReact').checked = true;
@@ -1545,6 +1568,7 @@
     applyLayers(list);
     opts = opts || {};
     if ('bgColor' in opts){ state.bgColor = opts.bgColor; document.getElementById('bgColor').value = opts.bgColor; }
+    if ('textColor' in opts){ state.textColor = opts.textColor; document.getElementById('textColor').value = opts.textColor; applyTextColor(); }
     if ('globalScale' in opts){ state.globalScale = opts.globalScale; gs.value = opts.globalScale; gsVal.textContent = opts.globalScale.toFixed(2); }
     if ('tiltX' in opts){ state.tiltX = opts.tiltX; tiltXEl.value = opts.tiltX; tiltXVal.textContent = opts.tiltX; }
     if ('tiltY' in opts){ state.tiltY = opts.tiltY; tiltYEl.value = opts.tiltY; tiltYVal.textContent = opts.tiltY; }
@@ -1557,7 +1581,7 @@
   function getSettingsSnapshot(){
     return {
       global: {
-        bgColor: state.bgColor, globalScale: state.globalScale, autoRotate: state.autoRotate,
+        bgColor: state.bgColor, textColor: state.textColor, globalScale: state.globalScale, autoRotate: state.autoRotate,
         mouseReact: state.mouseReact, mouseStrength: state.mouseStrength, mouseDeform: state.mouseDeform,
         tiltX: state.tiltX, tiltY: state.tiltY, perspective: state.perspective,
         autoTilt: state.autoTilt, tiltSpeed: state.tiltSpeed
@@ -1569,6 +1593,7 @@
     if (!obj || !Array.isArray(obj.layers) || !obj.layers.length) throw new Error('layers が見つかりません');
     Object.assign(state, obj.global || {});
     document.getElementById('bgColor').value = state.bgColor;
+    document.getElementById('textColor').value = state.textColor; applyTextColor();
     gs.value = state.globalScale; gsVal.textContent = parseFloat(state.globalScale).toFixed(2);
     document.getElementById('autoRotate').checked = !!state.autoRotate;
     document.getElementById('mouseReact').checked = !!state.mouseReact;
