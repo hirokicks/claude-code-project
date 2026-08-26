@@ -153,6 +153,8 @@
       easing: 'easeInOutCubic',
       // 構造が違っても、ほぼ全編モーフで繋ぐ
       force: true,
+      // カメラと配置は動かさず、形の変化だけを見せる
+      stage: false,
       onComplete: function () { modeEl.textContent = MODE_LABEL[mode] + ' 完了'; }
     });
     modeEl.textContent = '⟶ ' + MODE_LABEL[mode] + '中';

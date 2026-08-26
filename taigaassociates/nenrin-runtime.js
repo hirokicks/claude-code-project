@@ -292,6 +292,22 @@
   });
 
   var CAM_NUM_KEYS = ['globalScale', 'mouseStrength', 'tiltX', 'tiltY', 'perspective', 'tiltSpeed'];
+
+  // "Staging" — where the piece sits and how it is viewed, as opposed to what
+  // it is. Two arts often differ here by a lot (a layer authored at rotation
+  // 135 against one at 0, perspective 18 against 34), and animating that
+  // difference reads as the piece spinning and squashing while it morphs.
+  // `stage: false` on a transition leaves it alone so only the form changes.
+  var STAGING_CAM_KEYS = ['tiltX', 'tiltY', 'perspective', 'globalScale'];
+  var STAGING_LAYER_KEYS = ['rotation', 'scale', 'offsetX', 'offsetY'];
+
+  // Angles are interpolated the short way round: without this, 350 -> 10 spins
+  // 340 degrees instead of 20.
+  var ANGLE_LAYER_KEYS = ['rotation', 'eccentricityAngle', 'rot3DX', 'rot3DY'];
+  function lerpAngle(a, b, t) {
+    var d = ((b - a) % 360 + 540) % 360 - 180;
+    return a + d * t;
+  }
   var CAM_COLOR_KEYS = ['bgColor', 'textColor'];
   var CAM_BOOL_KEYS = ['autoRotate', 'mouseReact', 'mouseDeform', 'autoTilt'];
 
@@ -369,6 +385,7 @@
     var onStats = opts.onStats || null;
     // Idle motion left running under a transition (see render / transitionTo).
     var defaultCalm = opts.calm === undefined ? 0.15 : Math.max(0, Math.min(1, opts.calm));
+    var defaultStage = opts.stage === undefined ? true : !!opts.stage;
 
   // ---------------------------------------------------------------
   // WebGL setup
@@ -932,9 +949,12 @@
     // map the 0..80 "perspective strength" slider to a focal length: 0 = huge
     // focal (near-orthographic), 80 = focal close to the canvas size (strong,
     // but always positive and bounded so it can never invert/explode)
-    var perspNorm = Math.min(1, state.perspective / 80);
+    var perspNorm = Math.max(0, Math.min(1, state.perspective / 80));
     var maxDim = Math.max(canvas.width, canvas.height);
-    var focal = perspNorm < 0.001 ? 1e7 : maxDim * (2.6 - perspNorm * 1.9);
+    // Continuous across the whole slider: 0 is the weakest perspective rather
+    // than a jump to a 1e7 focal length, which used to snap the projection the
+    // instant a tween moved off zero.
+    var focal = maxDim * (2.6 - perspNorm * 1.9);
     gl.uniform1f(locFocal, focal);
 
     var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
@@ -1087,7 +1107,10 @@
     _tr = null;
     if (tr.mode === 'morph') {
       tr.pairs.forEach(function (p) {
-        LAYER_NUM_KEYS.forEach(function (k) { p.live[k] = p.to[k]; });
+        LAYER_NUM_KEYS.forEach(function (k) {
+          if (!tr.stage && STAGING_LAYER_KEYS.indexOf(k) >= 0) return;
+          p.live[k] = p.to[k];
+        });
         LAYER_COLOR_KEYS.forEach(function (k) { p.live[k] = p.to[k]; });
         LAYER_DISCRETE_KEYS.forEach(function (k) {
           if (k !== 'id') p.live[k] = p.to[k];
@@ -1102,7 +1125,10 @@
       state.layers = tr.incoming;
       _scenes = [{ layers: state.layers, alpha: 1 }];
     }
-    CAM_NUM_KEYS.forEach(function (k) { state[k] = tr.toCam[k]; });
+    CAM_NUM_KEYS.forEach(function (k) {
+      if (!tr.stage && STAGING_CAM_KEYS.indexOf(k) >= 0) return;
+      state[k] = tr.toCam[k];
+    });
     CAM_COLOR_KEYS.forEach(function (k) { state[k] = tr.toCam[k]; });
     CAM_BOOL_KEYS.forEach(function (k) { state[k] = tr.toCam[k]; });
     updateStats();
@@ -1115,6 +1141,7 @@
     var e = _tr.ease(t);
 
     CAM_NUM_KEYS.forEach(function (k) {
+      if (!_tr.stage && STAGING_CAM_KEYS.indexOf(k) >= 0) return;
       state[k] = _tr.fromCam[k] + (_tr.toCam[k] - _tr.fromCam[k]) * e;
     });
     CAM_COLOR_KEYS.forEach(function (k) {
@@ -1123,13 +1150,13 @@
     if (e >= 0.5) CAM_BOOL_KEYS.forEach(function (k) { state[k] = _tr.toCam[k]; });
 
     if (_tr.mode === 'morph') {
-      _morphPairs(_tr.pairs, e);
+      _morphPairs(_tr.pairs, e, _tr.stage);
     } else if (_tr.mode === 'forced') {
       // Morph as far as the shared parameters allow, then hand over to the
       // real target with a short crossfade. By the handover both sides agree
       // on colour, radius, spacing, eccentricity and shape — only the baked
       // ring structure still differs — so the swap is hard to see.
-      _morphPairs(_tr.pairs, _tr.ease(Math.min(1, t / _tr.split)));
+      _morphPairs(_tr.pairs, _tr.ease(Math.min(1, t / _tr.split)), _tr.stage);
       if (t > _tr.split) {
         if (!_tr.blending) {
           _tr.blending = true;
@@ -1151,12 +1178,15 @@
     if (t >= 1) _finishTransition();
   }
 
-  function _morphPairs(pairs, e) {
+  function _morphPairs(pairs, e, stage) {
     pairs.forEach(function (p) {
       var swapsShape = p.from.shapeMode !== p.to.shapeMode;
       LAYER_NUM_KEYS.forEach(function (k) {
         if (swapsShape && k === 'shapeMorph') return;
-        p.live[k] = p.from[k] + (p.to[k] - p.from[k]) * e;
+        if (!stage && STAGING_LAYER_KEYS.indexOf(k) >= 0) return;
+        p.live[k] = ANGLE_LAYER_KEYS.indexOf(k) >= 0
+          ? lerpAngle(p.from[k], p.to[k], e)
+          : p.from[k] + (p.to[k] - p.from[k]) * e;
       });
       // A shape-mode change cannot be interpolated, so unfold back toward
       // the plain ring form first, swap, then fold into the new shape. Each
@@ -1207,12 +1237,26 @@
     var mode = canMorph(state, to) ? 'morph' : 'crossfade';
     if (mode === 'crossfade' && o.force) mode = 'forced';
 
+    // The incoming layers of a crossfade/forced transition carry the target's
+    // own placement; with staging held, give them the current one instead so
+    // the handover does not snap the piece into a new orientation.
+    var holdStage = (o.stage === undefined ? defaultStage : !!o.stage) === false;
+    if (holdStage && mode !== 'morph') {
+      to.layers.forEach(function (l, i) {
+        var ref = state.layers[Math.min(i, state.layers.length - 1)];
+        if (ref) STAGING_LAYER_KEYS.forEach(function (k) { l[k] = ref[k]; });
+      });
+    }
+
     var tr = {
       mode: mode, start: performance.now(), duration: duration, ease: ease,
       fromCam: fromCam, toCam: toCam, onComplete: o.onComplete || null,
       // how much idle motion to leave running underneath: 1 keeps the piece
       // fully alive (busy), 0 freezes it so only the morph moves
-      calm: o.calm === undefined ? defaultCalm : Math.max(0, Math.min(1, o.calm))
+      calm: o.calm === undefined ? defaultCalm : Math.max(0, Math.min(1, o.calm)),
+      // false = keep the current camera and layer placement instead of
+      // animating over to the target's, so only the form changes
+      stage: o.stage === undefined ? defaultStage : !!o.stage
     };
 
     if (mode === 'morph') {
