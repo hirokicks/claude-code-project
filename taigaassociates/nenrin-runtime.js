@@ -1188,12 +1188,26 @@
           ? lerpAngle(p.from[k], p.to[k], e)
           : p.from[k] + (p.to[k] - p.from[k]) * e;
       });
-      // A shape-mode change cannot be interpolated, so unfold back toward
-      // the plain ring form first, swap, then fold into the new shape. Each
-      // half is eased so the fold settles to a stop at the midpoint instead
-      // of reversing direction at full speed.
+      // A shape-mode change cannot be interpolated, so in general we unfold
+      // back toward the plain ring form, swap, then fold into the new shape.
+      // But when one side is *already* the plain ring form that costs half the
+      // run doing nothing and crams the fold into the other half at double
+      // speed — which is what made flat -> sphere feel rushed. So only split
+      // the timeline when both sides actually have a shape to unfold.
       if (swapsShape) {
-        if (e < 0.5) {
+        var fromFlat = p.from.shapeMorph <= 0.0001;
+        var toFlat = p.to.shapeMorph <= 0.0001;
+        if (fromFlat) {
+          // already flat: fold straight into the new shape over the whole run
+          p.live.shapeMode = p.to.shapeMode;
+          p.live.shapeMorph = p.to.shapeMorph * e;
+        } else if (toFlat) {
+          // unfolding back to plain rings: nothing to refold afterwards
+          p.live.shapeMode = p.from.shapeMode;
+          p.live.shapeMorph = p.from.shapeMorph * (1 - e);
+        } else if (e < 0.5) {
+          // two different solids — each half eased so the fold settles to a
+          // stop at the midpoint instead of reversing at full speed
           p.live.shapeMode = p.from.shapeMode;
           p.live.shapeMorph = p.from.shapeMorph * (1 - EASINGS.easeInOutQuad(e * 2));
         } else {
