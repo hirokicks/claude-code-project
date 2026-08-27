@@ -436,6 +436,8 @@
     "uniform float uGrowthWaveCount;",
     "uniform float uGrowthAmt;",
     "uniform int uShapeMode;",
+    "uniform int uShapeModeB;",
+    "uniform float uShapeMix;",
     "uniform float uShapeMorph;",
     "uniform float uShapeRadius;",
     "uniform float uShapeRadius2;",
@@ -478,6 +480,86 @@
     "  float nxy0 = mix(nx00,nx10,f.y);",
     "  float nxy1 = mix(nx01,nx11,f.y);",
     "  return mix(nxy0,nxy1,f.z) * 2.0 - 1.0;",
+    "}",
+    "vec3 shapeAt(int mode, float tAlong, float ringN, vec2 dir, float shapeR) {",
+    "  float Xt = 0.0, Yt = 0.0, Zt = 0.0;",
+    "  if (mode == 1) {",
+    "    float phi = ringN * 3.14159265;",
+    "    float sinPhi = sin(phi), cosPhi = cos(phi);",
+    "    Xt = shapeR * sinPhi * dir.x;",
+    "    Yt = shapeR * sinPhi * dir.y;",
+    "    Zt = shapeR * cosPhi;",
+    "  } else if (mode == 2) {",
+    "    float mainAngle = tAlong * uShapeTurns * 6.28318530718;",
+    "    float cxp = shapeR * cos(mainAngle);",
+    "    float cyp = shapeR * sin(mainAngle);",
+    "    float czp = (tAlong - 0.5) * uShapeHeight;",
+    "    float strandAngle = ringN * 6.28318530718 + tAlong * uShapeTwist * 6.28318530718;",
+    "    Xt = cxp + uShapeRadius2 * cos(strandAngle) * cos(mainAngle);",
+    "    Yt = cyp + uShapeRadius2 * cos(strandAngle) * sin(mainAngle);",
+    "    Zt = czp + uShapeRadius2 * sin(strandAngle);",
+    "  } else if (mode == 3) {",
+    "    float angle = tAlong * 6.28318530718;",
+    "    float bandAngle = angle * 0.5 * uShapeTwist;",
+    "    float w = (ringN - 0.5) * 2.0 * uShapeRadius2;",
+    "    float radialX = cos(angle), radialY = sin(angle);",
+    "    Xt = shapeR * radialX + w * cos(bandAngle) * radialX;",
+    "    Yt = shapeR * radialY + w * cos(bandAngle) * radialY;",
+    "    Zt = w * sin(bandAngle);",
+    "  } else if (mode == 4) {",
+    "    float cxr = dir.x, cyr = dir.y;",
+    "    float m = max(abs(cxr), abs(cyr));",
+    "    if (m < 0.0001) m = 0.0001;",
+    "    Xt = (cxr / m) * shapeR;",
+    "    Yt = (cyr / m) * shapeR;",
+    "    Zt = (ringN - 0.5) * uShapeHeight;",
+    "  } else if (mode == 5) {",
+    "    float angle8 = tAlong * 6.28318530718;",
+    "    float ca8 = cos(angle8), sa8 = sin(angle8);",
+    "    float cx8 = shapeR * ca8;",
+    "    float cy8 = shapeR * sa8 * ca8;",
+    "    vec2 tan8 = vec2(-sa8, cos(2.0 * angle8));",
+    "    float tlen8 = length(tan8);",
+    "    if (tlen8 < 0.0001) tlen8 = 0.0001;",
+    "    tan8 /= tlen8;",
+    "    vec2 nrm8 = vec2(-tan8.y, tan8.x);",
+    "    float bandAngle8 = angle8 * 0.5;",
+    "    float w8 = (ringN - 0.5) * 2.0 * uShapeRadius2;",
+    "    Xt = cx8 + w8 * cos(bandAngle8) * nrm8.x;",
+    "    Yt = cy8 + w8 * cos(bandAngle8) * nrm8.y;",
+    "    Zt = w8 * sin(bandAngle8);",
+    "  } else if (mode == 6) {",
+    "    float tk = tAlong * 6.28318530718;",
+    "    float mainAngle = tk * uShapeTurns;",
+    "    float tubeAngle = tk * uShapeTwist;",
+    "    float ctb = cos(tubeAngle), stb = sin(tubeAngle);",
+    "    float cma = cos(mainAngle), sma = sin(mainAngle);",
+    "    float coreX = (shapeR + uShapeRadius2 * ctb) * cma;",
+    "    float coreY = (shapeR + uShapeRadius2 * ctb) * sma;",
+    "    float coreZ = uShapeRadius2 * stb;",
+    "    vec3 knotDir = vec3(ctb * cma, ctb * sma, stb);",
+    "    float wk = (ringN - 0.5) * 2.0 * uShapeRadius2 * 0.75;",
+    "    Xt = coreX + wk * knotDir.x;",
+    "    Yt = coreY + wk * knotDir.y;",
+    "    Zt = coreZ + wk * knotDir.z;",
+    "  } else {",
+    "    float tw = tAlong - 0.5;",
+    "    float xAlong = tw * uShapeHeight;",
+    "    float phase = tAlong * uShapeTurns * 6.28318530718;",
+    "    float yWave = shapeR * sin(phase);",
+    "    float dyWave = shapeR * uShapeTurns * 6.28318530718 * cos(phase);",
+    "    vec2 tanW = vec2(uShapeHeight, dyWave);",
+    "    float tlenW = length(tanW);",
+    "    if (tlenW < 0.0001) tlenW = 0.0001;",
+    "    tanW /= tlenW;",
+    "    vec2 nrmW = vec2(-tanW.y, tanW.x);",
+    "    float bandAngleW = tAlong * uShapeTwist * 3.14159265;",
+    "    float wW = (ringN - 0.5) * 2.0 * uShapeRadius2;",
+    "    Xt = xAlong + wW * cos(bandAngleW) * nrmW.x;",
+    "    Yt = yWave + wW * cos(bandAngleW) * nrmW.y;",
+    "    Zt = wW * sin(bandAngleW);",
+    "  }",
+    "  return vec3(Xt, Yt, Zt);",
     "}",
     "void main(){",
     "  float ringHashW = fract(sin(aRing * 12.9898 + uSeedOffset.x * 78.233 + 4.7) * 43758.5453123);",
@@ -525,86 +607,15 @@
     "    float tAlong = theta / 6.28318530718;",
     "    if (tAlong < 0.0) tAlong += 1.0;",
     "    float shapeR = uShapeRadius + ripple;",
-    "    float Xt = 0.0, Yt = 0.0, Zt = 0.0;",
-    "    if (uShapeMode == 1) {",
-    "      float phi = ringN * 3.14159265;",
-    "      float sinPhi = sin(phi), cosPhi = cos(phi);",
-    "      Xt = shapeR * sinPhi * aDir.x;",
-    "      Yt = shapeR * sinPhi * aDir.y;",
-    "      Zt = shapeR * cosPhi;",
-    "    } else if (uShapeMode == 2) {",
-    "      float mainAngle = tAlong * uShapeTurns * 6.28318530718;",
-    "      float cxp = shapeR * cos(mainAngle);",
-    "      float cyp = shapeR * sin(mainAngle);",
-    "      float czp = (tAlong - 0.5) * uShapeHeight;",
-    "      float strandAngle = ringN * 6.28318530718 + tAlong * uShapeTwist * 6.28318530718;",
-    "      Xt = cxp + uShapeRadius2 * cos(strandAngle) * cos(mainAngle);",
-    "      Yt = cyp + uShapeRadius2 * cos(strandAngle) * sin(mainAngle);",
-    "      Zt = czp + uShapeRadius2 * sin(strandAngle);",
-    "    } else if (uShapeMode == 3) {",
-    "      float angle = tAlong * 6.28318530718;",
-    "      float bandAngle = angle * 0.5 * uShapeTwist;",
-    "      float w = (ringN - 0.5) * 2.0 * uShapeRadius2;",
-    "      float radialX = cos(angle), radialY = sin(angle);",
-    "      Xt = shapeR * radialX + w * cos(bandAngle) * radialX;",
-    "      Yt = shapeR * radialY + w * cos(bandAngle) * radialY;",
-    "      Zt = w * sin(bandAngle);",
-    "    } else if (uShapeMode == 4) {",
-    "      float cxr = aDir.x, cyr = aDir.y;",
-    "      float m = max(abs(cxr), abs(cyr));",
-    "      if (m < 0.0001) m = 0.0001;",
-    "      Xt = (cxr / m) * shapeR;",
-    "      Yt = (cyr / m) * shapeR;",
-    "      Zt = (ringN - 0.5) * uShapeHeight;",
-    "    } else if (uShapeMode == 5) {",
-    "      float angle8 = tAlong * 6.28318530718;",
-    "      float ca8 = cos(angle8), sa8 = sin(angle8);",
-    "      float cx8 = shapeR * ca8;",
-    "      float cy8 = shapeR * sa8 * ca8;",
-    "      vec2 tan8 = vec2(-sa8, cos(2.0 * angle8));",
-    "      float tlen8 = length(tan8);",
-    "      if (tlen8 < 0.0001) tlen8 = 0.0001;",
-    "      tan8 /= tlen8;",
-    "      vec2 nrm8 = vec2(-tan8.y, tan8.x);",
-    "      float bandAngle8 = angle8 * 0.5;",
-    "      float w8 = (ringN - 0.5) * 2.0 * uShapeRadius2;",
-    "      Xt = cx8 + w8 * cos(bandAngle8) * nrm8.x;",
-    "      Yt = cy8 + w8 * cos(bandAngle8) * nrm8.y;",
-    "      Zt = w8 * sin(bandAngle8);",
-    "    } else if (uShapeMode == 6) {",
-    "      float tk = tAlong * 6.28318530718;",
-    "      float mainAngle = tk * uShapeTurns;",
-    "      float tubeAngle = tk * uShapeTwist;",
-    "      float ctb = cos(tubeAngle), stb = sin(tubeAngle);",
-    "      float cma = cos(mainAngle), sma = sin(mainAngle);",
-    "      float coreX = (shapeR + uShapeRadius2 * ctb) * cma;",
-    "      float coreY = (shapeR + uShapeRadius2 * ctb) * sma;",
-    "      float coreZ = uShapeRadius2 * stb;",
-    "      vec3 knotDir = vec3(ctb * cma, ctb * sma, stb);",
-    "      float wk = (ringN - 0.5) * 2.0 * uShapeRadius2 * 0.75;",
-    "      Xt = coreX + wk * knotDir.x;",
-    "      Yt = coreY + wk * knotDir.y;",
-    "      Zt = coreZ + wk * knotDir.z;",
-    "    } else {",
-    "      float tw = tAlong - 0.5;",
-    "      float xAlong = tw * uShapeHeight;",
-    "      float phase = tAlong * uShapeTurns * 6.28318530718;",
-    "      float yWave = shapeR * sin(phase);",
-    "      float dyWave = shapeR * uShapeTurns * 6.28318530718 * cos(phase);",
-    "      vec2 tanW = vec2(uShapeHeight, dyWave);",
-    "      float tlenW = length(tanW);",
-    "      if (tlenW < 0.0001) tlenW = 0.0001;",
-    "      tanW /= tlenW;",
-    "      vec2 nrmW = vec2(-tanW.y, tanW.x);",
-    "      float bandAngleW = tAlong * uShapeTwist * 3.14159265;",
-    "      float wW = (ringN - 0.5) * 2.0 * uShapeRadius2;",
-    "      Xt = xAlong + wW * cos(bandAngleW) * nrmW.x;",
-    "      Yt = yWave + wW * cos(bandAngleW) * nrmW.y;",
-    "      Zt = wW * sin(bandAngleW);",
+    "    vec3 T = shapeAt(uShapeMode, tAlong, ringN, aDir, shapeR);",
+    // Blending two solids directly avoids detouring through the flat ring
+    // form, which used to show up as an unwanted plain nenrin mid-transition.
+    "    if (uShapeMix > 0.0) {",
+    "      T = mix(T, shapeAt(uShapeModeB, tAlong, ringN, aDir, shapeR), uShapeMix);",
     "    }",
-    "    animated = mix(animated, vec2(Xt, Yt), uShapeMorph);",
-    "    smoothPos = mix(smoothPos, vec2(Xt, Yt), uShapeMorph);",
-    "    shapeZ = mix(existingZ, Zt * uShapeScale, uShapeMorph);",
+    "    animated = mix(animated, T.xy, uShapeMorph);",
+    "    smoothPos = mix(smoothPos, T.xy, uShapeMorph);",
+    "    shapeZ = mix(existingZ, T.z * uShapeScale, uShapeMorph);",
     "  }",
     "  float d = distance(smoothPos, uAnchorLocal);",
     "  float influence = exp(-(d*d) / (2.0 * uDeformRadius * uDeformRadius + 0.001));",
@@ -724,6 +735,8 @@
   var locGrowthWaveCount = gl.getUniformLocation(prog, 'uGrowthWaveCount');
   var locGrowthAmt = gl.getUniformLocation(prog, 'uGrowthAmt');
   var locShapeMode = gl.getUniformLocation(prog, 'uShapeMode');
+  var locShapeModeB = gl.getUniformLocation(prog, 'uShapeModeB');
+  var locShapeMix = gl.getUniformLocation(prog, 'uShapeMix');
   var locShapeMorph = gl.getUniformLocation(prog, 'uShapeMorph');
   var locShapeRadius = gl.getUniformLocation(prog, 'uShapeRadius');
   var locShapeRadius2 = gl.getUniformLocation(prog, 'uShapeRadius2');
@@ -831,6 +844,7 @@
 
   var state = normalizeConfig(config);
   var _scenes = [{ layers: state.layers, alpha: 1 }];
+  var _shapeBlend = {};   // layer id -> { modeB, mix } during a solid->solid morph
   var _running = true, _raf = 0, _tr = null;
 
   var geomCache = {}; // layer.id -> {buf, vbo, count}
@@ -1037,6 +1051,10 @@
       gl.uniform1f(locGrowthWaveCount, Math.max(0.01, layer.growthWaveCount || 0.01));
       gl.uniform1f(locGrowthAmt, Math.min(1, Math.max(0, layer.growthAmt || 0)));
       gl.uniform1i(locShapeMode, SHAPE_MODES[layer.shapeMode] || 0);
+      // set while morphing one solid straight into another (see _morphPairs)
+      var sb = _shapeBlend[layer.id];
+      gl.uniform1i(locShapeModeB, sb ? (SHAPE_MODES[sb.modeB] || 0) : 0);
+      gl.uniform1f(locShapeMix, sb ? sb.mix : 0);
       gl.uniform1f(locShapeMorph, Math.min(1, Math.max(0, layer.shapeMorph || 0)));
       gl.uniform1f(locShapeRadius, layer.shapeRadius || 0);
       gl.uniform1f(locShapeRadius2, layer.shapeRadius2 || 0);
@@ -1105,6 +1123,7 @@
     if (!_tr) return;
     var tr = _tr;
     _tr = null;
+    _shapeBlend = {};
     if (tr.mode === 'morph') {
       tr.pairs.forEach(function (p) {
         LAYER_NUM_KEYS.forEach(function (k) {
@@ -1205,14 +1224,13 @@
           // unfolding back to plain rings: nothing to refold afterwards
           p.live.shapeMode = p.from.shapeMode;
           p.live.shapeMorph = p.from.shapeMorph * (1 - e);
-        } else if (e < 0.5) {
-          // two different solids — each half eased so the fold settles to a
-          // stop at the midpoint instead of reversing at full speed
-          p.live.shapeMode = p.from.shapeMode;
-          p.live.shapeMorph = p.from.shapeMorph * (1 - EASINGS.easeInOutQuad(e * 2));
         } else {
-          p.live.shapeMode = p.to.shapeMode;
-          p.live.shapeMorph = p.to.shapeMorph * EASINGS.easeInOutQuad((e - 0.5) * 2);
+          // Two different solids: blend one shape target straight into the
+          // other in the shader, instead of unfolding back to plain rings and
+          // refolding — that detour flashed a flat nenrin through the middle.
+          p.live.shapeMode = p.from.shapeMode;
+          p.live.shapeMorph = p.from.shapeMorph + (p.to.shapeMorph - p.from.shapeMorph) * e;
+          _shapeBlend[p.live.id] = { modeB: p.to.shapeMode, mix: e };
         }
       }
       LAYER_COLOR_KEYS.forEach(function (k) { p.live[k] = mixHex(p.from[k], p.to[k], e); });
@@ -1229,6 +1247,7 @@
     if (!_tr) return;
     if (_tr.incoming) _freeLayerGeometry(_tr.incoming);
     _tr = null;
+    _shapeBlend = {};
     _scenes = [{ layers: state.layers, alpha: 1 }];
   }
 

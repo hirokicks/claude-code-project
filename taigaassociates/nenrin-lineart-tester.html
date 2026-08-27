@@ -533,7 +533,22 @@
     body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
     body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット'],['wave','ウェーブ']], function(v){ layer.shapeMode = v; }));
     body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
-    body.appendChild(slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0));
+    var shapeRadiusField = slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0);
+    body.appendChild(shapeRadiusField);
+    // A shape target much smaller than the flat rings makes the piece shrink
+    // hard while it morphs — the usual cause of a "violent" flat->3D
+    // transition. This matches the target to the rings' own outer radius.
+    var fitBtn = document.createElement('button');
+    fitBtn.className = 'small wide';
+    fitBtn.textContent = '↔ 年輪の大きさに合わせる（遷移の拡大縮小を抑える）';
+    fitBtn.addEventListener('click', function(){
+      var outer = Math.round(layer.baseRadius + layer.ringCount * layer.spacing);
+      layer.shapeRadius = Math.min(500, outer);
+      var r = shapeRadiusField.querySelector('input[type=range]');
+      var v = shapeRadiusField.querySelector('.val');
+      r.value = layer.shapeRadius; if (v) v.textContent = layer.shapeRadius;
+    });
+    body.appendChild(fitBtn);
     body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
     body.appendChild(slider('巻き数（螺旋チューブ）', 'shapeTurns', 0.2, 12, 0.1, layer.shapeTurns, function(v){ layer.shapeTurns = v; }, fmt1));
     body.appendChild(slider('高さ（螺旋チューブ）', 'shapeHeight', 0, 800, 5, layer.shapeHeight, function(v){ layer.shapeHeight = v; }, fmt0));
