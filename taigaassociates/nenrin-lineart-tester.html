@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>年輪ラインアート ジェネレーター / TAIGA ASSOCIATES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..900&display=swap">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -170,9 +173,13 @@
   #typeOverlay {
     position: absolute; left: 0; bottom: 0;
     padding: 0 26px 26px; pointer-events: none; z-index: 3;
-    display: flex; flex-direction: column; gap: 8px;
+    display: flex; flex-direction: column; gap: 12px;
+    /* Google Sans Flex carries no Japanese glyphs, so line2 falls through to
+       the same stack the rest of the UI uses */
+    font-family: 'Google Sans Flex', -apple-system, BlinkMacSystemFont,
+                 'Hiragino Kaku Gothic ProN', 'Segoe UI', sans-serif;
   }
-  #typeOverlay .line1 { font-size: 32px; font-weight: 300; line-height: 1; letter-spacing: -.01em; }
+  #typeOverlay .line1 { font-size: 64px; font-weight: 300; line-height: 1; letter-spacing: -.01em; }
   #typeOverlay .line2 { font-size: 24px; font-weight: 500; line-height: 1.4; }
 </style>
 </head>
