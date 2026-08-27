@@ -78,6 +78,12 @@ var mode = art.transitionTo(artB, {
 
 角度（`rotation` / `eccentricityAngle` / `rot3DX` / `rot3DY`）は常に**近い方向へ**補間されます。350°→10° は 20° 進むだけで、340° 逆回転はしません。
 
+**③ 速度パラメータは位相で積算されます**
+
+`twistSpeed` / `rotateSpeed` / `wobbleSpeed` / `breatheSpeed` / `growthSpeed` / `rippleSpeed` / `tiltSpeed` は、内部で「経過時間 × 速度」ではなく**毎フレーム積算した位相**として保持されます。
+
+これがないと、たとえば `twistSpeed` を 0 から -23 へ補間したとき、角度が「経過時間 × 速度差」だけ一気に振れてしまいます。ページを開いて1分後なら約4回転、3分後なら約11.5回転です。位相方式では速度を変えても**その瞬間から先の進み方が変わるだけ**で、すでに到達した角度は動きません。
+
 ### 構造パラメータ（これが一致すると morph になる）
 
 ```

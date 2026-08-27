@@ -408,7 +408,7 @@
     "uniform float uTime;",
     "uniform float uIrregAmt;",
     "uniform float uIrregFreq;",
-    "uniform float uWobbleSpeed;",
+    "uniform float uWobblePhase;",
     "uniform vec2 uSeedOffset;",
     "uniform vec2 uAnchorLocal;",
     "uniform float uDeformStrength;",
@@ -432,7 +432,7 @@
     "uniform float uMobiusAmt;",
     "uniform float uMobiusFreq;",
     "uniform float uMobiusRingTwist;",
-    "uniform float uGrowthSpeed;",
+    "uniform float uGrowthPhase;",
     "uniform float uGrowthWaveCount;",
     "uniform float uGrowthAmt;",
     "uniform int uShapeMode;",
@@ -447,8 +447,8 @@
     "uniform float uShapeScale;",
     "uniform float uRippleAmt;",
     "uniform float uRippleFreq;",
-    "uniform float uRippleSpeed;",
-    "uniform float uTwistSpeed;",
+    "uniform float uRipplePhase;",
+    "uniform float uTwistPhase;",
     "uniform float uRingWidthVar;",
     "uniform float uRingOpacityVar;",
     "uniform float uRingWobbleVar;",
@@ -572,7 +572,7 @@
     "  float ringDrift = aU * uRingCountInv * uRingDrift;",
     "  float nx = aDir.x * uIrregFreq + aU * 0.37 + uSeedOffset.x + ringDrift * 0.71;",
     "  float ny = aDir.y * uIrregFreq + aU * 0.37 + uSeedOffset.y - ringDrift * 0.53;",
-    "  float t = mod(uTime * uWobbleSpeed, 4000.0);",
+    "  float t = uWobblePhase;",
     "  float wob = noise3D(vec3(nx, ny, t)) * uIrregAmt * ringWobbleMod;",
     // Ring placement is resolved here rather than baked, so baseRadius /
     // spacing / spacingVarAmt / eccentricity / eccentricityAngle can be
@@ -585,17 +585,17 @@
     "  vec2 animated = basePos + aDir * wob;",
     "  vec2 smoothPos = basePos;",
     "  float ringN = clamp(aRing * uRingCountInv, 0.0, 1.0);",
-    "  float ripplePhase = ringN * uRippleFreq - uTime * uRippleSpeed;",
+    "  float ripplePhase = ringN * uRippleFreq - uRipplePhase;",
     "  float ripple = uRippleAmt * sin(ripplePhase * 6.28318530718);",
     "  animated += aDir * ripple;",
     "  smoothPos += aDir * ripple;",
-    "  float growthPhase = ringN * uGrowthWaveCount - uTime * uGrowthSpeed;",
+    "  float growthPhase = ringN * uGrowthWaveCount - uGrowthPhase;",
     "  float growthWave = 0.5 + 0.5 * cos(growthPhase * 6.28318530718);",
     "  vGrowth = mix(1.0, growthWave, uGrowthAmt);",
     "  float bulgeScale = 1.0 + uBulgeAmt * sin(ringN * 3.14159265);",
     "  animated *= bulgeScale;",
     "  smoothPos *= bulgeScale;",
-    "  float twistAng = aRing * uTwistPerRing + uTime * uTwistSpeed;",
+    "  float twistAng = aRing * uTwistPerRing + uTwistPhase;",
     "  float twc = cos(twistAng), tws = sin(twistAng);",
     "  animated = vec2(animated.x*twc - animated.y*tws, animated.x*tws + animated.y*twc);",
     "  smoothPos = vec2(smoothPos.x*twc - smoothPos.y*tws, smoothPos.x*tws + smoothPos.y*twc);",
@@ -707,7 +707,7 @@
   var locTime = gl.getUniformLocation(prog, 'uTime');
   var locIrregAmt = gl.getUniformLocation(prog, 'uIrregAmt');
   var locIrregFreq = gl.getUniformLocation(prog, 'uIrregFreq');
-  var locWobbleSpeed = gl.getUniformLocation(prog, 'uWobbleSpeed');
+  var locWobblePhase = gl.getUniformLocation(prog, 'uWobblePhase');
   var locSeedOffset = gl.getUniformLocation(prog, 'uSeedOffset');
   var locAnchorLocal = gl.getUniformLocation(prog, 'uAnchorLocal');
   var locDeformStrength = gl.getUniformLocation(prog, 'uDeformStrength');
@@ -731,7 +731,7 @@
   var locMobiusAmt = gl.getUniformLocation(prog, 'uMobiusAmt');
   var locMobiusFreq = gl.getUniformLocation(prog, 'uMobiusFreq');
   var locMobiusRingTwist = gl.getUniformLocation(prog, 'uMobiusRingTwist');
-  var locGrowthSpeed = gl.getUniformLocation(prog, 'uGrowthSpeed');
+  var locGrowthPhase = gl.getUniformLocation(prog, 'uGrowthPhase');
   var locGrowthWaveCount = gl.getUniformLocation(prog, 'uGrowthWaveCount');
   var locGrowthAmt = gl.getUniformLocation(prog, 'uGrowthAmt');
   var locShapeMode = gl.getUniformLocation(prog, 'uShapeMode');
@@ -746,8 +746,8 @@
   var locShapeScale = gl.getUniformLocation(prog, 'uShapeScale');
   var locRippleAmt = gl.getUniformLocation(prog, 'uRippleAmt');
   var locRippleFreq = gl.getUniformLocation(prog, 'uRippleFreq');
-  var locRippleSpeed = gl.getUniformLocation(prog, 'uRippleSpeed');
-  var locTwistSpeed = gl.getUniformLocation(prog, 'uTwistSpeed');
+  var locRipplePhase = gl.getUniformLocation(prog, 'uRipplePhase');
+  var locTwistPhase = gl.getUniformLocation(prog, 'uTwistPhase');
   var locRingWidthVar = gl.getUniformLocation(prog, 'uRingWidthVar');
   var locRingOpacityVar = gl.getUniformLocation(prog, 'uRingOpacityVar');
   var locRingWobbleVar = gl.getUniformLocation(prog, 'uRingWobbleVar');
@@ -898,6 +898,34 @@
   var lastFrameMs = startTime;   // for the damped ambient clock, see render()
   var animTime = 0;              // idle-motion clock, advances at `ambient` rate
   var ambient = 1;               // 1 = full idle motion, dips while transitioning
+  var tiltPhase = 0;             // accumulated auto-tilt sway
+
+  // Every ongoing animation keeps an accumulated phase instead of being
+  // recomputed as elapsed * speed. That matters because the speeds are
+  // tweenable: with elapsed * speed, nudging twistSpeed from 0 to -23 partway
+  // through a session swings the angle by elapsed * the whole difference — a
+  // minute in, that is nearly four full turns in one transition. Advancing a
+  // phase by dt * speed each frame means changing the speed changes only the
+  // rate from that moment on, never the angle already reached.
+  var _phase = {};
+  function _phaseOf(layer) {
+    return _phase[layer.id] ||
+      (_phase[layer.id] = { wobble: 0, ripple: 0, growth: 0, twist: 0, rotate: 0, breathe: 0 });
+  }
+  function _advancePhases(step) {
+    tiltPhase += step * state.tiltSpeed * 0.15;
+    _scenes.forEach(function (scene) {
+      scene.layers.forEach(function (l) {
+        var p = _phaseOf(l);
+        p.wobble = (p.wobble + step * l.wobbleSpeed) % 4000;
+        p.ripple += step * (l.rippleSpeed || 0);
+        p.growth += step * (l.growthSpeed || 0);
+        p.twist += step * (l.twistSpeed || 0) * Math.PI / 180;
+        p.breathe += step * l.breatheSpeed;
+        if (state.autoRotate) p.rotate += step * l.rotateSpeed * 6;
+      });
+    });
+  }
 
   function resize(){
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -938,6 +966,7 @@
     var ambientTarget = _tr ? _tr.calm : 1;
     ambient += (ambientTarget - ambient) * Math.min(1, dt * 5);
     animTime += dt * ambient;
+    _advancePhases(dt * ambient);
 
     var elapsed = animTime;
     var cxPx = canvas.width / 2, cyPx = canvas.height / 2;
@@ -955,7 +984,7 @@
 
     // sway back and forth rather than spin unbounded, so the piece keeps moving
     // without ever rotating edge-on (where a flat ring plane collapses to a line)
-    var tiltYNow = state.tiltY + (state.autoTilt ? Math.sin(elapsed * state.tiltSpeed * 0.15) * 22 : 0);
+    var tiltYNow = state.tiltY + (state.autoTilt ? Math.sin(tiltPhase) * 22 : 0);
     var txRad = state.tiltX * Math.PI / 180, tyRad = tiltYNow * Math.PI / 180;
     gl.uniform2f(locCenterPx, cxPx, cyPx);
     gl.uniform2f(locTiltXTrig, Math.cos(txRad), Math.sin(txRad));
@@ -983,10 +1012,11 @@
 
       gl.useProgram(prog);
 
-      var angleDeg = layer.rotation + (state.autoRotate ? layer.rotateSpeed * elapsed * 6 : 0);
+      var ph = _phaseOf(layer);
+      var angleDeg = layer.rotation + ph.rotate;
       var angle = angleDeg * Math.PI / 180;
       var breathPhase = (layer.seed % 97) * 0.0647;
-      var breathe = 1 + layer.breatheAmp * Math.sin(elapsed * layer.breatheSpeed + breathPhase);
+      var breathe = 1 + layer.breatheAmp * Math.sin(ph.breathe + breathPhase);
       var s = layer.scale * state.globalScale * dpr * breathe;
       var cos = Math.cos(angle), sin = Math.sin(angle);
 
@@ -1026,7 +1056,7 @@
       gl.uniform1f(locTime, elapsed);
       gl.uniform1f(locIrregAmt, layer.irregAmt);
       gl.uniform1f(locIrregFreq, layer.irregFreq);
-      gl.uniform1f(locWobbleSpeed, layer.wobbleSpeed);
+      gl.uniform1f(locWobblePhase, ph.wobble);
       gl.uniform2f(locSeedOffset, layer.seed * 0.173, layer.seed * 0.911);
       gl.uniform2f(locAnchorLocal, lx, ly);
       gl.uniform1f(locDeformStrength, (state.mouseDeform || layer.deformMode === 'fixed') ? layer.deformStrength : 0);
@@ -1047,7 +1077,7 @@
       gl.uniform1f(locMobiusAmt, (layer.mobiusAmt || 0) * s);
       gl.uniform1f(locMobiusFreq, layer.mobiusFreq || 0);
       gl.uniform1f(locMobiusRingTwist, (layer.mobiusRingTwist || 0) * Math.PI / 180);
-      gl.uniform1f(locGrowthSpeed, layer.growthSpeed || 0);
+      gl.uniform1f(locGrowthPhase, ph.growth);
       gl.uniform1f(locGrowthWaveCount, Math.max(0.01, layer.growthWaveCount || 0.01));
       gl.uniform1f(locGrowthAmt, Math.min(1, Math.max(0, layer.growthAmt || 0)));
       gl.uniform1i(locShapeMode, SHAPE_MODES[layer.shapeMode] || 0);
@@ -1064,8 +1094,8 @@
       gl.uniform1f(locShapeScale, s);
       gl.uniform1f(locRippleAmt, layer.rippleAmt || 0);
       gl.uniform1f(locRippleFreq, layer.rippleFreq || 0);
-      gl.uniform1f(locRippleSpeed, layer.rippleSpeed || 0);
-      gl.uniform1f(locTwistSpeed, (layer.twistSpeed || 0) * Math.PI / 180);
+      gl.uniform1f(locRipplePhase, ph.ripple);
+      gl.uniform1f(locTwistPhase, ph.twist);
       gl.uniform1f(locRingWidthVar, layer.ringWidthVar || 0);
       gl.uniform1f(locRingOpacityVar, layer.ringOpacityVar || 0);
       gl.uniform1f(locRingWobbleVar, layer.ringWobbleVar || 0);
@@ -1116,6 +1146,7 @@
     layers.forEach(function (l) {
       var e = geomCache[l.id];
       if (e) { gl.deleteBuffer(e.vbo); delete geomCache[l.id]; }
+      delete _phase[l.id];
     });
   }
 
