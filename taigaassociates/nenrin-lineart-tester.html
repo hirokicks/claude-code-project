@@ -221,6 +221,8 @@
           <input type="range" id="perspective" min="0" max="80" step="1" value="22">
         </div>
         <label class="chk"><input type="checkbox" id="autoTilt" checked> 3D自動回転（視点が常に動く）</label>
+        <div class="divider"></div>
+        <label class="chk"><input type="checkbox" id="hideInactive" checked> いま効かない項目を隠す</label>
       </div>
 
       <div class="panel">
@@ -400,6 +402,7 @@
   function slider(label, key, min, max, step, val, onInput, fmt){
     var wrap = document.createElement('div');
     wrap.className = 'field';
+    wrap.dataset.param = key;
     var row = document.createElement('div');
     row.className = 'label-row';
     var span = document.createElement('span');
@@ -414,6 +417,7 @@
       var v = parseFloat(input.value);
       valSpan.textContent = fmt ? fmt(v) : v;
       onInput(v);
+      scheduleRelevance();
     });
     wrap.appendChild(row); wrap.appendChild(input);
     return wrap;
@@ -452,6 +456,7 @@
 
     var body = document.createElement('div');
     body.className = 'layer-body';
+    body.__layer = layer;
 
     // Only the structural parameters call regen(), and those are exactly the
     // ones scene badges depend on — so refreshing here keeps them accurate.
@@ -499,8 +504,8 @@
 
     body.appendChild(el('div', 'subgroup-label', '変形（メッセージ表現）/ Deform'));
     var g3 = document.createElement('div'); g3.className = 'grid2';
-    g3.appendChild(selectField('アンカー', layer.deformMode, [['mouse','マウス追従'],['fixed','固定位置']], function(v){ layer.deformMode = v; }));
-    g3.appendChild(selectField('種類', layer.deformType, [['push','外へ押す'],['pull','内へ引く'],['swirl','渦を巻く']], function(v){ layer.deformType = v; }));
+    g3.appendChild(selectField('アンカー', layer.deformMode, [['mouse','マウス追従'],['fixed','固定位置']], function(v){ layer.deformMode = v; }, 'deformMode'));
+    g3.appendChild(selectField('種類', layer.deformType, [['push','外へ押す'],['pull','内へ引く'],['swirl','渦を巻く']], function(v){ layer.deformType = v; }, 'deformType'));
     body.appendChild(g3);
     body.appendChild(slider('変形の強さ', 'deformStrength', 0, 150, 1, layer.deformStrength, function(v){ layer.deformStrength = v; }, fmt0));
     body.appendChild(slider('変形の半径', 'deformRadius', 20, 800, 5, layer.deformRadius, function(v){ layer.deformRadius = v; }, fmt0));
@@ -531,7 +536,7 @@
     body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
 
     body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
-    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット'],['wave','ウェーブ']], function(v){ layer.shapeMode = v; }));
+    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット'],['wave','ウェーブ']], function(v){ layer.shapeMode = v; }, 'shapeMode'));
     body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
     var shapeRadiusField = slider('主半径（球体・螺旋・メビウスの大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0);
     body.appendChild(shapeRadiusField);
@@ -602,8 +607,9 @@
   function blendField(val, onInput){
     return selectField('ブレンド', val, [['normal','通常'],['multiply','乗算'],['screen','スクリーン'],['add','加算']], onInput);
   }
-  function selectField(label, val, options, onInput){
+  function selectField(label, val, options, onInput, key){
     var wrap = document.createElement('div'); wrap.className = 'field';
+    if (key) wrap.dataset.param = key;
     var row = document.createElement('div'); row.className = 'label-row';
     row.appendChild(el('span','', label));
     wrap.appendChild(row);
@@ -613,9 +619,106 @@
       if (o[0] === val) opt.selected = true;
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', function(){ onInput(sel.value); });
+    sel.addEventListener('change', function(){ onInput(sel.value); scheduleRelevance(); });
     wrap.appendChild(sel);
     return wrap;
+  }
+
+
+  var hideInactiveEl = document.getElementById('hideInactive');
+
+  // ---------------------------------------------------------------
+  // Which controls actually do anything right now
+  // ---------------------------------------------------------------
+  // Several parameters are genuinely inert depending on the layer's state —
+  // a shape only reads some of the shape sliders, a fully morphed layer
+  // discards everything that shapes the plain rings, and an "amount" at zero
+  // makes its own sub-settings meaningless. Hiding those keeps the panel to
+  // what is currently worth touching. Mirrors the vertex shader's order of
+  // operations in nenrin-runtime.js.
+  var SHAPE_USES = {
+    none:      [],
+    sphere:    ['shapeRadius'],
+    helix:     ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeHeight', 'shapeTwist'],
+    mobius:    ['shapeRadius', 'shapeRadius2', 'shapeTwist'],
+    cube:      ['shapeRadius', 'shapeHeight'],
+    infinity:  ['shapeRadius', 'shapeRadius2'],
+    torusknot: ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeTwist'],
+    wave:      ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeHeight', 'shapeTwist']
+  };
+  var SHAPE_SLIDERS = ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeHeight', 'shapeTwist'];
+
+  function inactiveParams(layer){
+    var out = {};
+    function off(){ for (var i = 0; i < arguments.length; i++) out[arguments[i]] = true; }
+
+    var solid = layer.shapeMode !== 'none';
+    var used = SHAPE_USES[layer.shapeMode] || [];
+    SHAPE_SLIDERS.forEach(function(k){ if (used.indexOf(k) < 0) off(k); });
+    if (!solid) off('shapeMorph');
+
+    // At a full morph the ring form is replaced outright, so everything that
+    // only shapes those rings is thrown away. spiralBlend survives because it
+    // decides whether the rings are chained into one strand, which still shows.
+    if (solid && layer.shapeMorph >= 0.999){
+      off('baseRadius', 'spacing', 'spacingVarAmt', 'spacingVarFreq',
+          'eccentricity', 'eccentricityAngle',
+          'irregAmt', 'irregFreq', 'wobbleSpeed', 'ringWobbleVar', 'ringDrift',
+          'bulgeAmt', 'twistPerRing', 'twistSpeed',
+          'spiralZ', 'depthOffset', 'mobiusAmt', 'mobiusFreq', 'mobiusRingTwist');
+    }
+
+    // an amount at zero makes its own frequency/speed/shape settings inert
+    if (!layer.spacingVarAmt) off('spacingVarFreq');
+    if (!layer.eccentricity) off('eccentricityAngle');
+    if (!layer.irregAmt) off('irregFreq', 'wobbleSpeed', 'ringWobbleVar', 'ringDrift');
+    if (!layer.breatheAmp) off('breatheSpeed');
+    if (!layer.growthAmt) off('growthSpeed', 'growthWaveCount');
+    if (!layer.rippleAmt) off('rippleFreq', 'rippleSpeed');
+    if (!layer.mobiusAmt) off('mobiusFreq', 'mobiusRingTwist');
+    if (!layer.deformStrength) off('deformRadius', 'deformMode', 'deformType', 'anchorX', 'anchorY');
+    else if (layer.deformMode !== 'fixed') off('anchorX', 'anchorY');
+    return out;
+  }
+
+  function applyRelevance(body){
+    var layer = body.__layer;
+    if (!layer) return;
+    var hide = hideInactiveEl.checked ? inactiveParams(layer) : {};
+    Array.prototype.forEach.call(body.querySelectorAll('[data-param]'), function(el){
+      el.style.display = hide[el.dataset.param] ? 'none' : '';
+    });
+    // collapse a two-up row, then a subgroup heading, once everything under
+    // it has gone
+    Array.prototype.forEach.call(body.querySelectorAll('.grid2'), function(g){
+      var anyVisible = Array.prototype.some.call(g.children, function(c){
+        return c.style.display !== 'none';
+      });
+      g.style.display = anyVisible ? '' : 'none';
+    });
+    var kids = Array.prototype.slice.call(body.children), heading = null, seen = false;
+    kids.forEach(function(node){
+      if (node.classList.contains('subgroup-label')){
+        if (heading) heading.style.display = seen ? '' : 'none';
+        heading = node; seen = false;
+      } else if (heading && node.style.display !== 'none'){
+        seen = true;
+      }
+    });
+    if (heading) heading.style.display = seen ? '' : 'none';
+  }
+
+  var relevanceQueued = false;
+  function scheduleRelevance(){
+    if (relevanceQueued) return;
+    relevanceQueued = true;
+    requestAnimationFrame(function(){
+      relevanceQueued = false;
+      Array.prototype.forEach.call(document.querySelectorAll('.layer-body'), applyRelevance);
+      // the one global control that can also go inert
+      var ms = document.getElementById('mouseStrengthField');
+      if (ms) ms.style.display = (hideInactiveEl.checked && !state.mouseReact) ? 'none' : '';
+    });
   }
 
   function rebuildLayersUI(){
@@ -624,6 +727,7 @@
       layersListEl.appendChild(buildLayerPanel(layer, i));
     });
     layerCountTag.textContent = state.layers.length + ' 層';
+    scheduleRelevance();
   }
 
   document.getElementById('addLayer').addEventListener('click', function(){
@@ -672,6 +776,7 @@
   var perspEl = document.getElementById('perspective'), perspVal = document.getElementById('v-perspective');
   perspEl.addEventListener('input', function(){ state.perspective = parseFloat(perspEl.value); perspVal.textContent = perspEl.value; });
   document.getElementById('autoTilt').addEventListener('change', function(e){ state.autoTilt = e.target.checked; });
+  hideInactiveEl.addEventListener('change', scheduleRelevance);
 
   document.getElementById('randomizeAll').addEventListener('click', function(){
     state.layers.forEach(function(layer){
