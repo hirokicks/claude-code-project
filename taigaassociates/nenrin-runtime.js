@@ -248,6 +248,9 @@
       rippleFreq: 4,
       rippleSpeed: 0.15,
       twistSpeed: 0,
+      twistXPerRing: 0,
+      twistXSpeed: 0,
+      lineStyle: 'simple',
       ringWidthVar: 0.35,
       ringOpacityVar: 0.35,
       ringWobbleVar: 0.4,
@@ -280,7 +283,7 @@
   ];
 
   // Non-numeric / non-interpolatable: snapped at the midpoint of a morph.
-  var LAYER_DISCRETE_KEYS = ['id', 'name', 'enabled', 'blend', 'deformMode', 'deformType', 'shapeMode'];
+  var LAYER_DISCRETE_KEYS = ['id', 'name', 'enabled', 'blend', 'deformMode', 'deformType', 'shapeMode', 'lineStyle'];
   var LAYER_COLOR_KEYS = ['color'];
 
   // Everything else on a layer is a plain shader uniform -> freely tweenable.
@@ -405,6 +408,7 @@
     "uniform mat2 uRotMat;",
     "uniform vec2 uResolution;",
     "uniform float uLineWidthPx;",
+    "uniform float uLineWidthMul;",
     "uniform float uTime;",
     "uniform float uIrregAmt;",
     "uniform float uIrregFreq;",
@@ -454,8 +458,11 @@
     "uniform float uRingWobbleVar;",
     "uniform float uRingDrift;",
     "uniform float uRot3DX;",
+    "uniform float uTwistXPerRing;",
+    "uniform float uTwistXPhase;",
     "uniform float uRot3DY;",
     "varying float vEdge;",
+    "varying float vAlong;",
     "varying float vGrowth;",
     "varying float vRingOpacity;",
     "float hash3(vec3 p){",
@@ -632,6 +639,13 @@
     "  } else {",
     "    animated += rdir * uDeformStrength * influence;",
     "  }",
+    // Each ring tipped a little further than the last around the X axis, so
+    // the piece opens out from the centre like a fan instead of spinning flat.
+    "  float twistXAng = aRing * uTwistXPerRing + uTwistXPhase;",
+    "  float cxw = cos(twistXAng), sxw = sin(twistXAng);",
+    "  float ywx = animated.y * cxw - shapeZ * sxw;",
+    "  float zwx = animated.y * sxw + shapeZ * cxw;",
+    "  animated.y = ywx; shapeZ = zwx;",
     "  float cxr3 = cos(uRot3DX), sxr3 = sin(uRot3DX);",
     "  float ny3 = animated.y * cxr3 - shapeZ * sxr3;",
     "  float nz3 = animated.y * sxr3 + shapeZ * cxr3;",
@@ -644,7 +658,7 @@
     "  vec2 nrm = uRotMat * aNormal;",
     "  float len = length(nrm);",
     "  if (len > 0.00001) nrm /= len;",
-    "  vec2 extruded = pos.xy + nrm * aSide * (uLineWidthPx * ringWidthMod * 0.5);",
+    "  vec2 extruded = pos.xy + nrm * aSide * (uLineWidthPx * ringWidthMod * uLineWidthMul * 0.5);",
     "  float z = shapeZ;",
     "  vec2 rel3 = extruded - uCenterPx;",
     "  float ry = rel3.y * uTiltXTrig.x - z * uTiltXTrig.y;",
@@ -659,18 +673,61 @@
     "  clip.y = -clip.y;",
     "  gl_Position = vec4(clip, 0.0, 1.0);",
     "  vEdge = aSide;",
+    "  vAlong = aU;",
     "}"
   ].join("\n");
 
+  // Four ways of inking the same stroke. vEdge runs -1..1 across the ribbon,
+  // vAlong travels with the stroke, so a style can vary the alpha across the
+  // width (soft edges), along the length (dry-brush breaks) or both (bleed).
+  // The ribbon is widened per style in the vertex shader — see LINE_WIDTH_MUL
+  // — and the alpha profile here brings the density back to something
+  // comparable, so switching styles does not change how heavy the art reads.
   var FRAG_SRC = [
     "precision mediump float;",
     "uniform vec4 uColor;",
+    "uniform int uLineStyle;",
+    // the vertex stage declares this at the default highp, so match it here or
+    // the program fails to link on a precision mismatch
+    "uniform highp vec2 uSeedOffset;",
     "varying float vEdge;",
+    "varying float vAlong;",
     "varying float vGrowth;",
     "varying float vRingOpacity;",
+    "float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }",
+    "float n21(vec2 p){",
+    "  vec2 i = floor(p), f = fract(p);",
+    "  f = f * f * (3.0 - 2.0 * f);",
+    "  return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x),",
+    "             mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);",
+    "}",
     "void main(){",
     "  float d = abs(vEdge);",
-    "  float alpha = 1.0 - smoothstep(0.55, 1.0, d);",
+    // kept small so mediump stays precise along a long stroke
+    "  float s = mod(vAlong, 64.0) + uSeedOffset.x;",
+    "  float alpha;",
+    "  if (uLineStyle == 1) {",
+    // blur — a wide gaussian core with no hard edge at all, which is what
+    // keeps neighbouring rings from beating against each other into moire
+    "    alpha = exp(-d * d * 3.4) * 0.72;",
+    "  } else if (uLineStyle == 2) {",
+    // ink — a firm core that the brush keeps lifting off the paper
+    "    float grain = n21(vec2(s * 5.5, d * 2.0 + uSeedOffset.y));",
+    "    float streak = n21(vec2(s * 22.0, 3.7));",
+    "    alpha = 1.0 - smoothstep(0.30, 0.92, d);",
+    "    alpha *= smoothstep(0.20, 0.62, grain * 0.65 + streak * 0.35);",
+    "    alpha = min(1.0, alpha * 1.5);",
+    "  } else if (uLineStyle == 3) {",
+    // watercolour — an uneven wet edge that pools darker in patches
+    "    float bleed = n21(vec2(s * 2.3, d * 1.6 + uSeedOffset.y));",
+    "    float pool  = n21(vec2(s * 0.9 + 11.0, 5.1));",
+    "    float edge = 0.42 + bleed * 0.5;",
+    "    alpha = 1.0 - smoothstep(edge * 0.35, edge + 0.55, d);",
+    "    alpha *= 0.42 + 0.58 * pool;",
+    "    alpha *= 0.9;",
+    "  } else {",
+    "    alpha = 1.0 - smoothstep(0.55, 1.0, d);",
+    "  }",
     "  gl_FragColor = vec4(uColor.rgb, uColor.a * alpha * vGrowth * vRingOpacity);",
     "}"
   ].join("\n");
@@ -703,6 +760,8 @@
   var locRotMat = gl.getUniformLocation(prog, 'uRotMat');
   var locResolution = gl.getUniformLocation(prog, 'uResolution');
   var locLineWidth = gl.getUniformLocation(prog, 'uLineWidthPx');
+  var locLineWidthMul = gl.getUniformLocation(prog, 'uLineWidthMul');
+  var locLineStyle = gl.getUniformLocation(prog, 'uLineStyle');
   var locColor = gl.getUniformLocation(prog, 'uColor');
   var locTime = gl.getUniformLocation(prog, 'uTime');
   var locIrregAmt = gl.getUniformLocation(prog, 'uIrregAmt');
@@ -753,6 +812,8 @@
   var locRingWobbleVar = gl.getUniformLocation(prog, 'uRingWobbleVar');
   var locRingDrift = gl.getUniformLocation(prog, 'uRingDrift');
   var locRot3DX = gl.getUniformLocation(prog, 'uRot3DX');
+  var locTwistXPerRing = gl.getUniformLocation(prog, 'uTwistXPerRing');
+  var locTwistXPhase = gl.getUniformLocation(prog, 'uTwistXPhase');
   var locRot3DY = gl.getUniformLocation(prog, 'uRot3DY');
 
   gl.enable(gl.BLEND);
@@ -910,7 +971,7 @@
   var _phase = {};
   function _phaseOf(layer) {
     return _phase[layer.id] ||
-      (_phase[layer.id] = { wobble: 0, ripple: 0, growth: 0, twist: 0, rotate: 0, breathe: 0 });
+      (_phase[layer.id] = { wobble: 0, ripple: 0, growth: 0, twist: 0, twistX: 0, rotate: 0, breathe: 0 });
   }
   function _advancePhases(step) {
     tiltPhase += step * state.tiltSpeed * 0.15;
@@ -921,6 +982,7 @@
         p.ripple += step * (l.rippleSpeed || 0);
         p.growth += step * (l.growthSpeed || 0);
         p.twist += step * (l.twistSpeed || 0) * Math.PI / 180;
+        p.twistX += step * (l.twistXSpeed || 0) * Math.PI / 180;
         p.breathe += step * l.breatheSpeed;
         if (state.autoRotate) p.rotate += step * l.rotateSpeed * 6;
       });
@@ -1001,6 +1063,9 @@
     gl.uniform1f(locFocal, focal);
 
     var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
+    var LINE_STYLES = { simple: 0, blur: 1, ink: 2, watercolor: 3 };
+    // wider ribbons give the softer styles room to fall off
+    var LINE_WIDTH_MUL = { simple: 1, blur: 2.8, ink: 1.25, watercolor: 3.2 };
     var SHAPE_MODES = { none: 0, sphere: 1, helix: 2, mobius: 3, cube: 4, infinity: 5, torusknot: 6, wave: 7 };
 
     _scenes.forEach(function(scene){
@@ -1096,6 +1161,10 @@
       gl.uniform1f(locRippleFreq, layer.rippleFreq || 0);
       gl.uniform1f(locRipplePhase, ph.ripple);
       gl.uniform1f(locTwistPhase, ph.twist);
+      gl.uniform1f(locTwistXPerRing, (layer.twistXPerRing || 0) * Math.PI / 180);
+      gl.uniform1f(locTwistXPhase, ph.twistX);
+      gl.uniform1i(locLineStyle, LINE_STYLES[layer.lineStyle] || 0);
+      gl.uniform1f(locLineWidthMul, LINE_WIDTH_MUL[layer.lineStyle] || 1);
       gl.uniform1f(locRingWidthVar, layer.ringWidthVar || 0);
       gl.uniform1f(locRingOpacityVar, layer.ringOpacityVar || 0);
       gl.uniform1f(locRingWobbleVar, layer.ringWobbleVar || 0);
