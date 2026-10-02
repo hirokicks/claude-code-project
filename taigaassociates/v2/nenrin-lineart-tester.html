@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>年輪ラインアート ジェネレーター / TAIGA ASSOCIATES</title>
+<title>年輪ラインアート ジェネレーター v2 / TAIGA ASSOCIATES</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..900&display=swap">
@@ -133,19 +133,6 @@
 
   .divider { height: 1px; background: #2a2a2a; margin: 2px 0; }
 
-  #layers-list { display: flex; flex-direction: column; gap: 10px; }
-  .layer-panel { border-left: 3px solid var(--lc, #6fae8f); }
-  .layer-title-input {
-    flex: 1;
-    background: transparent; border: none; color: #eee; font-size: 12px; font-weight: 600;
-    outline: none; padding: 2px 0;
-  }
-  .layer-head { display: flex; align-items: center; gap: 8px; }
-  .swatch { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); flex-shrink: 0; }
-  .layer-body { display: none; flex-direction: column; gap: 9px; padding-top: 8px; border-top: 1px solid #2a2a2a; margin-top: 2px; }
-  .layer-panel.open .layer-body { display: flex; }
-  .caret { transition: transform .15s; color: #666; font-size: 11px; }
-  .layer-panel.open .caret { transform: rotate(90deg); }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
   .subgroup-label { font-size: 9.5px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
 
@@ -181,79 +168,36 @@
   }
   #typeOverlay .line1 { font-size: 64px; font-weight: 300; line-height: 1; letter-spacing: -.01em; }
   #typeOverlay .line2 { font-size: 24px; font-weight: 500; line-height: 1.4; }
+
+  /* ---------- Centre icon ---------- */
+  .icon-row { display: flex; gap: 10px; align-items: center; }
+  #iconPreview {
+    width: 56px; height: 56px; flex-shrink: 0;
+    background: #181818; border: 1px solid #333; border-radius: 6px;
+  }
+  .icon-actions { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .icon-actions .row button { flex: 1; }
+  .hint { font-size: 10px; color: #6fae8f; line-height: 1.5; min-height: 0; }
+  .hint.err { color: #e0a08f; }
 </style>
 </head>
 <body>
 
   <div id="sidebar">
     <div id="sidebar-header">
-      <div class="brand">TAIGA ASSOCIATES — Line Art Tester</div>
+      <div class="brand">TAIGA ASSOCIATES — Line Art Tester v2</div>
       <h1>年輪ラインアート ジェネレーター</h1>
-      <p>タイガ気候の針葉樹林に育つ、緻密な年輪をモチーフにした線画パターンのパラメーター・テスターです。年輪を平面の同心円ではなく、奥行きを持つ螺旋構造として3Dチルト・パースで見せ、押す／引く／渦を巻くといった変形でメッセージに応じた表情に調整できます。</p>
+      <p>樹木の断面をモチーフに、年輪をフラットで力強いグラフィックとして描くテスターです。外側ほど大きくうねる外形、中心に置くアイコン、線種と線幅の変化で表情を調整できます。</p>
     </div>
     <div id="sidebar-scroll">
 
-      <div class="panel">
-        <h2>Canvas <span class="tag">背景 / 全体</span></h2>
-        <div class="row between">
-          <label class="chk">背景色 <input type="color" id="bgColor"></label>
-          <label class="chk">全体スケール</label>
-        </div>
-        <div class="row between">
-          <label class="chk">文字色 <input type="color" id="textColor"></label>
-        </div>
-        <div class="field">
-          <div class="label-row"><span>全体スケール</span><span class="val" id="v-globalScale">1.00</span></div>
-          <input type="range" id="globalScale" min="0.2" max="2.5" step="0.01" value="1">
-        </div>
-        <div class="divider"></div>
-        <label class="chk"><input type="checkbox" id="autoRotate" checked> 自動回転・常時揺らぎを有効化</label>
-        <label class="chk"><input type="checkbox" id="mouseReact" checked> マウス連動パララックス（層全体の移動）</label>
-        <div class="field" id="mouseStrengthField">
-          <div class="label-row"><span>連動の強さ</span><span class="val" id="v-mouseStrength">40</span></div>
-          <input type="range" id="mouseStrength" min="0" max="150" step="1" value="40">
-        </div>
-        <label class="chk"><input type="checkbox" id="mouseDeform" checked> マウスで形状を歪ませる（年輪自体が反応）</label>
-        <div class="divider"></div>
-        <div class="field">
-          <div class="label-row"><span>3Dチルト X（見下ろし角度）</span><span class="val" id="v-tiltX">32</span></div>
-          <input type="range" id="tiltX" min="-80" max="80" step="1" value="32">
-        </div>
-        <div class="field">
-          <div class="label-row"><span>3Dチルト Y（水平回転）</span><span class="val" id="v-tiltY">-14</span></div>
-          <input type="range" id="tiltY" min="-80" max="80" step="1" value="-14">
-        </div>
-        <div class="field">
-          <div class="label-row"><span>パースの強さ</span><span class="val" id="v-perspective">22</span></div>
-          <input type="range" id="perspective" min="0" max="80" step="1" value="22">
-        </div>
-        <label class="chk"><input type="checkbox" id="autoTilt" checked> 3D自動回転（視点が常に動く）</label>
-        <div class="divider"></div>
-        <label class="chk"><input type="checkbox" id="hideInactive" checked> いま効かない項目を隠す</label>
+      <div class="panel" id="canvasPanel">
+        <h2>Canvas <span class="tag">背景 / 配置 / 反応</span></h2>
       </div>
 
       <div class="panel">
         <h2>Presets <span class="tag">プリセット</span></h2>
-        <div class="grid2">
-          <button id="preset-fine" class="small">繊細 / Fine</button>
-          <button id="preset-bold" class="small">ラフ / Bold</button>
-          <button id="preset-moire" class="small">モアレ / Moiré</button>
-          <button id="preset-spiral" class="small">スプリング / Spring</button>
-          <button id="preset-calm" class="small">静謐 / Calm</button>
-          <button id="preset-growth" class="small">成長 / Growth</button>
-          <button id="preset-vortex" class="small">渦 / Vortex</button>
-          <button id="preset-barrel" class="small">樽 / Barrel</button>
-          <button id="preset-eccentric" class="small">偏心 / Eccentric</button>
-          <button id="preset-sphere" class="small">球体 / Sphere</button>
-          <button id="preset-tubebundle" class="small">螺旋の束 / Tube</button>
-          <button id="preset-mobiusbundle" class="small">メビウスの束 / M-Band</button>
-          <button id="preset-ripple" class="small">波紋 / Ripple</button>
-          <button id="preset-spin" class="small">回転 / Spin</button>
-          <button id="preset-ripplesphere" class="small">波打つ球体 / Sphere</button>
-          <button id="preset-trusknot" class="small">トーラスノット / trusknot</button>
-          <button id="preset-mirror" class="small">ミラー / mirror</button>
-          <button id="preset-wave" class="small">ウェーブ / Wave</button>
-        </div>
+        <div class="grid2" id="presetGrid"></div>
       </div>
 
       <div class="panel">
@@ -280,7 +224,7 @@
           <button id="scenePlay" class="small">▶ 順に再生</button>
         </div>
         <label class="chk"><input type="checkbox" id="sceneForce" checked> 強制モーフ（構造が違ってもモーフで繋ぐ）</label>
-        <label class="chk"><input type="checkbox" id="sceneStage"> 遷移中もカメラ・配置を動かす（回転／チルト／パース／スケール）</label>
+        <label class="chk"><input type="checkbox" id="sceneStage"> 遷移中も配置を動かす（スケール／位置）</label>
         <div class="field">
           <div class="label-row"><span>遷移中に残す揺らぎ（0=静止して形の変化だけ）</span><span class="val" id="v-sceneCalm">0.15</span></div>
           <input type="range" id="sceneCalm" min="0" max="1" step="0.05" value="0.15">
@@ -309,15 +253,13 @@
         </div>
       </div>
 
-      <div class="panel">
-        <h2>Layers <span class="tag" id="layerCountTag">2 層</span></h2>
-        <div id="layers-list"></div>
-        <button id="addLayer" class="wide small">＋ 層を追加</button>
+      <div class="panel" id="ringPanel">
+        <h2>Rings <span class="tag">年輪</span></h2>
       </div>
 
     </div>
     <div id="footer-actions">
-      <button id="randomizeAll" class="primary">🎲 全体ランダマイズ</button>
+      <button id="randomizeAll" class="primary">🎲 ランダマイズ</button>
       <button id="resetAll">初期化</button>
       <button id="exportPng">PNG書き出し</button>
     </div>
@@ -341,368 +283,338 @@
 (function(){
   "use strict";
 
-  // ---------------------------------------------------------------
-  // Engine
-  // ---------------------------------------------------------------
-  // The renderer now lives in nenrin-runtime.js — the same file that ships to
+  // The renderer lives in nenrin-runtime.js — the same file that ships to
   // implementers — so what this tester previews is literally what production
   // runs. Everything below is authoring UI only.
-  var defaultLayer = NenrinArt.defaultLayer;
-
-  function defaultLayers(){
-    return [
-      defaultLayer({
-        name: '外層 — ベース', ringCount: 55, segments: 90, baseRadius: 70, spacing: 6.8,
-        spacingVarAmt: 0.5, spacingVarFreq: 0.6, irregAmt: 4.5, irregFreq: 3.0,
-        eccentricity: 6, eccentricityAngle: 20, rotation: 0, scale: 1,
-        offsetX: 0, offsetY: 0, rotateSpeed: 0.6, lineWidth: 0.8, opacity: 0.85,
-        color: '#35322d', blend: 'normal', seed: 7,
-        wobbleSpeed: 0.14, breatheAmp: 0.012, breatheSpeed: 0.32,
-        deformStrength: 26, deformRadius: 260, deformMode: 'mouse', deformType: 'push',
-        spiralBlend: 0, spiralZ: 1.1, depthOffset: 0
-      }),
-      defaultLayer({
-        name: '重なり層 — モアレ', ringCount: 65, segments: 100, baseRadius: 42, spacing: 5.4,
-        spacingVarAmt: 0.6, spacingVarFreq: 0.9, irregAmt: 6.5, irregFreq: 4.6,
-        eccentricity: 24, eccentricityAngle: 200, rotation: 9, scale: 1.05,
-        offsetX: 18, offsetY: -12, rotateSpeed: -0.9, lineWidth: 0.6, opacity: 0.5,
-        color: '#8a8272', blend: 'multiply', seed: 23,
-        wobbleSpeed: 0.24, breatheAmp: 0.02, breatheSpeed: 0.5,
-        deformStrength: 42, deformRadius: 190, deformMode: 'mouse', deformType: 'swirl',
-        spiralBlend: 0, spiralZ: -0.8, depthOffset: -60
-      })
-    ];
-  }
-
-
   var art = NenrinArt.create(
     document.getElementById('glcanvas'),
-    { layers: defaultLayers() },
+    NenrinArt.defaultConfig(),
     {
       onStats: function (s) {
         document.getElementById('statsLine').textContent =
-          s.layers + ' Layers ・ ' + s.rings + ' Rings ・ ' + s.verts.toLocaleString() + ' Verts';
+          s.rings + ' Rings ・ ' + s.verts.toLocaleString() + ' Verts';
       }
     }
   );
   // handy for inspecting or scripting the piece from the console
   window.nenrinArt = art;
   var state = art.state;
-  var regenLayerGeometry = art.regenLayer;
-  var regenAll = art.regenAll;
-  var updateStats = art.updateStats;
 
+  var HEART_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
   // ---------------------------------------------------------------
-  // UI construction
+  // Controls — every one is bound to a key on the live config, and keeps a
+  // sync() so the panel can be refreshed after a preset, a scene change or a
+  // running transition (which moves the values itself).
   // ---------------------------------------------------------------
-  var layersListEl = document.getElementById('layers-list');
-  var layerCountTag = document.getElementById('layerCountTag');
-
-  function slider(label, key, min, max, step, val, onInput, fmt){
-    var wrap = document.createElement('div');
-    wrap.className = 'field';
-    wrap.dataset.param = key;
-    var row = document.createElement('div');
-    row.className = 'label-row';
-    var span = document.createElement('span');
-    span.textContent = label;
-    var valSpan = document.createElement('span');
-    valSpan.className = 'val';
-    valSpan.textContent = fmt ? fmt(val) : val;
-    row.appendChild(span); row.appendChild(valSpan);
+  var controls = [];
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function fmtOf(step){
+    var dec = step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
+    return function (v){ return Number(v).toFixed(dec); };
+  }
+  function changed(def){
+    if (def.regen) structuralChanged();
+    if (def.after) def.after();
+    scheduleRelevance();
+  }
+  function slider(def){
+    var wrap = el('div', 'field'); wrap.dataset.param = def.k;
+    var row = el('div', 'label-row');
+    var val = el('span', 'val');
+    row.appendChild(el('span', '', def.label)); row.appendChild(val);
     var input = document.createElement('input');
-    input.type = 'range'; input.min = min; input.max = max; input.step = step; input.value = val;
+    input.type = 'range'; input.min = def.min; input.max = def.max; input.step = def.step;
+    var fmt = fmtOf(def.step);
     input.addEventListener('input', function(){
-      var v = parseFloat(input.value);
-      valSpan.textContent = fmt ? fmt(v) : v;
-      onInput(v);
-      scheduleRelevance();
+      state[def.k] = parseFloat(input.value);
+      val.textContent = fmt(state[def.k]);
+      changed(def);
     });
     wrap.appendChild(row); wrap.appendChild(input);
+    controls.push({ k: def.k, sync: function(){ input.value = state[def.k]; val.textContent = fmt(state[def.k]); } });
     return wrap;
   }
-
-  function fmt1(v){ return v.toFixed(1); }
-  function fmt2(v){ return v.toFixed(2); }
-  function fmt0(v){ return Math.round(v); }
-
-  function buildLayerPanel(layer, index){
-    var panel = document.createElement('div');
-    panel.className = 'panel layer-panel';
-    panel.style.setProperty('--lc', layer.color);
-
-    var head = document.createElement('div');
-    head.className = 'layer-head';
-    var caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '▶';
-    var swatch = document.createElement('span'); swatch.className = 'swatch'; swatch.style.background = layer.color;
-    var titleInput = document.createElement('input');
-    titleInput.className = 'layer-title-input';
-    titleInput.value = layer.name;
-    titleInput.addEventListener('input', function(){ layer.name = titleInput.value; });
-    titleInput.addEventListener('click', function(e){ e.stopPropagation(); });
-
-    var enableChk = document.createElement('input');
-    enableChk.type = 'checkbox'; enableChk.checked = layer.enabled;
-    enableChk.addEventListener('click', function(e){ e.stopPropagation(); });
-    enableChk.addEventListener('change', function(){ layer.enabled = enableChk.checked; updateStats(); });
-
-    head.appendChild(caret);
-    head.appendChild(swatch);
-    head.appendChild(titleInput);
-    head.appendChild(enableChk);
-    head.style.cursor = 'pointer';
-    head.addEventListener('click', function(){ panel.classList.toggle('open'); });
-
-    var body = document.createElement('div');
-    body.className = 'layer-body';
-    body.__layer = layer;
-
-    // Only the structural parameters call regen(), and those are exactly the
-    // ones scene badges depend on — so refreshing here keeps them accurate.
-    function regen(){ regenLayerGeometry(layer); updateStats(); if (sceneListEl) renderSceneList(); }
-
-    body.appendChild(el('div', 'subgroup-label', '重なり方 / Overlap'));
-    var g1 = document.createElement('div'); g1.className = 'grid2';
-    g1.appendChild(colorField('線の色', layer.color, function(v){ layer.color = v; swatch.style.background=v; panel.style.setProperty('--lc', v); }));
-    g1.appendChild(blendField(layer.blend, function(v){ layer.blend = v; }));
-    body.appendChild(g1);
-    body.appendChild(slider('不透明度', 'opacity', 0, 1, 0.01, layer.opacity, function(v){ layer.opacity = v; }, fmt2));
-    body.appendChild(selectField('線種', layer.lineStyle,
-      [['simple','1 シンプル'],['blur','2 ブラー（モアレが出にくい）'],['ink','3 インク（かすれ）'],['watercolor','4 水彩（にじみ）']],
-      function(v){ layer.lineStyle = v; }, 'lineStyle'));
-    body.appendChild(slider('線幅 (px)', 'lineWidth', 0.2, 4, 0.05, layer.lineWidth, function(v){ layer.lineWidth = v; }, fmt2));
-
-    body.appendChild(el('div', 'subgroup-label', '量 / Density'));
-    body.appendChild(slider('本数（リング数）', 'ringCount', 6, 300, 1, layer.ringCount, function(v){ layer.ringCount = v; regen(); }, fmt0));
-    body.appendChild(slider('分割数（滑らかさ）', 'segments', 16, 360, 2, layer.segments, function(v){ layer.segments = v; regen(); }, fmt0));
-    body.appendChild(slider('基準半径', 'baseRadius', 0, 400, 1, layer.baseRadius, function(v){ layer.baseRadius = v; }, fmt0));
-    body.appendChild(slider('間隔', 'spacing', 0.5, 30, 0.1, layer.spacing, function(v){ layer.spacing = v; }, fmt1));
-    body.appendChild(slider('螺旋化（0=同心円 / 1=連続螺旋、中間値は継ぎ目が出ます）', 'spiralBlend', 0, 1, 0.01, layer.spiralBlend, function(v){ layer.spiralBlend = v; regen(); }, fmt2));
-
-    body.appendChild(el('div', 'subgroup-label', '有機的なばらつき / Organic Variance'));
-    body.appendChild(slider('年輪の粗密（ばらつき量）', 'spacingVarAmt', 0, 1, 0.01, layer.spacingVarAmt, function(v){ layer.spacingVarAmt = v; }, fmt2));
-    body.appendChild(slider('ばらつきの周波数', 'spacingVarFreq', 0.05, 5, 0.05, layer.spacingVarFreq, function(v){ layer.spacingVarFreq = v; regen(); }, fmt2));
-    body.appendChild(slider('偏心量（芯のずれ）', 'eccentricity', 0, 200, 1, layer.eccentricity, function(v){ layer.eccentricity = v; }, fmt0));
-    body.appendChild(slider('偏心角度', 'eccentricityAngle', 0, 360, 1, layer.eccentricityAngle, function(v){ layer.eccentricityAngle = v; }, fmt0));
-
-    body.appendChild(el('div', 'subgroup-label', '年輪の個体差 / Ring Individuality'));
-    body.appendChild(slider('線幅のばらつき（1本ずつ）', 'ringWidthVar', 0, 1, 0.01, layer.ringWidthVar, function(v){ layer.ringWidthVar = v; }, fmt2));
-    body.appendChild(slider('濃さのばらつき（1本ずつ）', 'ringOpacityVar', 0, 1, 0.01, layer.ringOpacityVar, function(v){ layer.ringOpacityVar = v; }, fmt2));
-    body.appendChild(slider('揺らぎ幅のばらつき（1本ずつ）', 'ringWobbleVar', 0, 1.5, 0.01, layer.ringWobbleVar, function(v){ layer.ringWobbleVar = v; }, fmt2));
-    body.appendChild(slider('揺らぎパターンのドリフト（外側ほどコブがズレる）', 'ringDrift', 0, 8, 0.1, layer.ringDrift, function(v){ layer.ringDrift = v; }, fmt1));
-
-    body.appendChild(el('div', 'subgroup-label', '揺らぎ・アニメーション / Motion'));
-    body.appendChild(slider('歪み量（木目の揺らぎ幅）', 'irregAmt', 0, 40, 0.5, layer.irregAmt, function(v){ layer.irregAmt = v; }, fmt1));
-    body.appendChild(slider('歪みの周波数', 'irregFreq', 0.2, 12, 0.1, layer.irregFreq, function(v){ layer.irregFreq = v; }, fmt1));
-    body.appendChild(slider('揺らぎ速度（常時アニメーション）', 'wobbleSpeed', 0, 3, 0.01, layer.wobbleSpeed, function(v){ layer.wobbleSpeed = v; }, fmt2));
-    body.appendChild(slider('呼吸振幅（スケール脈動）', 'breatheAmp', 0, 0.3, 0.005, layer.breatheAmp, function(v){ layer.breatheAmp = v; }, fmt2));
-    body.appendChild(slider('呼吸速度', 'breatheSpeed', 0, 3, 0.01, layer.breatheSpeed, function(v){ layer.breatheSpeed = v; }, fmt2));
-    body.appendChild(slider('成長波の速度（中心→外側）', 'growthSpeed', 0, 1, 0.01, layer.growthSpeed, function(v){ layer.growthSpeed = v; }, fmt2));
-    body.appendChild(slider('成長波の本数', 'growthWaveCount', 0.5, 10, 0.5, layer.growthWaveCount, function(v){ layer.growthWaveCount = v; }, fmt1));
-    body.appendChild(slider('成長波の強さ', 'growthAmt', 0, 1, 0.01, layer.growthAmt, function(v){ layer.growthAmt = v; }, fmt2));
-    body.appendChild(slider('波紋の振幅（中心から実際に波打つ）', 'rippleAmt', -60, 60, 1, layer.rippleAmt, function(v){ layer.rippleAmt = v; }, fmt0));
-    body.appendChild(slider('波紋の本数', 'rippleFreq', 0.5, 16, 0.5, layer.rippleFreq, function(v){ layer.rippleFreq = v; }, fmt1));
-    body.appendChild(slider('波紋の速度（中心→外側）', 'rippleSpeed', 0, 1.5, 0.01, layer.rippleSpeed, function(v){ layer.rippleSpeed = v; }, fmt2));
-
-    body.appendChild(el('div', 'subgroup-label', '変形（メッセージ表現）/ Deform'));
-    var g3 = document.createElement('div'); g3.className = 'grid2';
-    g3.appendChild(selectField('アンカー', layer.deformMode, [['mouse','マウス追従'],['fixed','固定位置']], function(v){ layer.deformMode = v; }, 'deformMode'));
-    g3.appendChild(selectField('種類', layer.deformType, [['push','外へ押す'],['pull','内へ引く'],['swirl','渦を巻く']], function(v){ layer.deformType = v; }, 'deformType'));
-    body.appendChild(g3);
-    body.appendChild(slider('変形の強さ', 'deformStrength', 0, 150, 1, layer.deformStrength, function(v){ layer.deformStrength = v; }, fmt0));
-    body.appendChild(slider('変形の半径', 'deformRadius', 20, 800, 5, layer.deformRadius, function(v){ layer.deformRadius = v; }, fmt0));
-    var g4 = document.createElement('div'); g4.className = 'grid2';
-    g4.appendChild(slider('固定アンカーX', 'anchorX', -500, 500, 1, layer.anchorX, function(v){ layer.anchorX = v; }, fmt0));
-    g4.appendChild(slider('固定アンカーY', 'anchorY', -500, 500, 1, layer.anchorY, function(v){ layer.anchorY = v; }, fmt0));
-    body.appendChild(g4);
-
-    body.appendChild(el('div', 'subgroup-label', '角度・スケール・奥行き / Transform'));
-    body.appendChild(slider('回転角度', 'rotation', 0, 360, 1, layer.rotation, function(v){ layer.rotation = v; }, fmt0));
-    body.appendChild(slider('スケール', 'scale', 0.1, 3, 0.01, layer.scale, function(v){ layer.scale = v; }, fmt2));
-    var g2 = document.createElement('div'); g2.className = 'grid2';
-    g2.appendChild(slider('Xオフセット', 'offsetX', -500, 500, 1, layer.offsetX, function(v){ layer.offsetX = v; }, fmt0));
-    g2.appendChild(slider('Yオフセット', 'offsetY', -500, 500, 1, layer.offsetY, function(v){ layer.offsetY = v; }, fmt0));
-    body.appendChild(g2);
-    body.appendChild(slider('自動回転速度', 'rotateSpeed', -30, 30, 0.1, layer.rotateSpeed, function(v){ layer.rotateSpeed = v; }, fmt1));
-    body.appendChild(slider('螺旋の奥行き（リング毎のZ変化）', 'spiralZ', -5, 5, 0.05, layer.spiralZ, function(v){ layer.spiralZ = v; }, fmt2));
-    body.appendChild(slider('奥行きオフセット', 'depthOffset', -400, 400, 1, layer.depthOffset, function(v){ layer.depthOffset = v; }, fmt0));
-    var g2b = document.createElement('div'); g2b.className = 'grid2';
-    g2b.appendChild(slider('3D回転 X軸', 'rot3DX', -180, 180, 1, layer.rot3DX, function(v){ layer.rot3DX = v; }, fmt0));
-    g2b.appendChild(slider('3D回転 Y軸', 'rot3DY', -180, 180, 1, layer.rot3DY, function(v){ layer.rot3DY = v; }, fmt0));
-    body.appendChild(g2b);
-    body.appendChild(slider('ひねり（リング毎の回転角度）', 'twistPerRing', -3, 3, 0.02, layer.twistPerRing, function(v){ layer.twistPerRing = v; }, fmt2));
-    body.appendChild(slider('ひねりの回転速度（Z軸を中心に常時回転）', 'twistSpeed', -60, 60, 0.5, layer.twistSpeed, function(v){ layer.twistSpeed = v; }, fmt1));
-    body.appendChild(slider('X軸のひねり（中心から順に傾く）', 'twistXPerRing', -6, 6, 0.05, layer.twistXPerRing, function(v){ layer.twistXPerRing = v; }, fmt2));
-    body.appendChild(slider('X軸ひねりの回転速度', 'twistXSpeed', -60, 60, 0.5, layer.twistXSpeed, function(v){ layer.twistXSpeed = v; }, fmt1));
-    body.appendChild(slider('膨らみ（樽型 / くびれ）', 'bulgeAmt', -0.6, 0.6, 0.01, layer.bulgeAmt, function(v){ layer.bulgeAmt = v; }, fmt2));
-    body.appendChild(slider('メビウス振幅（輪自体のうねり）', 'mobiusAmt', -200, 200, 1, layer.mobiusAmt, function(v){ layer.mobiusAmt = v; }, fmt0));
-    body.appendChild(slider('メビウス周波数（一周の波の数）', 'mobiusFreq', 0, 6, 0.1, layer.mobiusFreq, function(v){ layer.mobiusFreq = v; }, fmt1));
-    body.appendChild(slider('メビウス位相のリング進行', 'mobiusRingTwist', -30, 30, 0.5, layer.mobiusRingTwist, function(v){ layer.mobiusRingTwist = v; }, fmt1));
-
-    body.appendChild(el('div', 'subgroup-label', '形状ターゲット / Shape Target'));
-    body.appendChild(selectField('形状', layer.shapeMode, [['none','なし（年輪のまま）'],['sphere','球体'],['helix','螺旋チューブ'],['mobius','メビウス面'],['cube','キューブ'],['infinity','インフィニティ（8の字）'],['torusknot','トーラスノット'],['wave','ウェーブ']], function(v){ layer.shapeMode = v; }, 'shapeMode'));
-    body.appendChild(slider('変形量（0=年輪 / 1=形状）', 'shapeMorph', 0, 1, 0.01, layer.shapeMorph, function(v){ layer.shapeMorph = v; }, fmt2));
-    var shapeRadiusField = slider('主半径（形状全体の大きさ）', 'shapeRadius', 0, 500, 1, layer.shapeRadius, function(v){ layer.shapeRadius = v; }, fmt0);
-    body.appendChild(shapeRadiusField);
-    // A shape target much smaller than the flat rings makes the piece shrink
-    // hard while it morphs — the usual cause of a "violent" flat->3D
-    // transition. This matches the target to the rings' own outer radius.
-    var fitBtn = document.createElement('button');
-    fitBtn.className = 'small wide';
-    fitBtn.textContent = '↔ 年輪の大きさに合わせる（遷移の拡大縮小を抑える）';
-    fitBtn.addEventListener('click', function(){
-      var outer = Math.round(layer.baseRadius + layer.ringCount * layer.spacing);
-      layer.shapeRadius = Math.min(500, outer);
-      var r = shapeRadiusField.querySelector('input[type=range]');
-      var v = shapeRadiusField.querySelector('.val');
-      r.value = layer.shapeRadius; if (v) v.textContent = layer.shapeRadius;
-    });
-    body.appendChild(fitBtn);
-    body.appendChild(slider('副半径（チューブ太さ／帯の幅）', 'shapeRadius2', 0, 200, 1, layer.shapeRadius2, function(v){ layer.shapeRadius2 = v; }, fmt0));
-    body.appendChild(slider('巻き数（軸まわりに何周するか）', 'shapeTurns', 0.2, 12, 0.1, layer.shapeTurns, function(v){ layer.shapeTurns = v; }, fmt1));
-    body.appendChild(slider('高さ（軸方向の長さ）', 'shapeHeight', 0, 800, 5, layer.shapeHeight, function(v){ layer.shapeHeight = v; }, fmt0));
-    body.appendChild(slider('束のねじれ／ひねりの数', 'shapeTwist', -8, 8, 0.1, layer.shapeTwist, function(v){ layer.shapeTwist = v; }, fmt1));
-
-    var actions = document.createElement('div'); actions.className = 'row';
-    var seedBtn = document.createElement('button'); seedBtn.className = 'small'; seedBtn.textContent = '🎲 シードを変更';
-    seedBtn.addEventListener('click', function(){ layer.seed = (Math.random()*1000|0); regen(); });
-    var dupBtn = document.createElement('button'); dupBtn.className = 'small'; dupBtn.textContent = '複製';
-    dupBtn.addEventListener('click', function(){
-      var copy = defaultLayer(layer);
-      copy.id = 'L' + (Math.random()*1e6|0);
-      copy.name = layer.name + ' コピー';
-      var idx = state.layers.indexOf(layer);
-      state.layers.splice(idx+1, 0, copy);
-      rebuildLayersUI();
-      regenLayerGeometry(copy);
-      updateStats();
-    });
-    var delBtn = document.createElement('button'); delBtn.className = 'small danger'; delBtn.textContent = '削除';
-    delBtn.addEventListener('click', function(){
-      if (state.layers.length <= 1) return;
-      var idx = state.layers.indexOf(layer);
-      state.layers.splice(idx, 1);
-      art.releaseLayer(layer);
-      rebuildLayersUI();
-      updateStats();
-    });
-    actions.appendChild(seedBtn); actions.appendChild(dupBtn); actions.appendChild(delBtn);
-    body.appendChild(actions);
-
-    panel.appendChild(head);
-    panel.appendChild(body);
-    if (index === 0) panel.classList.add('open');
-    return panel;
-  }
-
-  function el(tag, cls, text){ var e = document.createElement(tag); e.className = cls; e.textContent = text; return e; }
-
-  function colorField(label, val, onInput){
-    var wrap = document.createElement('div'); wrap.className = 'field';
-    var row = document.createElement('div'); row.className = 'label-row';
-    row.appendChild(el('span','', label));
-    wrap.appendChild(row);
-    var input = document.createElement('input');
-    input.type = 'color'; input.value = val;
-    input.addEventListener('input', function(){ onInput(input.value); });
-    wrap.appendChild(input);
-    return wrap;
-  }
-  function blendField(val, onInput){
-    return selectField('ブレンド', val, [['normal','通常'],['multiply','乗算'],['screen','スクリーン'],['add','加算']], onInput);
-  }
-  function selectField(label, val, options, onInput, key){
-    var wrap = document.createElement('div'); wrap.className = 'field';
-    if (key) wrap.dataset.param = key;
-    var row = document.createElement('div'); row.className = 'label-row';
-    row.appendChild(el('span','', label));
-    wrap.appendChild(row);
+  function select(def){
+    var wrap = el('div', 'field'); wrap.dataset.param = def.k;
+    var row = el('div', 'label-row'); row.appendChild(el('span', '', def.label));
     var sel = document.createElement('select');
-    options.forEach(function(o){
-      var opt = document.createElement('option'); opt.value = o[0]; opt.textContent = o[1];
-      if (o[0] === val) opt.selected = true;
-      sel.appendChild(opt);
+    def.options.forEach(function(o){
+      var opt = el('option', '', o[1]); opt.value = o[0]; sel.appendChild(opt);
     });
-    sel.addEventListener('change', function(){ onInput(sel.value); scheduleRelevance(); });
-    wrap.appendChild(sel);
+    sel.addEventListener('change', function(){ state[def.k] = sel.value; changed(def); });
+    wrap.appendChild(row); wrap.appendChild(sel);
+    controls.push({ k: def.k, sync: function(){ sel.value = state[def.k]; } });
     return wrap;
   }
+  function color(def){
+    var wrap = el('label', 'chk'); wrap.dataset.param = def.k;
+    var input = document.createElement('input'); input.type = 'color';
+    input.addEventListener('input', function(){ state[def.k] = input.value; changed(def); });
+    wrap.appendChild(document.createTextNode(def.label + ' ')); wrap.appendChild(input);
+    controls.push({ k: def.k, sync: function(){ input.value = state[def.k]; } });
+    return wrap;
+  }
+  function check(def){
+    var wrap = el('label', 'chk'); wrap.dataset.param = def.k;
+    var input = document.createElement('input'); input.type = 'checkbox';
+    input.addEventListener('change', function(){ state[def.k] = input.checked; changed(def); });
+    wrap.appendChild(input); wrap.appendChild(document.createTextNode(' ' + def.label));
+    controls.push({ k: def.k, sync: function(){ input.checked = !!state[def.k]; } });
+    return wrap;
+  }
+  function grid2(a, b){ var g = el('div', 'grid2'); g.appendChild(a); g.appendChild(b); return g; }
+  function syncAll(){ controls.forEach(function(c){ c.sync(); }); drawIconPreview(); scheduleRelevance(); }
 
-
-  var hideInactiveEl = document.getElementById('hideInactive');
+  function structuralChanged(){
+    art.regen();
+    // scene badges show morph-vs-crossfade against the *current* structure
+    renderSceneList();
+  }
 
   // ---------------------------------------------------------------
-  // Which controls actually do anything right now
+  // Canvas panel
   // ---------------------------------------------------------------
-  // Several parameters are genuinely inert depending on the layer's state —
-  // a shape only reads some of the shape sliders, a fully morphed layer
-  // discards everything that shapes the plain rings, and an "amount" at zero
-  // makes its own sub-settings meaningless. Hiding those keeps the panel to
-  // what is currently worth touching. Mirrors the vertex shader's order of
-  // operations in nenrin-runtime.js.
-  var SHAPE_USES = {
-    none:      [],
-    sphere:    ['shapeRadius'],
-    helix:     ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeHeight', 'shapeTwist'],
-    mobius:    ['shapeRadius', 'shapeRadius2', 'shapeTwist'],
-    cube:      ['shapeRadius', 'shapeHeight'],
-    infinity:  ['shapeRadius', 'shapeRadius2'],
-    torusknot: ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeTwist'],
-    wave:      ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeHeight', 'shapeTwist']
-  };
-  var SHAPE_SLIDERS = ['shapeRadius', 'shapeRadius2', 'shapeTurns', 'shapeHeight', 'shapeTwist'];
+  var canvasPanel = document.getElementById('canvasPanel');
+  canvasPanel.appendChild(grid2(
+    color({ k: 'bgColor', label: '背景色' }),
+    color({ k: 'textColor', label: '文字色' })
+  ));
+  canvasPanel.appendChild(slider({ k: 'scale', label: 'スケール（線幅も一緒に拡大縮小）', min: 0.2, max: 3, step: 0.01 }));
+  canvasPanel.appendChild(grid2(
+    slider({ k: 'offsetX', label: 'Xオフセット', min: -600, max: 600, step: 1 }),
+    slider({ k: 'offsetY', label: 'Yオフセット', min: -600, max: 600, step: 1 })
+  ));
+  canvasPanel.appendChild(el('div', 'divider'));
+  canvasPanel.appendChild(check({ k: 'animate', label: '常時アニメーション（揺らぎ・呼吸・波）' }));
+  canvasPanel.appendChild(check({ k: 'mouseDeform', label: 'マウスで形状を歪ませる（年輪自体が反応）' }));
+  canvasPanel.appendChild(check({ k: 'mouseReact', label: 'マウス連動（アート全体が追従して動く）' }));
+  canvasPanel.appendChild(slider({ k: 'mouseStrength', label: '連動の強さ', min: 0, max: 150, step: 1 }));
+  canvasPanel.appendChild(el('div', 'divider'));
+  var hideInactiveWrap = el('label', 'chk');
+  var hideInactiveEl = document.createElement('input');
+  hideInactiveEl.type = 'checkbox'; hideInactiveEl.checked = true;
+  hideInactiveWrap.appendChild(hideInactiveEl);
+  hideInactiveWrap.appendChild(document.createTextNode(' いま効かない項目を隠す'));
+  canvasPanel.appendChild(hideInactiveWrap);
+  hideInactiveEl.addEventListener('change', function(){ scheduleRelevance(); });
 
-  function inactiveParams(layer){
+  // ---------------------------------------------------------------
+  // Rings panel
+  // ---------------------------------------------------------------
+  var ringPanel = document.getElementById('ringPanel');
+  function group(title){ ringPanel.appendChild(el('div', 'subgroup-label', title)); }
+
+  group('線 / Line');
+  ringPanel.appendChild(color({ k: 'color', label: '線の色' }));
+  ringPanel.appendChild(slider({ k: 'opacity', label: '不透明度', min: 0, max: 1, step: 0.01 }));
+  ringPanel.appendChild(select({ k: 'lineStyle', label: '線種', options: [
+    ['simple', '1 シンプル'], ['blur', '2 ブラー（モアレが出にくい）'],
+    ['ink', '3 インク（かすれ）'], ['watercolor', '4 水彩（にじみ）']
+  ]}));
+  ringPanel.appendChild(slider({ k: 'lineWidth', label: '線幅（最外周）', min: 0.2, max: 30, step: 0.1 }));
+  ringPanel.appendChild(slider({ k: 'lineWidthInner', label: '中心の線幅（最外周を1とした比率）', min: 0.05, max: 2, step: 0.01 }));
+
+  group('量 / Density');
+  ringPanel.appendChild(slider({ k: 'ringCount', label: '本数（リング数）', min: 4, max: 300, step: 1, regen: true }));
+  ringPanel.appendChild(slider({ k: 'segments', label: '分割数（滑らかさ）', min: 24, max: 480, step: 4, regen: true }));
+  ringPanel.appendChild(slider({ k: 'baseRadius', label: '基準半径（中心の空き・アイコンの大きさ）', min: 0, max: 300, step: 1 }));
+  ringPanel.appendChild(slider({ k: 'spacing', label: '間隔', min: 1, max: 40, step: 0.1 }));
+  ringPanel.appendChild(slider({ k: 'spiralBlend', label: '螺旋化（0=同心円 / 1=連続螺旋、中間値は継ぎ目が出ます）', min: 0, max: 1, step: 0.01, regen: true }));
+
+  group('中心のアイコン / Icon');
+  var iconField = el('div', 'field'); iconField.dataset.param = 'icon';
+  var iconRow = el('div', 'icon-row');
+  var iconPreview = document.createElement('canvas');
+  iconPreview.id = 'iconPreview'; iconPreview.width = 112; iconPreview.height = 112;
+  var iconActions = el('div', 'icon-actions');
+  var iconUploadBtn = el('button', 'small', 'SVG を読み込む');
+  var iconSampleRow = el('div', 'row');
+  var iconHeartBtn = el('button', 'small', 'ハート（サンプル）');
+  var iconClearBtn = el('button', 'small danger', '外す');
+  iconSampleRow.appendChild(iconHeartBtn); iconSampleRow.appendChild(iconClearBtn);
+  iconActions.appendChild(iconUploadBtn); iconActions.appendChild(iconSampleRow);
+  iconRow.appendChild(iconPreview); iconRow.appendChild(iconActions);
+  var iconFile = document.createElement('input');
+  iconFile.type = 'file'; iconFile.accept = '.svg,image/svg+xml'; iconFile.hidden = true;
+  var iconMsg = el('div', 'hint');
+  iconField.appendChild(iconRow); iconField.appendChild(iconFile); iconField.appendChild(iconMsg);
+  ringPanel.appendChild(iconField);
+  ringPanel.appendChild(slider({ k: 'iconAmt', label: 'アイコンの効き（0=円 / 1=アイコン形状）', min: 0, max: 1, step: 0.01 }));
+
+  group('外形のうねり / Outline');
+  ringPanel.appendChild(slider({ k: 'outlineAmt', label: 'うねりの大きさ（最外周での振れ幅）', min: 0, max: 200, step: 1 }));
+  ringPanel.appendChild(slider({ k: 'outlineFreq', label: 'うねりの数', min: 0.2, max: 4, step: 0.05 }));
+  ringPanel.appendChild(slider({ k: 'outlineGrowth', label: '外側への増え方（0=一律 / 大きいほど外側に集中）', min: 0, max: 4, step: 0.05 }));
+
+  group('有機的なばらつき / Organic Variance');
+  ringPanel.appendChild(slider({ k: 'spacingVarAmt', label: '年輪の粗密（ばらつき量）', min: 0, max: 1, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'spacingVarFreq', label: 'ばらつきの周波数', min: 0.05, max: 5, step: 0.05, regen: true }));
+  ringPanel.appendChild(slider({ k: 'eccentricity', label: '偏心量（芯のずれ）', min: 0, max: 200, step: 1 }));
+  ringPanel.appendChild(slider({ k: 'eccentricityAngle', label: '偏心角度', min: 0, max: 360, step: 1 }));
+  ringPanel.appendChild(slider({ k: 'bulgeAmt', label: '膨らみ（中間の年輪の広がり）', min: -0.6, max: 0.6, step: 0.01 }));
+
+  group('年輪の個体差 / Ring Individuality');
+  ringPanel.appendChild(slider({ k: 'ringWidthVar', label: '線幅のばらつき（1本ずつ）', min: 0, max: 1, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'ringOpacityVar', label: '濃さのばらつき（1本ずつ）', min: 0, max: 1, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'ringWobbleVar', label: '揺らぎ幅のばらつき（1本ずつ）', min: 0, max: 1.5, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'ringDrift', label: '揺らぎパターンのドリフト（外側ほどコブがズレる）', min: 0, max: 8, step: 0.1 }));
+
+  group('細かな揺らぎ・動き / Motion');
+  ringPanel.appendChild(slider({ k: 'irregAmt', label: '細かな揺らぎ（木目の振れ幅）', min: 0, max: 20, step: 0.1 }));
+  ringPanel.appendChild(slider({ k: 'irregFreq', label: '細かな揺らぎの周波数', min: 0.2, max: 12, step: 0.1 }));
+  ringPanel.appendChild(slider({ k: 'wobbleSpeed', label: '揺らぎ速度（うねりも一緒に動く）', min: 0, max: 2, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'breatheAmp', label: '呼吸振幅（スケール脈動）', min: 0, max: 0.1, step: 0.001 }));
+  ringPanel.appendChild(slider({ k: 'breatheSpeed', label: '呼吸速度', min: 0, max: 3, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'growthAmt', label: '成長波の強さ（濃淡が中心→外側へ流れる）', min: 0, max: 1, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'growthSpeed', label: '成長波の速度', min: 0, max: 1, step: 0.01 }));
+  ringPanel.appendChild(slider({ k: 'growthWaveCount', label: '成長波の本数', min: 0.5, max: 10, step: 0.5 }));
+  ringPanel.appendChild(slider({ k: 'rippleAmt', label: '波紋の振幅（中心から実際に波打つ）', min: -60, max: 60, step: 1 }));
+  ringPanel.appendChild(slider({ k: 'rippleFreq', label: '波紋の本数', min: 0.5, max: 16, step: 0.5 }));
+  ringPanel.appendChild(slider({ k: 'rippleSpeed', label: '波紋の速度（中心→外側）', min: 0, max: 1.5, step: 0.01 }));
+
+  group('変形 / Deform');
+  ringPanel.appendChild(grid2(
+    select({ k: 'deformMode', label: 'アンカー', options: [['mouse', 'マウス追従'], ['fixed', '固定位置']] }),
+    select({ k: 'deformType', label: '種類', options: [['push', '外へ押す'], ['pull', '内へ引く'], ['swirl', '渦を巻く']] })
+  ));
+  ringPanel.appendChild(slider({ k: 'deformStrength', label: '変形の強さ', min: 0, max: 150, step: 1 }));
+  ringPanel.appendChild(slider({ k: 'deformRadius', label: '変形の半径', min: 20, max: 800, step: 5 }));
+  ringPanel.appendChild(grid2(
+    slider({ k: 'anchorX', label: '固定アンカーX', min: -500, max: 500, step: 1 }),
+    slider({ k: 'anchorY', label: '固定アンカーY', min: -500, max: 500, step: 1 })
+  ));
+
+  var seedRow = el('div', 'row');
+  var seedBtn = el('button', 'small', '🎲 シードを変更');
+  seedBtn.addEventListener('click', function(){
+    state.seed = (Math.random() * 1000 | 0);
+    structuralChanged();
+  });
+  seedRow.appendChild(seedBtn);
+  ringPanel.appendChild(seedRow);
+
+  // ---------------------------------------------------------------
+  // Centre icon
+  // ---------------------------------------------------------------
+  function iconOutlines(str){
+    var subs = [], cur = null;
+    (String(str || '').match(/[MLZ]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g) || []).forEach(function(t){
+      if (t === 'M'){ cur = []; subs.push(cur); }
+      else if (t === 'Z'){ cur = null; }
+      else if (t !== 'L' && cur){ cur.push(parseFloat(t)); }
+    });
+    return subs.map(function(flat){
+      var pts = [];
+      for (var i = 0; i + 1 < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
+      return pts;
+    });
+  }
+  function drawIconPreview(){
+    var ctx = iconPreview.getContext('2d');
+    var W = iconPreview.width;
+    ctx.clearRect(0, 0, W, W);
+    if (!state.icon){
+      ctx.fillStyle = '#555';
+      ctx.font = '22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('なし', W / 2, W / 2);
+      return;
+    }
+    ctx.save();
+    ctx.translate(W / 2, W / 2);
+    ctx.scale(W * 0.42, W * 0.42);
+    ctx.beginPath();
+    iconOutlines(state.icon).forEach(function(s){
+      if (!s.length) return;
+      ctx.moveTo(s[0][0], s[0][1]);
+      for (var i = 1; i < s.length; i++) ctx.lineTo(s[i][0], s[i][1]);
+      ctx.closePath();
+    });
+    ctx.fillStyle = '#d8d3c7';
+    ctx.fill('nonzero');
+    ctx.restore();
+  }
+  function setIcon(str, label){
+    state.icon = str || '';
+    iconMsg.className = 'hint';
+    if (str && state.baseRadius < 40){
+      // The icon is drawn at the base radius, so a tiny base would hide it.
+      // Growing the base pushes every ring outward, so scale the piece down
+      // by the same ratio to keep its overall size on the page.
+      var ringsSpan = state.ringCount * state.spacing;
+      var before = state.baseRadius + ringsSpan, after = 90 + ringsSpan;
+      state.baseRadius = 90;
+      state.scale = Math.max(0.2, +(state.scale * before / after).toFixed(2));
+      iconMsg.textContent = label + 'を中心に置きました（アイコンが見えるよう基準半径を 90 にし、全体の大きさが変わらないようスケールを調整しました）';
+    } else {
+      iconMsg.textContent = str ? label + 'を中心に置きました' : 'アイコンを外しました';
+    }
+    structuralChanged();
+    syncAll();
+  }
+  iconUploadBtn.addEventListener('click', function(){ iconFile.click(); });
+  iconFile.addEventListener('change', function(){
+    var f = iconFile.files && iconFile.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        setIcon(NenrinArt.svgToIcon(reader.result), '「' + f.name + '」');
+      } catch (e) {
+        iconMsg.className = 'hint err';
+        iconMsg.textContent = '読み込めませんでした: ' + e.message;
+      }
+      iconFile.value = '';
+    };
+    reader.readAsText(f);
+  });
+  iconHeartBtn.addEventListener('click', function(){ setIcon(NenrinArt.svgToIcon(HEART_SVG), 'ハート'); });
+  iconClearBtn.addEventListener('click', function(){ setIcon('', ''); });
+
+  // ---------------------------------------------------------------
+  // "Hide what does nothing right now" — mirrors the vertex shader: an amount
+  // at zero makes its own frequency/speed settings inert, and so on.
+  // ---------------------------------------------------------------
+  function inactiveParams(s){
     var out = {};
     function off(){ for (var i = 0; i < arguments.length; i++) out[arguments[i]] = true; }
-
-    var solid = layer.shapeMode !== 'none';
-    var used = SHAPE_USES[layer.shapeMode] || [];
-    SHAPE_SLIDERS.forEach(function(k){ if (used.indexOf(k) < 0) off(k); });
-    if (!solid) off('shapeMorph');
-
-    // At a full morph the ring form is replaced outright, so everything that
-    // only shapes those rings is thrown away. spiralBlend survives because it
-    // decides whether the rings are chained into one strand, which still shows.
-    if (solid && layer.shapeMorph >= 0.999){
-      off('baseRadius', 'spacing', 'spacingVarAmt', 'spacingVarFreq',
-          'eccentricity', 'eccentricityAngle',
-          'irregAmt', 'irregFreq', 'wobbleSpeed', 'ringWobbleVar', 'ringDrift',
-          'bulgeAmt', 'twistPerRing', 'twistSpeed',
-          'spiralZ', 'depthOffset', 'mobiusAmt', 'mobiusFreq', 'mobiusRingTwist');
-    }
-
-    // an amount at zero makes its own frequency/speed/shape settings inert
-    if (!layer.spacingVarAmt) off('spacingVarFreq');
-    if (!layer.eccentricity) off('eccentricityAngle');
-    if (!layer.irregAmt) off('irregFreq', 'wobbleSpeed', 'ringWobbleVar', 'ringDrift');
-    if (!layer.breatheAmp) off('breatheSpeed');
-    if (!layer.growthAmt) off('growthSpeed', 'growthWaveCount');
-    if (!layer.rippleAmt) off('rippleFreq', 'rippleSpeed');
-    if (!layer.mobiusAmt) off('mobiusFreq', 'mobiusRingTwist');
-    if (!layer.deformStrength) off('deformRadius', 'deformMode', 'deformType', 'anchorX', 'anchorY');
-    else if (layer.deformMode !== 'fixed') off('anchorX', 'anchorY');
+    if (!s.spacingVarAmt) off('spacingVarFreq');
+    if (!s.eccentricity) off('eccentricityAngle');
+    if (!s.irregAmt) off('irregFreq', 'ringWobbleVar', 'ringDrift');
+    // the outline undulation runs on the wobble clock too
+    if (!s.irregAmt && !s.outlineAmt) off('wobbleSpeed');
+    if (!s.outlineAmt) off('outlineFreq', 'outlineGrowth');
+    if (!s.icon) off('iconAmt');
+    if (!s.breatheAmp) off('breatheSpeed');
+    if (!s.growthAmt) off('growthSpeed', 'growthWaveCount');
+    if (!s.rippleAmt) off('rippleFreq', 'rippleSpeed');
+    if (!s.mouseReact) off('mouseStrength');
+    // a mouse-anchored deform does nothing while the mouse is not allowed to
+    // deform; a fixed anchor deforms regardless
+    var deformLive = s.deformStrength && (s.deformMode === 'fixed' || s.mouseDeform);
+    if (!deformLive) off('deformRadius', 'deformType', 'anchorX', 'anchorY');
+    if (!s.deformStrength) off('deformMode');
+    if (s.deformMode !== 'fixed') off('anchorX', 'anchorY');
+    if (!s.animate) off('wobbleSpeed', 'breatheSpeed', 'growthSpeed', 'rippleSpeed');
     return out;
   }
-
-  function applyRelevance(body){
-    var layer = body.__layer;
-    if (!layer) return;
-    var hide = hideInactiveEl.checked ? inactiveParams(layer) : {};
-    Array.prototype.forEach.call(body.querySelectorAll('[data-param]'), function(el){
-      el.style.display = hide[el.dataset.param] ? 'none' : '';
+  function applyRelevance(root){
+    var hide = hideInactiveEl.checked ? inactiveParams(state) : {};
+    Array.prototype.forEach.call(root.querySelectorAll('[data-param]'), function(n){
+      n.style.display = hide[n.dataset.param] ? 'none' : '';
     });
-    // collapse a two-up row, then a subgroup heading, once everything under
-    // it has gone
-    Array.prototype.forEach.call(body.querySelectorAll('.grid2'), function(g){
-      var anyVisible = Array.prototype.some.call(g.children, function(c){
-        return c.style.display !== 'none';
-      });
-      g.style.display = anyVisible ? '' : 'none';
+    // collapse a two-up row, then a subgroup heading, once all under it is gone
+    Array.prototype.forEach.call(root.querySelectorAll('.grid2'), function(g){
+      var any = Array.prototype.some.call(g.children, function(c){ return c.style.display !== 'none'; });
+      g.style.display = any ? '' : 'none';
     });
-    var kids = Array.prototype.slice.call(body.children), heading = null, seen = false;
-    kids.forEach(function(node){
+    var heading = null, seen = false;
+    Array.prototype.forEach.call(root.children, function(node){
       if (node.classList.contains('subgroup-label')){
         if (heading) heading.style.display = seen ? '' : 'none';
         heading = node; seen = false;
@@ -712,148 +624,132 @@
     });
     if (heading) heading.style.display = seen ? '' : 'none';
   }
-
   var relevanceQueued = false;
   function scheduleRelevance(){
     if (relevanceQueued) return;
     relevanceQueued = true;
     requestAnimationFrame(function(){
       relevanceQueued = false;
-      Array.prototype.forEach.call(document.querySelectorAll('.layer-body'), applyRelevance);
-      // the one global control that can also go inert
-      var ms = document.getElementById('mouseStrengthField');
-      if (ms) ms.style.display = (hideInactiveEl.checked && !state.mouseReact) ? 'none' : '';
+      applyRelevance(canvasPanel);
+      applyRelevance(ringPanel);
     });
   }
 
-  function rebuildLayersUI(){
-    layersListEl.innerHTML = '';
-    state.layers.forEach(function(layer, i){
-      layersListEl.appendChild(buildLayerPanel(layer, i));
-    });
-    layerCountTag.textContent = state.layers.length + ' 層';
-    scheduleRelevance();
-  }
-
-  document.getElementById('addLayer').addEventListener('click', function(){
-    var base = state.layers[state.layers.length - 1];
-    var nl = defaultLayer(base ? Object.assign({}, base, {
-      seed: (Math.random()*1000|0),
-      rotation: (base.rotation + 25) % 360,
-      offsetX: base.offsetX + 10,
-      offsetY: base.offsetY - 8
-    }) : {});
-    nl.id = 'L' + (Math.random()*1e6|0);
-    nl.name = '層 ' + (state.layers.length + 1);
-    state.layers.push(nl);
-    rebuildLayersUI();
-    regenLayerGeometry(nl);
-    updateStats();
-  });
-
-  // ---------------------------------------------------------------
-  // Global controls
-  // ---------------------------------------------------------------
-  document.getElementById('bgColor').value = state.bgColor;
-  document.getElementById('bgColor').addEventListener('input', function(e){ state.bgColor = e.target.value; });
-
+  // the text overlay follows the live colour, which a transition also moves
   var typeOverlay = document.getElementById('typeOverlay');
-  function applyTextColor(){ typeOverlay.style.color = state.textColor; }
-  document.getElementById('textColor').value = state.textColor;
-  document.getElementById('textColor').addEventListener('input', function(e){ state.textColor = e.target.value; applyTextColor(); });
-  applyTextColor();
+  (function tick(){
+    typeOverlay.style.color = state.textColor;
+    requestAnimationFrame(tick);
+  })();
 
-  var gs = document.getElementById('globalScale');
-  var gsVal = document.getElementById('v-globalScale');
-  gs.addEventListener('input', function(){ state.globalScale = parseFloat(gs.value); gsVal.textContent = state.globalScale.toFixed(2); });
-
-  document.getElementById('autoRotate').addEventListener('change', function(e){ state.autoRotate = e.target.checked; });
-  document.getElementById('mouseReact').addEventListener('change', function(e){ state.mouseReact = e.target.checked; });
-  document.getElementById('mouseDeform').addEventListener('change', function(e){ state.mouseDeform = e.target.checked; });
-  var ms = document.getElementById('mouseStrength');
-  var msVal = document.getElementById('v-mouseStrength');
-  ms.addEventListener('input', function(){ state.mouseStrength = parseFloat(ms.value); msVal.textContent = ms.value; });
-
-  var tiltXEl = document.getElementById('tiltX'), tiltXVal = document.getElementById('v-tiltX');
-  tiltXEl.addEventListener('input', function(){ state.tiltX = parseFloat(tiltXEl.value); tiltXVal.textContent = tiltXEl.value; });
-  var tiltYEl = document.getElementById('tiltY'), tiltYVal = document.getElementById('v-tiltY');
-  tiltYEl.addEventListener('input', function(){ state.tiltY = parseFloat(tiltYEl.value); tiltYVal.textContent = tiltYEl.value; });
-  var perspEl = document.getElementById('perspective'), perspVal = document.getElementById('v-perspective');
-  perspEl.addEventListener('input', function(){ state.perspective = parseFloat(perspEl.value); perspVal.textContent = perspEl.value; });
-  document.getElementById('autoTilt').addEventListener('change', function(e){ state.autoTilt = e.target.checked; });
-  hideInactiveEl.addEventListener('change', scheduleRelevance);
-
-  document.getElementById('randomizeAll').addEventListener('click', function(){
-    state.layers.forEach(function(layer){
-      Object.assign(layer, {
-        ringCount: 30 + (Math.random()*110|0),
-        segments: 50 + (Math.random()*130|0),
-        baseRadius: (Math.random()*120|0),
-        spacing: 2 + Math.random()*14,
-        spacingVarAmt: Math.random()*0.9,
-        spacingVarFreq: 0.1 + Math.random()*3,
-        irregAmt: Math.random()*20,
-        irregFreq: 0.5 + Math.random()*8,
-        eccentricity: Math.random()*80,
-        eccentricityAngle: Math.random()*360,
-        rotation: Math.random()*360,
-        scale: 0.6 + Math.random()*1.2,
-        offsetX: (Math.random()-0.5)*200,
-        offsetY: (Math.random()-0.5)*200,
-        rotateSpeed: (Math.random()-0.5)*6,
-        lineWidth: 0.3 + Math.random()*1.6,
-        opacity: 0.35 + Math.random()*0.5,
-        blend: ['normal','multiply','screen','add'][Math.random()*4|0],
-        seed: (Math.random()*1000|0),
-        wobbleSpeed: Math.random()*0.6,
-        breatheAmp: Math.random()*0.06,
-        breatheSpeed: Math.random()*1.2,
-        deformStrength: Math.random()*80,
-        deformRadius: 60 + Math.random()*400,
-        deformMode: Math.random() < 0.75 ? 'mouse' : 'fixed',
-        deformType: ['push','pull','swirl'][Math.random()*3|0],
-        anchorX: (Math.random()-0.5)*300,
-        anchorY: (Math.random()-0.5)*300,
-        // spiralBlend only closes without a seam at its two ends (pure
-        // concentric or pure continuous spiral); anywhere in between the
-        // ring's own start and end radii can't both match, so keep
-        // randomize to the two clean extremes.
-        spiralBlend: Math.random() < 0.5 ? 0 : 1,
-        spiralZ: (Math.random()-0.5)*4,
-        depthOffset: (Math.random()-0.5)*200,
-        twistPerRing: (Math.random()-0.5)*2,
-        bulgeAmt: (Math.random()-0.5)*0.8,
-        mobiusAmt: (Math.random()-0.5)*160,
-        mobiusFreq: Math.random()*4,
-        mobiusRingTwist: (Math.random()-0.5)*16,
-        growthSpeed: Math.random()*0.4,
-        growthWaveCount: 1 + Math.random()*7,
-        growthAmt: Math.random()*0.7,
-        rippleAmt: (Math.random()-0.5)*40,
-        rippleFreq: 1 + Math.random()*8,
-        rippleSpeed: Math.random()*0.5,
-        twistSpeed: (Math.random()-0.5)*20
-      });
+  // ---------------------------------------------------------------
+  // Presets — each is a complete look, applied over the defaults
+  // ---------------------------------------------------------------
+  var PRESETS = [
+    ['section', '断面 / Section', {}],
+    ['heart', 'ハート / Heart', function(){ return {
+      icon: NenrinArt.svgToIcon(HEART_SVG), scale: 0.88, baseRadius: 95, ringCount: 34, spacing: 9.5,
+      lineWidth: 5.5, lineWidthInner: 0.12, outlineAmt: 55, outlineFreq: 1.4, outlineGrowth: 2.2,
+      irregAmt: 0.4, seed: 7
+    }; }],
+    ['sumi', '墨 / Sumi', {
+      bgColor: '#f3f0e8', color: '#1e1c1a', lineStyle: 'ink', scale: 0.85, ringCount: 32, spacing: 11.5,
+      baseRadius: 10, lineWidth: 7, lineWidthInner: 0.55, outlineAmt: 64, outlineFreq: 1.25,
+      outlineGrowth: 1.4, irregAmt: 2.2, irregFreq: 3.4, seed: 41
+    }],
+    ['fine', '繊細 / Fine', {
+      bgColor: '#f4f2ec', color: '#3a3733', opacity: 0.8, ringCount: 80, segments: 200,
+      baseRadius: 50, spacing: 4.2, lineWidth: 0.6, lineWidthInner: 1, spacingVarAmt: 0.25,
+      spacingVarFreq: 0.5, irregAmt: 2, irregFreq: 2.2, eccentricity: 4, eccentricityAngle: 40,
+      outlineAmt: 18, outlineFreq: 1.1, outlineGrowth: 1, ringWidthVar: 0.35, ringOpacityVar: 0.35,
+      ringWobbleVar: 0.4, ringDrift: 3.5, seed: 11
+    }],
+    ['bold', 'ラフ / Bold', {
+      bgColor: '#efece2', color: '#2c2925', scale: 0.8, ringCount: 34, segments: 240,
+      baseRadius: 40, spacing: 14, spacingVarAmt: 0.7, spacingVarFreq: 1.2, irregAmt: 14,
+      irregFreq: 2.4, eccentricity: 30, eccentricityAngle: 60, lineWidth: 3, lineWidthInner: 0.7,
+      outlineAmt: 30, ringWidthVar: 0.35, ringWobbleVar: 0.4, ringDrift: 3.5, seed: 5
+    }],
+    ['calm', '静謐 / Calm', {
+      bgColor: '#f6f4ee', color: '#55503f', opacity: 0.6, ringCount: 55, segments: 200,
+      baseRadius: 45, spacing: 5.2, spacingVarAmt: 0.12, spacingVarFreq: 0.3, irregAmt: 1,
+      irregFreq: 1.3, lineWidth: 0.6, lineWidthInner: 1, outlineAmt: 10, outlineGrowth: 1,
+      wobbleSpeed: 0.05, breatheAmp: 0.005, breatheSpeed: 0.15, deformStrength: 8,
+      deformRadius: 150, growthAmt: 0.15, growthSpeed: 0.05, growthWaveCount: 2, seed: 60
+    }],
+    ['growth', '成長 / Growth', {
+      bgColor: '#f3efe4', color: '#4a3524', scale: 0.85, ringCount: 75, segments: 200,
+      baseRadius: 12, spacing: 5.8, spacingVarAmt: 0.6, spacingVarFreq: 0.8, irregAmt: 5,
+      irregFreq: 2.6, eccentricity: 65, eccentricityAngle: 70, lineWidth: 1.2, lineWidthInner: 0.6,
+      outlineAmt: 30, wobbleSpeed: 0.2, deformStrength: 32, deformRadius: 210, seed: 71
+    }],
+    ['eccentric', '偏心 / Eccentric', {
+      bgColor: '#f2f0e9', color: '#332e26', ringCount: 70, segments: 200, baseRadius: 8,
+      spacing: 4.2, spacingVarAmt: 0.3, spacingVarFreq: 0.6, irregAmt: 2, irregFreq: 2.5,
+      eccentricity: 140, eccentricityAngle: 0, lineWidth: 1, lineWidthInner: 0.5,
+      outlineAmt: 22, seed: 101
+    }],
+    ['ripple', '波紋 / Ripple', {
+      bgColor: '#f4f2ec', color: '#33302a', scale: 0.8, ringCount: 90, segments: 240,
+      baseRadius: 20, spacing: 5.5, spacingVarAmt: 0.15, spacingVarFreq: 0.4, irregAmt: 1.5,
+      irregFreq: 2, lineWidth: 1, lineWidthInner: 0.5, outlineAmt: 14, deformStrength: 0,
+      rippleAmt: 22, rippleFreq: 5, rippleSpeed: 0.25, seed: 251
+    }],
+    ['vortex', '渦 / Vortex', {
+      bgColor: '#efece2', color: '#201d19', scale: 0.9, ringCount: 64, segments: 200,
+      baseRadius: 8, spacing: 6, spacingVarAmt: 0.2, spacingVarFreq: 0.8, irregAmt: 1.2,
+      irregFreq: 3.2, ringWobbleVar: 0.2, ringDrift: 1, lineWidth: 1.6, lineWidthInner: 0.35,
+      outlineAmt: 26, spiralBlend: 1, wobbleSpeed: 0.22, deformMode: 'fixed', deformType: 'swirl',
+      deformStrength: 150, deformRadius: 260, growthAmt: 0.25, growthWaveCount: 3, seed: 81
+    }]
+  ];
+  var presetGrid = document.getElementById('presetGrid');
+  PRESETS.forEach(function(p){
+    var b = el('button', 'small', p[1]);
+    b.addEventListener('click', function(){
+      var over = typeof p[2] === 'function' ? p[2]() : p[2];
+      applyConfig(NenrinArt.defaultConfig(over));
     });
-    rebuildLayersUI();
-    regenAll();
+    presetGrid.appendChild(b);
   });
 
+  function applyConfig(cfg){
+    art.setConfig(cfg);
+    syncAll();
+    renderSceneList();
+  }
+
+  // ---------------------------------------------------------------
+  // Footer
+  // ---------------------------------------------------------------
+  function rnd(a, b){ return a + Math.random() * (b - a); }
+  document.getElementById('randomizeAll').addEventListener('click', function(){
+    var ringCount = 24 + (Math.random() * 70 | 0);
+    var spacing = rnd(4, 14);
+    applyConfig(Object.assign(art.getConfig(), {
+      ringCount: ringCount,
+      spacing: spacing,
+      baseRadius: state.icon ? state.baseRadius : rnd(0, 60),
+      lineWidth: spacing * rnd(0.12, 0.7),
+      lineWidthInner: rnd(0.15, 1.2),
+      spacingVarAmt: rnd(0, 0.6),
+      spacingVarFreq: rnd(0.2, 2),
+      outlineAmt: rnd(0, 110),
+      outlineFreq: rnd(0.6, 2.4),
+      outlineGrowth: rnd(0.5, 2.6),
+      irregAmt: rnd(0, 4),
+      irregFreq: rnd(1, 8),
+      eccentricity: Math.random() < 0.6 ? 0 : rnd(10, 120),
+      eccentricityAngle: rnd(0, 360),
+      ringWidthVar: Math.random() < 0.5 ? 0 : rnd(0, 0.5),
+      ringOpacityVar: Math.random() < 0.5 ? 0 : rnd(0, 0.5),
+      rippleAmt: Math.random() < 0.75 ? 0 : rnd(-30, 30),
+      seed: (Math.random() * 1000 | 0)
+    }));
+  });
   document.getElementById('resetAll').addEventListener('click', function(){
-    applyLayers(defaultLayers());
-    state.bgColor = '#f2f0e9'; document.getElementById('bgColor').value = state.bgColor;
-    state.textColor = '#2c2925'; document.getElementById('textColor').value = state.textColor; applyTextColor();
-    state.globalScale = 1; gs.value = 1; gsVal.textContent = '1.00';
-    state.autoRotate = true; document.getElementById('autoRotate').checked = true;
-    state.mouseReact = true; document.getElementById('mouseReact').checked = true;
-    state.mouseDeform = true; document.getElementById('mouseDeform').checked = true;
-    state.mouseStrength = 40; ms.value = 40; msVal.textContent = '40';
-    state.tiltX = 32; tiltXEl.value = 32; tiltXVal.textContent = '32';
-    state.tiltY = -14; tiltYEl.value = -14; tiltYVal.textContent = '-14';
-    state.perspective = 22; perspEl.value = 22; perspVal.textContent = '22';
-    state.autoTilt = true; document.getElementById('autoTilt').checked = true;
+    applyConfig(NenrinArt.defaultConfig());
   });
-
   document.getElementById('exportPng').addEventListener('click', function(){
     art.renderNow(); // ensure a fresh frame is in the buffer before capture
     var link = document.createElement('a');
@@ -861,77 +757,17 @@
     link.href = art.canvas.toDataURL('image/png');
     link.click();
   });
-
   document.getElementById('toggle-sidebar').addEventListener('click', function(){
     document.body.classList.toggle('sidebar-hidden');
   });
 
-  function applyLayers(list){
-    art.setLayers(list);
-    rebuildLayersUI();
-    // scene badges show morph-vs-crossfade against the *current* look
-    if (sceneListEl) renderSceneList();
-  }
-
-  // Applies a layer set together with the "camera mood" (tilt/perspective/bg)
-  // that goes with it, so a preset reads as one complete look, not just a shape.
-  function applyPreset(list, opts){
-    applyLayers(list);
-    opts = opts || {};
-    if ('bgColor' in opts){ state.bgColor = opts.bgColor; document.getElementById('bgColor').value = opts.bgColor; }
-    if ('textColor' in opts){ state.textColor = opts.textColor; document.getElementById('textColor').value = opts.textColor; applyTextColor(); }
-    if ('globalScale' in opts){ state.globalScale = opts.globalScale; gs.value = opts.globalScale; gsVal.textContent = opts.globalScale.toFixed(2); }
-    if ('tiltX' in opts){ state.tiltX = opts.tiltX; tiltXEl.value = opts.tiltX; tiltXVal.textContent = opts.tiltX; }
-    if ('tiltY' in opts){ state.tiltY = opts.tiltY; tiltYEl.value = opts.tiltY; tiltYVal.textContent = opts.tiltY; }
-    if ('perspective' in opts){ state.perspective = opts.perspective; perspEl.value = opts.perspective; perspVal.textContent = opts.perspective; }
-  }
-
-  // ---------------------------------------------------------------
-  // Settings export / import (JSON snapshot of everything on screen)
-  // ---------------------------------------------------------------
-  function getSettingsSnapshot(){
-    return {
-      global: {
-        bgColor: state.bgColor, textColor: state.textColor, globalScale: state.globalScale, autoRotate: state.autoRotate,
-        mouseReact: state.mouseReact, mouseStrength: state.mouseStrength, mouseDeform: state.mouseDeform,
-        tiltX: state.tiltX, tiltY: state.tiltY, perspective: state.perspective,
-        autoTilt: state.autoTilt, tiltSpeed: state.tiltSpeed
-      },
-      layers: state.layers.map(function(l){ return Object.assign({}, l); })
-    };
-  }
-  // Pushes the current state back into the global controls. Needed both when
-  // loading a snapshot and after a transition, since transitionTo() drives
-  // these values itself while it runs.
-  function syncGlobalUI(){
-    document.getElementById('bgColor').value = state.bgColor;
-    document.getElementById('textColor').value = state.textColor; applyTextColor();
-    gs.value = state.globalScale; gsVal.textContent = parseFloat(state.globalScale).toFixed(2);
-    document.getElementById('autoRotate').checked = !!state.autoRotate;
-    document.getElementById('mouseReact').checked = !!state.mouseReact;
-    ms.value = state.mouseStrength; msVal.textContent = state.mouseStrength;
-    document.getElementById('mouseDeform').checked = !!state.mouseDeform;
-    tiltXEl.value = state.tiltX; tiltXVal.textContent = Math.round(state.tiltX);
-    tiltYEl.value = state.tiltY; tiltYVal.textContent = Math.round(state.tiltY);
-    perspEl.value = state.perspective; perspVal.textContent = Math.round(state.perspective);
-    document.getElementById('autoTilt').checked = !!state.autoTilt;
-  }
-
-  function loadSettingsSnapshot(obj){
-    if (!obj || !Array.isArray(obj.layers) || !obj.layers.length) throw new Error('layers が見つかりません');
-    Object.assign(state, obj.global || {});
-    syncGlobalUI();
-    applyLayers(obj.layers.map(function(l){ return defaultLayer(l); }));
-  }
-
   // ---------------------------------------------------------------
   // Scenes — save any number of looks, then morph between them
   // ---------------------------------------------------------------
-  // Each scene is a full settings snapshot. Switching hands it to
-  // art.transitionTo(), which picks morph or crossfade on its own; the badge
-  // on each row shows which one the current state would take, so it is clear
-  // before clicking whether the shape will actually deform.
-  var SCENES_KEY = 'nenrin.scenes.v1';
+  // A separate storage key from v1: both versions can be served from the same
+  // origin, and v1 scenes are multi-layer snapshots this version would read
+  // differently.
+  var SCENES_KEY = 'nenrin.scenes.v2';
   var scenes = [];
   var activeScene = -1;
   var playing = false, playTimer = 0;
@@ -961,19 +797,12 @@
     } catch(e){ scenes = []; }
   }
 
-  function afterTransition(){
-    rebuildLayersUI();
-    syncGlobalUI();
-    updateStats();
-    renderSceneList();
-  }
-
-  // transitionTo() drives the camera values itself, so mirror them into the
-  // global controls while it runs — the sliders visibly travel, which is most
-  // of what makes a morph readable as a demo.
+  // transitionTo() moves the values itself, so mirror them into the panel
+  // while it runs — the sliders visibly travel, which is most of what makes a
+  // morph readable as a demo.
   function trackTransition(){
     if (!art.isTransitioning()) return;
-    syncGlobalUI();
+    controls.forEach(function(c){ c.sync(); });
     requestAnimationFrame(trackTransition);
   }
 
@@ -987,7 +816,8 @@
       calm: parseFloat(sceneCalmEl.value),
       stage: sceneStageEl.checked,
       onComplete: function(){
-        afterTransition();
+        syncAll();
+        renderSceneList();
         sceneMsgEl.textContent = '「' + sc.name + '」へ ' + MODE_LABEL[mode] + 'で切り替えました';
         if (playing) playTimer = setTimeout(playStep, 900);
       }
@@ -998,29 +828,19 @@
     trackTransition();
   }
 
-  // Copies only the structural parameters from a scene onto the current
-  // layers, leaving colour/shape/motion alone — the fastest way to turn a
+  // Copies only the structural parameters from a scene, leaving colour,
+  // outline, icon strength and motion alone — the quickest way to turn a
   // crossfade pair into a morph pair while keeping each look distinct.
   function alignStructureTo(i){
     var target = NenrinArt.normalizeConfig(scenes[i].config);
-    var list = state.layers.slice();
-    while (list.length < target.layers.length){
-      var src = list[list.length - 1] || defaultLayer();
-      var clone = defaultLayer(Object.assign({}, src));
-      clone.id = 'L' + (Math.random()*1e6|0);
-      clone.name = src.name + ' (複製)';
-      list.push(clone);
-    }
-    while (list.length > target.layers.length) list.pop();
-    list.forEach(function(l, idx){
-      NenrinArt.STRUCTURAL_KEYS.forEach(function(k){ l[k] = target.layers[idx][k]; });
-    });
-    applyLayers(list);
-    renderSceneList();
+    NenrinArt.STRUCTURAL_KEYS.forEach(function(k){ state[k] = target[k]; });
+    structuralChanged();
+    syncAll();
     sceneMsgEl.textContent = '「' + scenes[i].name + '」と構造を揃えました。モーフで繋がります。';
   }
 
   function renderSceneList(){
+    if (!sceneListEl) return;
     sceneListEl.innerHTML = '';
     if (!scenes.length){
       var empty = el('div', '', 'まだシーンがありません。プリセットや調整で好きな絵を作り、「＋ 現在を保存」で登録してください。');
@@ -1045,33 +865,25 @@
                      : (forced ? 'background:#2f4a5d;color:#9fc8e0;'
                                : 'background:#4a3a2a;color:#e0bb8f;'));
 
-      var go = document.createElement('button');
-      go.className = 'small' + (i === activeScene ? ' primary' : '');
-      go.textContent = sc.name;
+      var go = el('button', 'small' + (i === activeScene ? ' primary' : ''), sc.name);
       go.style.cssText = 'flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
       go.addEventListener('click', function(){ stopPlay(); goScene(i); });
 
-      var align = document.createElement('button');
-      align.className = 'small';
-      align.textContent = '⇄';
+      var align = el('button', 'small', '⇄');
       align.title = 'このシーンに構造を揃える（モーフ化）';
       align.disabled = willMorph;
       align.style.opacity = willMorph ? '.35' : '';
       align.addEventListener('click', function(){ stopPlay(); alignStructureTo(i); });
 
-      var upd = document.createElement('button');
-      upd.className = 'small';
-      upd.textContent = '⟳';
+      var upd = el('button', 'small', '⟳');
       upd.title = '現在の状態で上書き';
       upd.addEventListener('click', function(){
-        sc.config = getSettingsSnapshot();
+        sc.config = art.getConfig();
         persistScenes(); renderSceneList();
         sceneMsgEl.textContent = '「' + sc.name + '」を更新しました';
       });
 
-      var del = document.createElement('button');
-      del.className = 'small danger';
-      del.textContent = '×';
+      var del = el('button', 'small danger', '×');
       del.title = '削除';
       del.addEventListener('click', function(){
         stopPlay();
@@ -1115,7 +927,7 @@
 
   document.getElementById('sceneSave').addEventListener('click', function(){
     var name = (sceneNameEl.value || '').trim() || ('Scene ' + (scenes.length + 1));
-    scenes.push({ name: name, config: getSettingsSnapshot() });
+    scenes.push({ name: name, config: art.getConfig() });
     activeScene = scenes.length - 1;
     sceneNameEl.value = '';
     persistScenes(); renderSceneList();
@@ -1128,9 +940,9 @@
   sceneForceEl.addEventListener('change', function(){ renderSceneList(); });
   sceneCalmEl.addEventListener('input', function(){ sceneCalmVal.textContent = parseFloat(sceneCalmEl.value).toFixed(2); });
 
-  restoreScenes();
-  renderSceneList();
-
+  // ---------------------------------------------------------------
+  // Export / restore
+  // ---------------------------------------------------------------
   var settingsBox = document.getElementById('settingsBox');
   var settingsText = document.getElementById('settingsText');
   var settingsMsg = document.getElementById('settingsMsg');
@@ -1140,13 +952,6 @@
   var modeExportBtn = document.getElementById('modeExport');
   var panelMode = 'export'; // 'settings' | 'export'
 
-  // ---------------------------------------------------------------
-  // Implementation hand-off — emits a config object for nenrin-runtime.js.
-  // ---------------------------------------------------------------
-  // The runtime fills in every omitted field from defaultLayer(), so only
-  // values that differ from the defaults are written out. That keeps the
-  // handed-over code short and makes it obvious which knobs this particular
-  // art actually uses.
   // Scene names are free text (often Japanese), so strip them down to a legal
   // ASCII identifier for the variable and fall back to a positional name when
   // nothing usable is left. The original name is kept verbatim as the
@@ -1157,40 +962,28 @@
     return v;
   }
   function jsValue(v){
-    return typeof v === 'string' ? "'" + v.replace(/'/g, "\\'") + "'" : String(v);
+    return typeof v === 'string' ? "'" + v.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'" : String(v);
   }
-  function configLiteral(snap){
-    var camDefaults = NenrinArt.defaultConfig();
-    var layerDefaults = NenrinArt.defaultLayer();
-
-    var camLines = Object.keys(snap.global).filter(function(k){
-      return camDefaults[k] !== undefined && snap.global[k] !== camDefaults[k];
-    }).map(function(k){ return '  ' + k + ': ' + jsValue(snap.global[k]); });
-
-    var layerLines = snap.layers.map(function(l){
-      var pairs = Object.keys(l).filter(function(k){
-        // `id` is regenerated per instance; `name` is authoring-only metadata.
-        return k !== 'id' && l[k] !== layerDefaults[k];
-      }).map(function(k){ return k + ': ' + jsValue(l[k]); });
-      return '    L({ ' + pairs.join(', ') + ' })';
-    });
-
-    return ['{',
-      camLines.join(',\n') + (camLines.length ? ',' : ''),
-      '  layers: [',
-      layerLines.join(',\n'),
-      '  ]',
-      '}'].join('\n');
+  // The runtime fills every omitted key from NenrinArt.defaultConfig(), so
+  // only the values that differ are written — the hand-off stays short and
+  // shows which knobs this art actually uses.
+  function configLiteral(cfg){
+    var defaults = NenrinArt.defaultConfig();
+    var n = NenrinArt.normalizeConfig(cfg);
+    var lines = Object.keys(defaults).filter(function(k){
+      return n[k] !== defaults[k];
+    }).map(function(k){ return '  ' + k + ': ' + jsValue(n[k]); });
+    return lines.length ? '{\n' + lines.join(',\n') + '\n}' : '{}';
   }
 
-  // With saved scenes, the hand-off is the whole set plus a switcher — that is
+  // With saved scenes, the hand-off is the whole set plus a lookup — that is
   // what a page with transitioning blocks actually needs. With none, it falls
   // back to just the art currently on screen.
   function buildExportCode(){
     if (!scenes.length){
       var name = safeVarName(exportName.value);
       return [
-        '/* ' + name + ' — nenrin-runtime.js 用の設定',
+        '/* ' + name + ' — nenrin-runtime.js (v2) 用の設定',
         ' *',
         ' * 使い方:',
         ' *   <canvas id="art" style="width:100%;height:100%"></canvas>',
@@ -1199,11 +992,9 @@
         ' *     var art = NenrinArt.create(document.getElementById(\'art\'), ' + name + ');',
         ' *   <\/script>',
         ' *',
-        ' * 記載のない項目は NenrinArt.defaultLayer() の既定値が使われます。',
+        ' * 記載のない項目は NenrinArt.defaultConfig() の既定値が使われます。',
         ' */',
-        'var L = NenrinArt.defaultLayer;',
-        '',
-        'var ' + name + ' = ' + configLiteral(getSettingsSnapshot()) + ';'
+        'var ' + name + ' = ' + configLiteral(art.getConfig()) + ';'
       ].join('\n');
     }
 
@@ -1212,12 +1003,12 @@
       var v = safeVarName(sc.name, 'scene' + (i + 1));
       while (used[v]) v = v + '_' + (i + 1);
       used[v] = true;
-      return { varName: v, label: sc.name, snap: sc.config };
+      return { varName: v, label: sc.name, cfg: sc.config };
     });
     var first = entries[0].label;
 
     var head = [
-      '/* 年輪ラインアート — 全 ' + entries.length + ' シーン',
+      '/* 年輪ラインアート v2 — 全 ' + entries.length + ' シーン',
       ' *',
       ' * 使い方:',
       ' *   <canvas id="art" style="width:100%;height:100%"></canvas>',
@@ -1226,25 +1017,25 @@
       ' *   <script>',
       ' *     var art = NenrinArt.create(document.getElementById(\'art\'), NENRIN_SCENES[' + jsValue(first) + ']);',
       ' *     art.transitionTo(NENRIN_SCENES[<別のシーン名>], { duration: '
-        + parseInt(sceneDurEl.value, 10) + ", easing: '" + sceneEaseEl.value + "' });",
+        + parseInt(sceneDurEl.value, 10) + ", easing: '" + sceneEaseEl.value + "', force: true });",
       ' *   <\/script>',
       ' *',
       ' * transitionTo() は構造パラメータが一致すればモーフ、異なればクロス',
-      ' * フェードを自動で選びます。NenrinArt.canMorph(a, b) で事前判定も可能。',
-      ' * 記載のない項目は NenrinArt.defaultLayer() の既定値が使われます。',
+      ' * フェードを自動で選びます（force: true で常にモーフ）。',
+      ' * NenrinArt.canMorph(a, b) で事前判定も可能。',
+      ' * 記載のない項目は NenrinArt.defaultConfig() の既定値が使われます。',
       ' */',
-      'var L = NenrinArt.defaultLayer;',
       ''
     ];
 
     var body = entries.map(function(e){
-      return '/* ' + e.label + ' */\nvar ' + e.varName + ' = ' + configLiteral(e.snap) + ';';
+      return '/* ' + e.label + ' */\nvar ' + e.varName + ' = ' + configLiteral(e.cfg) + ';';
     });
 
     var matrix = ['', '/* シーン間の遷移方式（M = モーフ / X = クロスフェード）'];
     entries.forEach(function(a){
       var cells = entries.map(function(b){
-        return b.varName === a.varName ? '-' : (NenrinArt.canMorph(a.snap, b.snap) ? 'M' : 'X');
+        return b.varName === a.varName ? '-' : (NenrinArt.canMorph(a.cfg, b.cfg) ? 'M' : 'X');
       });
       matrix.push(' *   ' + a.label + ': ' + cells.join(' '));
     });
@@ -1266,7 +1057,7 @@
     var isExport = panelMode === 'export';
     settingsText.value = isExport
       ? buildExportCode()
-      : JSON.stringify(getSettingsSnapshot(), null, 2);
+      : JSON.stringify(art.getConfig(), null, 2);
     // the name field only matters when there are no scenes to export
     exportName.parentNode.style.display = (isExport && !scenes.length) ? '' : 'none';
     applyBtn.style.display = isExport ? 'none' : '';
@@ -1277,12 +1068,11 @@
       ? (scenes.length
           ? '保存済み ' + scenes.length + ' シーンをまとめて書き出しています'
           : 'いま画面に出ているアートを書き出しています')
-      : 'このJSONを保存しておけば、貼り付けて「適用」で同じアートを復元できます';
+      : 'このJSONを保存しておけば、貼り付けて「適用」で同じアートを復元できます（v1 のJSONも読み込めます）';
   }
 
   // Each button opens the box in its own mode, and closes it when pressed
-  // again in that same mode — so both features stay visible from the panel
-  // without needing to open something first to discover them.
+  // again in that same mode — so both features stay visible from the panel.
   function openPanel(mode){
     if (panelOpen() && panelMode === mode){
       settingsBox.style.display = 'none';
@@ -1309,146 +1099,25 @@
     } catch(e){ ok = false; }
     settingsMsg.textContent = ok ? 'コピーしました' : 'コピーに失敗しました（手動で選択してコピーしてください）';
   });
-  document.getElementById('applySettings').addEventListener('click', function(){
+  applyBtn.addEventListener('click', function(){
     try {
-      loadSettingsSnapshot(JSON.parse(settingsText.value));
-      settingsMsg.textContent = '設定を適用しました';
+      var obj = JSON.parse(settingsText.value);
+      var fromV1 = !!(obj && (obj.global || Array.isArray(obj.layers)));
+      applyConfig(obj);
+      settingsMsg.textContent = fromV1
+        ? 'v1 形式の設定を読み込みました（最初の層のみ。3D関連の項目は無視しました）'
+        : '設定を適用しました';
     } catch(e){
       settingsMsg.textContent = 'JSONの読み込みに失敗しました: ' + e.message;
     }
   });
 
   // ---------------------------------------------------------------
-  // Presets
-  // ---------------------------------------------------------------
-  document.getElementById('preset-fine').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'外層', ringCount:80, segments:130, baseRadius:50, spacing:4.2, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:2, irregFreq:2.2, eccentricity:4, eccentricityAngle:40, rotation:0, scale:1, lineWidth:0.5, opacity:0.75, color:'#3a3733', blend:'normal', seed:11 }),
-      defaultLayer({ name:'内層', ringCount:70, segments:120, baseRadius:20, spacing:3.6, spacingVarAmt:0.2, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:1.8, eccentricity:2, eccentricityAngle:120, rotation:3, scale:1.0, offsetX:6, offsetY:-4, lineWidth:0.4, opacity:0.55, color:'#6b675f', blend:'multiply', seed:31 })
-    ], { bgColor:'#f4f2ec', tiltX:18, tiltY:-8, perspective:10 });
-  });
-  document.getElementById('preset-bold').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'外層', ringCount:34, segments:120, baseRadius:40, spacing:14, spacingVarAmt:0.7, spacingVarFreq:1.2, irregAmt:14, irregFreq:2.4, eccentricity:30, eccentricityAngle:60, rotation:0, scale:1, lineWidth:2.2, opacity:0.9, color:'#2c2925', blend:'normal', seed:5 }),
-      defaultLayer({ name:'重なり層', ringCount:26, segments:100, baseRadius:20, spacing:16, spacingVarAmt:0.8, spacingVarFreq:1.5, irregAmt:18, irregFreq:2.0, eccentricity:40, eccentricityAngle:250, rotation:14, scale:1.08, offsetX:20, offsetY:15, lineWidth:1.6, opacity:0.55, color:'#a9977a', blend:'multiply', seed:44 })
-    ], { bgColor:'#efece2', tiltX:36, tiltY:-18, perspective:26 });
-  });
-  document.getElementById('preset-moire').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'層A', ringCount:75, segments:120, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'normal', seed:2 }),
-      defaultLayer({ name:'層B', ringCount:75, segments:120, baseRadius:60, spacing:5.15, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:5, scale:1.015, lineWidth:0.6, opacity:0.6, color:'#33302b', blend:'multiply', seed:2 }),
-      defaultLayer({ name:'層C', ringCount:75, segments:120, baseRadius:60, spacing:5.0, spacingVarAmt:0.2, spacingVarFreq:0.3, irregAmt:1.5, irregFreq:1.5, eccentricity:0, rotation:-6, scale:0.985, lineWidth:0.6, opacity:0.5, color:'#33302b', blend:'multiply', seed:2 })
-    ], { bgColor:'#f2f0e9', tiltX:6, tiltY:0, perspective:4 });
-  });
-  document.getElementById('preset-spiral').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'スプリング', ringCount:30, segments:280, baseRadius:40, spacing:4,
-        spacingVarAmt:0.12, spacingVarFreq:0.5, irregAmt:1.2, irregFreq:2.2, lineWidth:0.6,
-        opacity:0.85, color:'#2f2c27', blend:'normal', seed:14, wobbleSpeed:0.1,
-        deformStrength:0, spiralBlend:0,
-        shapeMode:'helix', shapeMorph:1, shapeRadius:135, shapeRadius2:26,
-        shapeTurns:7, shapeHeight:640, shapeTwist:1, rot3DX:90 })
-    ], { bgColor:'#f2f0e9', globalScale:0.9, tiltX:8, tiltY:-10, perspective:14 });
-  });
-  document.getElementById('preset-calm').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'静けさ', ringCount:55, segments:120, baseRadius:45, spacing:5.2, spacingVarAmt:0.12, spacingVarFreq:0.3, irregAmt:1, irregFreq:1.3, eccentricity:0, rotation:0, scale:1, lineWidth:0.4, opacity:0.55, color:'#55503f', blend:'normal', seed:60, wobbleSpeed:0.05, breatheAmp:0.005, breatheSpeed:0.15, rotateSpeed:0.05, spiralZ:0.3, deformStrength:8, deformRadius:150, growthSpeed:0.05, growthWaveCount:2, growthAmt:0.15 })
-    ], { bgColor:'#f6f4ee', tiltX:10, tiltY:-4, perspective:4 });
-  });
-  document.getElementById('preset-growth').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'成長', ringCount:75, segments:120, baseRadius:12, spacing:5.8, spacingVarAmt:0.6, spacingVarFreq:0.8, irregAmt:5, irregFreq:2.6, eccentricity:65, eccentricityAngle:70, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#4a3524', blend:'normal', seed:71, spiralZ:0.9, deformType:'push', deformStrength:32, deformRadius:210, wobbleSpeed:0.2 })
-    ], { bgColor:'#f3efe4', tiltX:24, tiltY:-10, perspective:14 });
-  });
-  document.getElementById('preset-vortex').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'渦 — 主', ringCount:96, segments:200, baseRadius:8, spacing:4.4,
-        spacingVarAmt:0.45, spacingVarFreq:0.8, irregAmt:4, irregFreq:3.2, eccentricity:14,
-        eccentricityAngle:40, lineWidth:0.6, opacity:0.9, color:'#201d19', blend:'normal',
-        seed:81, wobbleSpeed:0.22, spiralBlend:1, spiralZ:1.4,
-        deformMode:'fixed', deformType:'swirl', deformStrength:120, deformRadius:420,
-        twistPerRing:1.6, growthAmt:0.25, growthWaveCount:3 }),
-      defaultLayer({ name:'渦 — 残響', ringCount:72, segments:170, baseRadius:6, spacing:4.8,
-        eccentricity:10, eccentricityAngle:220, rotation:30, scale:1.04, lineWidth:0.4,
-        opacity:0.3, color:'#8f8574', blend:'multiply', seed:82, wobbleSpeed:0.18,
-        spiralBlend:1, spiralZ:-0.9,
-        deformMode:'fixed', deformType:'swirl', deformStrength:-90, deformRadius:360,
-        twistPerRing:-1.1 })
-    ], { bgColor:'#efece2', globalScale:0.95, tiltX:24, tiltY:-12, perspective:18 });
-  });
-  document.getElementById('preset-barrel').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'樽', ringCount:60, segments:130, baseRadius:30, spacing:6, spacingVarAmt:0.25, spacingVarFreq:0.5, irregAmt:3, irregFreq:2, eccentricity:5, rotation:0, scale:1, lineWidth:0.7, opacity:0.85, color:'#3d3226', blend:'normal', seed:91, bulgeAmt:0.45, spiralZ:1.2, spiralBlend:0 })
-    ], { bgColor:'#f2ece0', tiltX:38, tiltY:-12, perspective:30 });
-  });
-  document.getElementById('preset-eccentric').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'偏心', ringCount:70, segments:130, baseRadius:8, spacing:4.2, spacingVarAmt:0.3, spacingVarFreq:0.6, irregAmt:2, irregFreq:2.5, eccentricity:140, eccentricityAngle:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#332e26', blend:'normal', seed:101, spiralZ:0.4 })
-    ], { bgColor:'#f2f0e9', tiltX:14, tiltY:-6, perspective:8 });
-  });
-  document.getElementById('preset-sphere').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'球体 — 主', ringCount:50, segments:200, baseRadius:60, spacing:5, spacingVarAmt:0.2, spacingVarFreq:0.5, irregAmt:2, irregFreq:2.5, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2c2925', blend:'normal', seed:161, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:220 }),
-      defaultLayer({ name:'球体 — 影', ringCount:44, segments:180, baseRadius:55, spacing:5, spacingVarAmt:0.2, spacingVarFreq:0.6, irregAmt:2, irregFreq:2.8, eccentricity:0, rotation:40, scale:1, lineWidth:0.45, opacity:0.4, color:'#9b8f78', blend:'multiply', seed:162, wobbleSpeed:0.18, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:214 })
-    ], { bgColor:'#f2f0e9', tiltX:18, tiltY:-24, perspective:20 });
-  });
-  document.getElementById('preset-tubebundle').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'螺旋の束', ringCount:36, segments:260, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:2, irregFreq:3, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#2c2925', blend:'normal', seed:171, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'helix', shapeMorph:1, shapeRadius:110, shapeRadius2:38, shapeTurns:5, shapeHeight:420, shapeTwist:5 })
-    ], { bgColor:'#f2f0e9', tiltX:20, tiltY:-14, perspective:18 });
-  });
-  document.getElementById('preset-mobiusbundle').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'メビウスの束', ringCount:40, segments:300, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:2, irregFreq:3, eccentricity:0, rotation:0, scale:1, lineWidth:0.55, opacity:0.85, color:'#2c2925', blend:'normal', seed:181, wobbleSpeed:0.15, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:150, shapeRadius2:65, shapeTwist:1 })
-    ], { bgColor:'#f2f0e9', tiltX:26, tiltY:-18, perspective:22 });
-  });
-  document.getElementById('preset-ripple').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'波紋 — 主', ringCount:90, segments:180, baseRadius:20, spacing:5.5, spacingVarAmt:0.15, spacingVarFreq:0.4, irregAmt:1.5, irregFreq:2, eccentricity:0, rotation:0, scale:1, lineWidth:0.6, opacity:0.85, color:'#33302a', blend:'normal', seed:251, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, rippleAmt:22, rippleFreq:5, rippleSpeed:0.25 }),
-      defaultLayer({ name:'波紋 — 残響', ringCount:80, segments:170, baseRadius:18, spacing:5.5, spacingVarAmt:0.15, spacingVarFreq:0.4, irregAmt:1.3, irregFreq:2, rotation:8, scale:1.02, lineWidth:0.4, opacity:0.35, color:'#8f8778', blend:'multiply', seed:252, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, rippleAmt:22, rippleFreq:5, rippleSpeed:0.25 })
-    ], { bgColor:'#f4f2ec', tiltX:22, tiltY:-10, perspective:12 });
-  });
-  document.getElementById('preset-spin').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'回転 — 主', ringCount:42, segments:200, baseRadius:18, spacing:9.5,
-        spacingVarAmt:0.18, spacingVarFreq:0.5, irregAmt:1.6, irregFreq:2.2, lineWidth:0.8,
-        opacity:0.9, color:'#2c2925', blend:'normal', seed:261, wobbleSpeed:0.08,
-        deformStrength:0, spiralBlend:0, ringOpacityVar:0.2,
-        twistXPerRing:2.1, twistXSpeed:6 }),
-      defaultLayer({ name:'回転 — 残像', ringCount:30, segments:170, baseRadius:16, spacing:9.5,
-        rotation:6, lineWidth:0.45, opacity:0.28, color:'#9b8f78', blend:'multiply', seed:262,
-        wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, ringOpacityVar:0.2,
-        twistXPerRing:-1.5, twistXSpeed:-4 })
-    ], { bgColor:'#f2f0e9', globalScale:0.95, tiltX:14, tiltY:-6, perspective:30 });
-  });
-  document.getElementById('preset-ripplesphere').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'波打つ球体 — 主', ringCount:64, segments:240, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:1.5, irregFreq:2.5, lineWidth:0.5, opacity:0.85, color:'#2c2925', blend:'normal', seed:271, wobbleSpeed:0.12, deformStrength:0, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:210, rippleAmt:30, rippleFreq:5, rippleSpeed:0.22 }),
-      defaultLayer({ name:'波打つ球体 — 陰影', ringCount:54, segments:220, baseRadius:45, spacing:4, rotation:35, lineWidth:0.35, opacity:0.35, color:'#9b8f78', blend:'multiply', seed:272, wobbleSpeed:0.12, deformStrength:0, spiralBlend:0, shapeMode:'sphere', shapeMorph:1, shapeRadius:205, rippleAmt:26, rippleFreq:5, rippleSpeed:0.22 })
-    ], { bgColor:'#f4f2ec', tiltX:18, tiltY:-22, perspective:18 });
-  });
-  document.getElementById('preset-trusknot').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'トーラスノット — 主', ringCount:70, segments:260, baseRadius:50, spacing:4, spacingVarAmt:0.15, spacingVarFreq:0.5, irregAmt:1.5, irregFreq:2.5, lineWidth:0.5, opacity:0.85, color:'#1f3a63', blend:'normal', seed:291, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, shapeMode:'torusknot', shapeMorph:1, shapeRadius:170, shapeRadius2:55, shapeTurns:1, shapeTwist:7 }),
-      defaultLayer({ name:'トーラスノット — 陰影', ringCount:56, segments:240, baseRadius:45, spacing:4, rotation:6, lineWidth:0.35, opacity:0.4, color:'#7d90b8', blend:'multiply', seed:292, wobbleSpeed:0.1, deformStrength:0, spiralBlend:0, shapeMode:'torusknot', shapeMorph:1, shapeRadius:165, shapeRadius2:52, shapeTurns:1, shapeTwist:7 })
-    ], { bgColor:'#f4f6fa', tiltX:12, tiltY:-6, perspective:10 });
-  });
-  document.getElementById('preset-mirror').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'ミラー — 主', ringCount:70, segments:280, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, rotation:135, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:301, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:160, shapeRadius2:145, shapeTwist:1 }),
-      defaultLayer({ name:'ミラー — 陰影', ringCount:56, segments:240, baseRadius:36, spacing:3.5, rotation:141, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:302, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'mobius', shapeMorph:1, shapeRadius:155, shapeRadius2:138, shapeTwist:1 })
-    ], { bgColor:'#fafaf7', globalScale:1, tiltX:32, tiltY:-26, perspective:18 });
-  });
-  document.getElementById('preset-wave').addEventListener('click', function(){
-    applyPreset([
-      defaultLayer({ name:'ウェーブ — 主', ringCount:70, segments:260, baseRadius:40, spacing:3.5, spacingVarAmt:0.1, spacingVarFreq:0.4, irregAmt:1, irregFreq:2, eccentricity:0, lineWidth:0.5, opacity:0.85, color:'#232019', blend:'normal', seed:311, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'wave', shapeMorph:1, shapeRadius:130, shapeRadius2:80, shapeTurns:1, shapeHeight:380, shapeTwist:1.5 }),
-      defaultLayer({ name:'ウェーブ — 陰影', ringCount:56, segments:220, baseRadius:36, spacing:3.5, rotation:4, lineWidth:0.35, opacity:0.4, color:'#6b6a63', blend:'multiply', seed:312, wobbleSpeed:0.08, deformStrength:0, spiralBlend:0, shapeMode:'wave', shapeMorph:1, shapeRadius:125, shapeRadius2:75, shapeTurns:1, shapeHeight:370, shapeTwist:1.5 })
-    ], { bgColor:'#fafaf7', globalScale:0.85, tiltX:20, tiltY:-24, perspective:16 });
-  });
-  // ---------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------
-  applyLayers(defaultLayers());
+  restoreScenes();
+  syncAll();
+  renderSceneList();
 
 })();
 </script>

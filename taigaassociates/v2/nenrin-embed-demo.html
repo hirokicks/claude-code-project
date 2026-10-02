@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>年輪アート 組み込みデモ / TAIGA ASSOCIATES</title>
+<title>年輪アート 組み込みデモ v2 / TAIGA ASSOCIATES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..900&display=swap">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Segoe UI', sans-serif;
-    background: #fafaf7; color: #2c2925;
+    background: #ffffff; color: #2c2925;
   }
 
   /* この art-block が、実際のページ内で使う想定のブロック単位 */
@@ -16,15 +19,19 @@
   .art-block canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
   .art-copy {
-    position: absolute; top: 50%; left: 0; transform: translateY(-50%);
-    padding: 0 clamp(20px, 5vw, 64px); pointer-events: none; z-index: 2;
+    position: absolute; left: 0; bottom: 0;
+    padding: 0 clamp(20px, 3vw, 26px) clamp(20px, 3vw, 26px);
+    pointer-events: none; z-index: 2;
+    display: flex; flex-direction: column; gap: 12px;
+    font-family: 'Google Sans Flex', -apple-system, BlinkMacSystemFont,
+                 'Hiragino Kaku Gothic ProN', 'Segoe UI', sans-serif;
   }
-  .art-copy h2 { font-size: clamp(40px, 8vw, 96px); font-weight: 300; line-height: 1; letter-spacing: -.01em; }
-  .art-copy p  { font-size: clamp(15px, 2.2vw, 24px); font-weight: 500; margin-top: 14px; }
+  .art-copy h2 { font-size: clamp(36px, 6vw, 64px); font-weight: 300; line-height: 1; letter-spacing: -.01em; }
+  .art-copy p  { font-size: clamp(15px, 2.2vw, 24px); font-weight: 500; line-height: 1.4; }
 
   .panel {
-    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+    position: fixed; right: 24px; bottom: 24px;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;
     background: rgba(20,19,17,.88); color: #eee; padding: 10px 14px; border-radius: 999px;
     z-index: 10; font-size: 12px; letter-spacing: .04em;
     box-shadow: 0 6px 24px rgba(0,0,0,.18);
@@ -35,7 +42,7 @@
   }
   .panel button:hover { background: #444140; }
   .panel button[aria-current="true"] { background: #eee; color: #1a1917; border-color: #eee; }
-  .panel .mode { opacity: .65; min-width: 190px; text-align: center; }
+  .panel .mode { opacity: .65; min-width: 150px; text-align: center; }
 </style>
 </head>
 <body>
@@ -49,9 +56,9 @@
 </div>
 
 <div class="panel">
-  <button data-key="calm">静 / Calm</button>
-  <button data-key="sphere">球 / Sphere</button>
-  <button data-key="wave">波 / Wave</button>
+  <button data-key="section">断面 / Section</button>
+  <button data-key="tint">彩 / Tint</button>
+  <button data-key="heart">ハート / Heart</button>
   <span class="mode" id="mode">—</span>
 </div>
 
@@ -60,78 +67,43 @@
 (function () {
   "use strict";
 
-  var L = NenrinArt.defaultLayer;
+  // 中心アイコンは SVG から変換して設定に入れます。テスターから書き出した
+  // 設定には変換済みの文字列（icon: 'M0 1 L...'）がそのまま入っているので、
+  // 通常この変換は不要です。ここでは svgToIcon の使い方を示すために実行時に変換しています。
+  var HEART = NenrinArt.svgToIcon(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
+  );
 
-  // 構造パラメータ（ringCount / segments / baseRadius / spacing /
-  // spacingVar* / eccentricity* / spiralBlend / seed）を共有させておくと、
-  // その2つは「モーフ」で形そのものが連続変形して繋がります。
-  var SHARED = {
-    ringCount: 70, segments: 240, baseRadius: 40, spacing: 3.5,
-    spacingVarAmt: 0.1, spacingVarFreq: 0.4,
-    eccentricity: 0, eccentricityAngle: 0, spiralBlend: 0
-  };
-  function shared(seed, extra) {
-    return L(Object.assign({}, SHARED, { seed: seed }, extra));
-  }
-
+  // 構造パラメータ（ringCount / segments / spiralBlend / spacingVarFreq /
+  // seed / icon）が同じ2枚は「モーフ」で形そのものが連続変形します。
+  // 記載のない項目は NenrinArt.defaultConfig() の既定値です。
   var CONFIGS = {
-    // --- A: 年輪そのまま ---
-    calm: {
-      bgColor: '#f4f2ec', textColor: '#2c2925',
-      tiltX: 24, tiltY: -10, perspective: 14, globalScale: 1,
-      layers: [
-        shared(401, { name: '主', irregAmt: 3, irregFreq: 2.2, lineWidth: 0.5,
-                      opacity: 0.85, color: '#2c2925', blend: 'normal', wobbleSpeed: 0.1 }),
-        shared(402, { name: '陰影', irregAmt: 2, irregFreq: 2.6, rotation: 6, lineWidth: 0.35,
-                      opacity: 0.4, color: '#8f8778', blend: 'multiply', wobbleSpeed: 0.1 })
-      ]
+    // --- A: 樹木の断面 ---
+    section: {},
+
+    // --- B: A と構造は同一、色とうねりだけ違う → モーフで繋がる ---
+    tint: {
+      bgColor: '#eef2f6', textColor: '#1f3a63', color: '#3a5f8a',
+      lineWidth: 3.2, lineWidthInner: 0.3, outlineAmt: 105, outlineGrowth: 1.8
     },
 
-    // --- B: A と構造は同一、形状ターゲットだけ球体 → モーフで繋がる ---
-    sphere: {
-      bgColor: '#eef1f6', textColor: '#1f3a63',
-      tiltX: 46, tiltY: -24, perspective: 22, globalScale: 1,
-      layers: [
-        shared(401, { name: '主', irregAmt: 3, irregFreq: 2.2, lineWidth: 0.5,
-                      opacity: 0.85, color: '#1f3a63', blend: 'normal', wobbleSpeed: 0.1,
-                      shapeMode: 'sphere', shapeMorph: 1, shapeRadius: 210,
-                      rippleAmt: 24, rippleFreq: 5, rippleSpeed: 0.2 }),
-        shared(402, { name: '陰影', irregAmt: 2, irregFreq: 2.6, rotation: 6, lineWidth: 0.35,
-                      opacity: 0.4, color: '#7d90b8', blend: 'multiply', wobbleSpeed: 0.1,
-                      shapeMode: 'sphere', shapeMorph: 1, shapeRadius: 204,
-                      rippleAmt: 20, rippleFreq: 5, rippleSpeed: 0.2 })
-      ]
-    },
-
-    // --- C: 構造（ringCount / segments / baseRadius …）が違う → クロスフェード ---
-    wave: {
-      bgColor: '#fafaf7', textColor: '#232019',
-      tiltX: 20, tiltY: -24, perspective: 16, globalScale: 0.85,
-      layers: [
-        L({ name: 'ウェーブ — 主', ringCount: 70, segments: 260, baseRadius: 40, spacing: 3.5,
-            spacingVarAmt: 0.1, spacingVarFreq: 0.4, irregAmt: 1, irregFreq: 2, eccentricity: 0,
-            lineWidth: 0.5, opacity: 0.85, color: '#232019', blend: 'normal', seed: 311,
-            wobbleSpeed: 0.08, deformStrength: 0, spiralBlend: 0,
-            shapeMode: 'wave', shapeMorph: 1, shapeRadius: 130, shapeRadius2: 80,
-            shapeTurns: 1, shapeHeight: 380, shapeTwist: 1.5 }),
-        L({ name: 'ウェーブ — 陰影', ringCount: 56, segments: 220, baseRadius: 36, spacing: 3.5,
-            rotation: 4, lineWidth: 0.35, opacity: 0.4, color: '#6b6a63', blend: 'multiply',
-            seed: 312, wobbleSpeed: 0.08, deformStrength: 0, spiralBlend: 0,
-            shapeMode: 'wave', shapeMorph: 1, shapeRadius: 125, shapeRadius2: 75,
-            shapeTurns: 1, shapeHeight: 370, shapeTwist: 1.5 })
-      ]
+    // --- C: 中心にアイコン。icon は構造パラメータなので強制モーフで繋ぐ ---
+    heart: {
+      icon: HEART, scale: 0.88, baseRadius: 95, ringCount: 34, spacing: 9.5,
+      lineWidth: 5.5, lineWidthInner: 0.12, outlineAmt: 55, outlineFreq: 1.4,
+      outlineGrowth: 2.2, irregAmt: 0.4
     }
   };
 
   var COPY = {
-    calm:   ['Discover New Way', '新しい価値を紡ぐ'],
-    sphere: ['Expand Horizons',  '視野をひろげる'],
-    wave:   ['Flow Forward',     '流れをつくる']
+    section: ['Discover New Way', '新しい価値を紡ぐ'],
+    tint:    ['Grow Together',    '共に育つ'],
+    heart:   ['From the Heart',   '想いを中心に']
   };
 
   // --- 起動 ---
-  var current = 'calm';
-  var art = NenrinArt.create(document.getElementById('art'), CONFIGS.calm);
+  var current = 'section';
+  var art = NenrinArt.create(document.getElementById('art'), CONFIGS.section);
 
   var headline = document.getElementById('headline');
   var subline = document.getElementById('subline');
@@ -153,15 +125,13 @@
       easing: 'easeInOutCubic',
       // 構造が違っても、ほぼ全編モーフで繋ぐ
       force: true,
-      // カメラと配置は動かさず、形の変化だけを見せる
+      // 位置と大きさは動かさず、形の変化だけを見せる
       stage: false,
       onComplete: function () { modeEl.textContent = MODE_LABEL[mode] + ' 完了'; }
     });
     modeEl.textContent = '⟶ ' + MODE_LABEL[mode] + '中';
     current = key;
     syncButtons();
-
-    // テキストは背景色に追従（文字色も設定に含まれる）
     headline.textContent = COPY[key][0];
     subline.textContent = COPY[key][1];
   }
@@ -171,7 +141,7 @@
   });
   syncButtons();
 
-  // 文字色は state.textColor を毎フレーム反映（遷移中も補間される）
+  // 文字色と背景は state を毎フレーム反映（遷移中も補間される）
   (function tick() {
     document.querySelector('.art-copy').style.color = art.state.textColor;
     document.body.style.background = art.state.bgColor;
