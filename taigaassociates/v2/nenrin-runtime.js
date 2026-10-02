@@ -637,7 +637,15 @@
     "  float drift = s.w * uRingCountInv * uRingDrift;",
     "  float nx = dir.x * uIrregFreq + s.w * 0.37 + uSeedOffset.x + drift * 0.71;",
     "  float ny = dir.y * uIrregFreq + s.w * 0.37 + uSeedOffset.y - drift * 0.53;",
-    "  float wob = noise3D(vec3(nx, ny, uWobblePhase)) * uIrregAmt * wobMod;",
+    // The fine wobble puts the same number of bumps on every ring, so on a
+    // small ring near the pith they crowd into a short circumference and
+    // read as a zigzag. Its amplitude is therefore capped against the bump
+    // spacing (R / freq): outer rings keep the full amount, inner rings ease
+    // toward round. A soft minimum, so there is no visible point where the
+    // cap kicks in.
+    "  float wobCap = 0.1 * R / max(uIrregFreq, 0.2);",
+    "  float wobAmp = uIrregAmt * wobCap * inversesqrt(uIrregAmt * uIrregAmt + wobCap * wobCap + 1e-6);",
+    "  float wob = noise3D(vec3(nx, ny, uWobblePhase)) * wobAmp * wobMod;",
     "  float bulge = 1.0 + uBulgeAmt * sin(ringN * 3.14159265);",
     "  smoothP = (center + dir * rs) * bulge;",
     "  vec2 p = (center + dir * (rs + wob)) * bulge;",
