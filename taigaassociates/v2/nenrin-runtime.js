@@ -312,14 +312,15 @@
   // baked from the undeformed circle would visibly thin the line wherever the
   // outline or an icon turns it away from radial.
   //
-  // One sample is [ringPos, growth, theta, wobbleU, iconF, ring]:
+  // One sample is [ringPos, growth, theta, wobbleU, iconF, ring, parallel]:
   //   ringPos  position in ring steps; continuous along a spiral
   //   growth   ring-to-ring spacing noise, resolved against spacingVarAmt in
   //            the shader so baseRadius / spacing / spacingVarAmt /
   //            eccentricity stay tweenable
   //   wobbleU  coordinate for the fine wobble noise
   //   iconF    ring radius multiplier that bends the ring toward the icon
-  var FLOATS = 17, STRIDE = FLOATS * 4;
+  //   parallel accumulated growth-width variation, in ring steps (see below)
+  var FLOATS = 20, STRIDE = FLOATS * 4;
 
   function buildGeometry(p){
     var noise = makeNoise2D(p.seed);
@@ -341,6 +342,59 @@
     var S = p.baseRadius;
     var prof = (icon && S > 0.5) ? iconProfile(icon, segments) : null;
 
+    // Parallel wobble — the gap between neighbouring rings changing along the
+    // ring, the way a real cross-section bunches its rings tightly on one side
+    // and lets them open out on another. Modelled the way a tree grows: each
+    // year's growth width varies around the circumference (a noise field over
+    // angle and ring index), and a ring sits at the *sum* of the widths inside
+    // it. Summing means neighbours converge and diverge smoothly and keep
+    // their order. The sum is then pinned at both ends (a bridge), so the pith
+    // stays where it is and the outermost ring still follows the outline —
+    // the silhouette stays under the outline controls and the bunching lives
+    // inside it. Baked in ring steps; parallelAmt scales it in the shader, so
+    // the amount itself tweens.
+    //
+    // Each year's variation is also ramped in over the inner third of the
+    // rings: near the pith a ring is small next to the accumulated offset, and
+    // full strength there dragged the first rings into lumps, where a real
+    // pith is nearly round and the bunching builds outward. The ramp sits
+    // inside the sum, so a ring still never crosses its neighbour.
+    var pnoise = makeNoise2D(p.seed + 913);
+    var pLen = Math.max(0.5, p.parallelLength || 6), pFreq = p.parallelFreq || 1.6;
+    var pW = new Float32Array(ringCount), pWSum = new Float32Array(ringCount + 1);
+    for (var pk = 0; pk < ringCount; pk++){
+      var t = Math.min(1, (pk + 0.5) / (ringCount * 0.35));
+      pW[pk] = t * t * (3 - 2 * t);
+      pWSum[pk + 1] = pWSum[pk] + pW[pk];
+    }
+    var pStep = new Float32Array(segments * ringCount);
+    var pSum = new Float32Array(segments * (ringCount + 1));
+    for (var pj = 0; pj < segments; pj++){
+      var pth = pj / segments * Math.PI * 2;
+      var pcx = Math.cos(pth) * pFreq, pcy = Math.sin(pth) * pFreq, acc = 0;
+      for (var pk2 = 0; pk2 < ringCount; pk2++){
+        // walking k diagonally through the noise plane keeps each bunch
+        // going for about parallelLength rings
+        var v = pnoise(pcx + pk2 / pLen, pcy + pk2 / pLen * 0.71 + 37) * pW[pk2];
+        pStep[pj * ringCount + pk2] = v;
+        pSum[pj * (ringCount + 1) + pk2] = acc;
+        acc += v;
+      }
+      pSum[pj * (ringCount + 1) + ringCount] = acc;
+    }
+    var pLast = Math.max(1, ringCount - 1);
+    var pWLast = pWSum[pLast] || 1;
+    function parallelAt(ringPos, j){
+      j = j % segments;
+      var k = Math.min(ringCount, Math.floor(ringPos)), f = ringPos - k;
+      var inRange = k < ringCount;
+      var sum = pSum[j * (ringCount + 1) + k] + (inRange ? f * pStep[j * ringCount + k] : 0);
+      var w = pWSum[k] + (inRange ? f * pW[k] : 0);
+      // the bridge correction follows the same ramp, so the innermost rings
+      // are not shifted by it either
+      return sum - (w / pWLast) * pSum[j * (ringCount + 1) + pLast];
+    }
+
     function sample(i, j){
       var frac = j / segments;
       var ringPos = i + frac * sb;
@@ -352,7 +406,7 @@
       }
       // wobbleU must match at a closed ring's two ends (same angle), so only
       // the spiral's own advance moves it along the ring
-      return [ringPos, gi + (gu - gi) * sb, frac * Math.PI * 2, i + sb * frac, f, i];
+      return [ringPos, gi + (gu - gi) * sb, frac * Math.PI * 2, i + sb * frac, f, i, parallelAt(ringPos, j)];
     }
 
     var strands = [], i, j;
@@ -389,6 +443,7 @@
           data[o++] = pp[0]; data[o++] = pp[1]; data[o++] = pp[2]; data[o++] = pp[3];
           data[o++] = pn[0]; data[o++] = pn[1]; data[o++] = pn[2]; data[o++] = pn[3];
           data[o++] = pp[4]; data[o++] = pk[4]; data[o++] = pn[4];
+          data[o++] = pp[6]; data[o++] = pk[6]; data[o++] = pn[6];
           data[o++] = pk[5]; data[o++] = side;
         }
       }
@@ -454,6 +509,11 @@
       outlineFreq: 1.45,
       outlineGrowth: 1.35,
       // organic variance
+      // the gap between neighbouring rings tightening and opening along the
+      // ring: how strongly, how many times round, over how many rings
+      parallelAmt: 0,
+      parallelFreq: 1.6,
+      parallelLength: 6,
       spacingVarAmt: 0.12,
       spacingVarFreq: 0.7,
       eccentricity: 0,
@@ -493,7 +553,8 @@
   // are crossfaded (or force-morphed) instead. ringCount / segments set the
   // vertex count, spiralBlend how the rings chain, seed / spacingVarFreq which
   // noise is sampled, icon the shape every ring is bent toward.
-  var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon'];
+  var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon',
+                         'parallelFreq', 'parallelLength'];
   // Not interpolatable: snapped at the midpoint of a morph.
   var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact'];
   var COLOR_KEYS = ['bgColor', 'textColor', 'color'];
@@ -563,6 +624,7 @@
     "attribute vec4 aPrev;",
     "attribute vec4 aNext;",
     "attribute vec3 aIcon;",    // icon bend of prev / cur / next
+    "attribute vec3 aPar;",     // parallel wobble of prev / cur / next
     "attribute vec2 aMeta;",    // ring index, side of the line (-1 / +1)
     "uniform vec2 uResolution;",
     "uniform vec2 uTranslate;",
@@ -603,6 +665,7 @@
     "uniform float uOutlineFreq;",
     "uniform float uOutlineGrowth;",
     "uniform float uIconAmt;",
+    "uniform float uParallelAmt;",
     "varying float vEdge;",
     "varying float vExtent;",
     "varying float vHalfW;",
@@ -637,11 +700,12 @@
     // sample and both neighbours, so the line direction follows every live
     // deformation. smoothP leaves out the fine wobble — the cursor deform
     // measures distance against it so the wobble cannot facet the line.
-    "vec2 place(vec4 s, float iconF, float wobMod, out vec2 smoothP){",
+    "vec2 place(vec4 s, float iconF, float par, float wobMod, out vec2 smoothP){",
     "  float ringPos = s.x;",
     "  vec2 dir = vec2(cos(s.z), sin(s.z));",
     "  float ringN = clamp(ringPos * uRingCountInv, 0.0, 1.0);",
-    "  float R = max(0.4, uBaseRadius + ringPos * uSpacing + s.y * uSpacing * uSpacingVarAmt);",
+    "  float R = max(0.4, uBaseRadius + ringPos * uSpacing + s.y * uSpacing * uSpacingVarAmt",
+    "                + par * uSpacing * uParallelAmt);",
     "  R *= mix(1.0, iconF, uIconAmt);",
     // one low-frequency field shared by every ring, so the rings bend together
     // and stay nested; its amplitude rises toward the bark, the way a real
@@ -696,9 +760,9 @@
     "  vRingOpacity = clamp(1.0 + (ringHashO - 0.5) * 2.0 * uRingOpacityVar, 0.15, 1.35);",
     "  float wobMod = max(0.0, 1.0 + (ringHashN - 0.5) * 2.0 * uRingWobbleVar);",
     "  vec2 sp;",
-    "  vec2 P  = place(aCur,  aIcon.y, wobMod, sp);",
-    "  vec2 Pp = place(aPrev, aIcon.x, wobMod, sp);",
-    "  vec2 Pn = place(aNext, aIcon.z, wobMod, sp);",
+    "  vec2 P  = place(aCur,  aIcon.y, aPar.y, wobMod, sp);",
+    "  vec2 Pp = place(aPrev, aIcon.x, aPar.x, wobMod, sp);",
+    "  vec2 Pn = place(aNext, aIcon.z, aPar.z, wobMod, sp);",
     // Offset along the miter of the two adjacent segments so neighbouring
     // quads share their edge exactly — no gaps and no overlaps at the joints,
     // and the stroke keeps its width through a bend. Capped so a hairpin (the
@@ -864,7 +928,7 @@
 
     var prog = link(VERT_SRC, FRAG_SRC);
     var A = {}, U = {};
-    var ATTRS = ['aCur', 'aPrev', 'aNext', 'aIcon', 'aMeta'];
+    var ATTRS = ['aCur', 'aPrev', 'aNext', 'aIcon', 'aPar', 'aMeta'];
     ATTRS.forEach(function (n) { A[n] = gl.getAttribLocation(prog, n); });
     ['uResolution', 'uTranslate', 'uScale', 'uLineWidthPx', 'uStyleV', 'uLineWidthInner',
      'uLineWidthCurve', 'uWidthAccent', 'uWidthDir', 'uWidthNoise',
@@ -873,7 +937,7 @@
      'uBaseRadius', 'uSpacing', 'uSpacingVarAmt', 'uEccentricity', 'uEccDir', 'uBulgeAmt',
      'uGrowthPhase', 'uGrowthWaveCount', 'uGrowthAmt', 'uRippleAmt', 'uRippleFreq', 'uRipplePhase',
      'uRingWidthVar', 'uRingOpacityVar', 'uRingWobbleVar', 'uRingDrift',
-     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt'
+     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt'
     ].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -1016,7 +1080,8 @@
       gl.vertexAttribPointer(A.aPrev, 4, gl.FLOAT, false, STRIDE, 16);
       gl.vertexAttribPointer(A.aNext, 4, gl.FLOAT, false, STRIDE, 32);
       gl.vertexAttribPointer(A.aIcon, 3, gl.FLOAT, false, STRIDE, 48);
-      gl.vertexAttribPointer(A.aMeta, 2, gl.FLOAT, false, STRIDE, 60);
+      gl.vertexAttribPointer(A.aPar, 3, gl.FLOAT, false, STRIDE, 60);
+      gl.vertexAttribPointer(A.aMeta, 2, gl.FLOAT, false, STRIDE, 72);
       ATTRS.forEach(function (n) { gl.enableVertexAttribArray(A[n]); });
       if (g.ibo) gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.ibo);
     }
@@ -1085,6 +1150,7 @@
       gl.uniform1f(U.uOutlineFreq, c.outlineFreq || 0);
       gl.uniform1f(U.uOutlineGrowth, Math.max(0, c.outlineGrowth || 0));
       gl.uniform1f(U.uIconAmt, g.hasIcon ? Math.min(1, Math.max(0, c.iconAmt)) : 0);
+      gl.uniform1f(U.uParallelAmt, c.parallelAmt || 0);
 
       // pass 1: coverage mask with MAX blending
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);

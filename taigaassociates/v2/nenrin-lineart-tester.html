@@ -636,6 +636,14 @@
     currentSection.keys.push('seed');
   });
 
+  section('parallel', '平行の揺らぎ', 'Parallel', true, function(){
+    return state.parallelAmt ? '強さ ' + Number(state.parallelAmt).toFixed(2) : 'なし';
+  }, function(add){
+    add(slider({ k: 'parallelAmt', label: '揺らぎの強さ（隣の線との間隔が詰まる・開く）', min: 0, max: 0.95, step: 0.01 }));
+    add(slider({ k: 'parallelFreq', label: '周方向の数（1周で何か所詰まるか）', min: 0.3, max: 6, step: 0.05, regen: true }));
+    add(slider({ k: 'parallelLength', label: '続く長さ（何本の年輪にわたって続くか）', min: 1, max: 40, step: 0.5, regen: true }));
+  });
+
   // the centre icon widget; its behaviour is wired up further down
   var iconPreview, iconMsg, iconUploadBtn, iconFile, iconHeartBtn, iconClearBtn;
   var iconSection = section('icon', '中心のアイコン', 'Icon', false, function(){
@@ -820,6 +828,7 @@
     if (!s.widthDirAmt) off('widthDirAngle');
     if (!s.widthNoiseAmt) off('widthNoiseFreq');
     if (!s.spacingVarAmt) off('spacingVarFreq');
+    if (!s.parallelAmt) off('parallelFreq', 'parallelLength');
     if (!s.eccentricity) off('eccentricityAngle');
     if (!s.irregAmt) off('irregFreq', 'ringWobbleVar', 'ringDrift');
     // the outline undulation and the pressure wander run on the wobble clock too
@@ -891,6 +900,15 @@
       bgColor: '#f3f0e8', color: '#1e1c1a', lineStyle: 'ink', scale: 0.85, ringCount: 32, spacing: 11.5,
       baseRadius: 10, lineWidth: 7, lineWidthInner: 0.55, outlineAmt: 64, outlineFreq: 1.25,
       outlineGrowth: 1.4, irregAmt: 2.2, irregFreq: 3.4, seed: 41
+    }],
+    ['endgrain', '木口 / End Grain', {
+      bgColor: '#ece0c8', color: '#8b5a2b', textColor: '#3b2a1a', ringCount: 64, spacing: 7.5,
+      baseRadius: 4, lineWidth: 2.4, lineWidthInner: 0.55, lineWidthCurve: 0.8,
+      parallelAmt: 0.8, parallelFreq: 2.2, parallelLength: 5,
+      outlineAmt: 70, outlineFreq: 1.3, outlineGrowth: 1.2,
+      eccentricity: 60, eccentricityAngle: 10, offsetX: -260, offsetY: 30, scale: 1.25,
+      ringWidthVar: 0.45, ringOpacityVar: 0.4, widthNoiseAmt: 0.3, widthNoiseFreq: 3,
+      irregAmt: 1, irregFreq: 4, seed: 57
     }],
     ['brush', '抑揚 / Brush', {
       bgColor: '#f4f1ea', color: '#26231f', scale: 0.85, ringCount: 30, spacing: 12,
@@ -988,6 +1006,9 @@
       irregFreq: rnd(1, 8),
       eccentricity: Math.random() < 0.6 ? 0 : rnd(10, 120),
       eccentricityAngle: rnd(0, 360),
+      parallelAmt: Math.random() < 0.4 ? 0 : rnd(0.2, 0.8),
+      parallelFreq: rnd(0.8, 3.5),
+      parallelLength: rnd(2, 14),
       lineWidthCurve: rnd(0.5, 2),
       widthAccentEvery: Math.random() < 0.75 ? 0 : 3 + (Math.random() * 6 | 0),
       widthAccentAmt: rnd(0.5, 2),
