@@ -426,7 +426,20 @@
       opacity: 1,
       lineStyle: 'simple',
       lineWidth: 5,
+      // how the width changes from the pith to the bark: the centre's width as
+      // a ratio of the outermost, and the curve it follows getting there
       lineWidthInner: 0.8,
+      lineWidthCurve: 1,
+      // a rhythm across the rings: every Nth ring, counted in from the bark,
+      // drawn heavier (0 = off)
+      widthAccentEvery: 0,
+      widthAccentAmt: 1,
+      // swelling and thinning along each line: toward one side, and as a
+      // brush-pressure wander
+      widthDirAmt: 0,
+      widthDirAngle: 0,
+      widthNoiseAmt: 0,
+      widthNoiseFreq: 3,
       // ring structure
       ringCount: 46,
       segments: 240,
@@ -492,7 +505,7 @@
   // transition leaves these alone so only the form changes.
   var STAGING_KEYS = ['scale', 'offsetX', 'offsetY'];
   // interpolated the short way round, so 350 -> 10 moves 20 degrees, not 340
-  var ANGLE_KEYS = ['eccentricityAngle'];
+  var ANGLE_KEYS = ['eccentricityAngle', 'widthDirAngle'];
   function lerpAngle(a, b, t) {
     var d = ((b - a) % 360 + 540) % 360 - 180;
     return a + d * t;
@@ -557,6 +570,10 @@
     "uniform float uLineWidthPx;",
     "uniform float uStyleV;",
     "uniform float uLineWidthInner;",
+    "uniform float uLineWidthCurve;",
+    "uniform vec2 uWidthAccent;",   // every N rings, extra width
+    "uniform vec3 uWidthDir;",      // direction (x, y), amount
+    "uniform vec2 uWidthNoise;",    // amount, frequency
     "uniform float uIrregAmt;",
     "uniform float uIrregFreq;",
     "uniform float uWobblePhase;",
@@ -697,7 +714,25 @@
     "  m = ml > 1e-4 ? m / ml : n1;",
     "  float miter = 1.0 / max(dot(m, n1), 0.35);",
     "  float ringN = clamp(aCur.x * uRingCountInv, 0.0, 1.0);",
-    "  float hw = 0.5 * uLineWidthPx * ringWidthMod * mix(uLineWidthInner, 1.0, ringN);",
+    // pith to bark, along a curve: below 1 the change happens near the
+    // centre, above 1 it is held back toward the bark
+    "  float wRadial = mix(uLineWidthInner, 1.0, pow(max(ringN, 0.0001), uLineWidthCurve));",
+    // every Nth ring counted in from the bark, so the outermost ring is
+    // always one of the accented ones
+    "  float wAccent = 1.0;",
+    "  if (uWidthAccent.x >= 1.0) {",
+    "    float fromBark = floor(1.0 / uRingCountInv + 0.5) - ring;",
+    "    if (mod(fromBark + 0.5, floor(uWidthAccent.x + 0.5)) < 1.0) wAccent += uWidthAccent.y;",
+    "  }",
+    // thicker toward one side and thinner on the other, like a stroke laid
+    // with a broad nib or a tree that grew faster on its sunny side
+    "  vec2 dirC = vec2(cos(aCur.z), sin(aCur.z));",
+    "  float wDir = 1.0 + uWidthDir.z * dot(dirC, uWidthDir.xy);",
+    // a slow wander along each line, as brush pressure would give; nearby
+    // rings wander alike so the swelling reads as a passage, not static
+    "  float wn = noise3D(vec3(dirC * uWidthNoise.y + uSeedOffset * 0.21 + 41.0, ring * 0.23 + uWobblePhase * 0.15));",
+    "  float wNoise = 1.0 + uWidthNoise.x * clamp(wn * 1.4, -1.0, 1.0);",
+    "  float hw = 0.5 * uLineWidthPx * ringWidthMod * wRadial * wAccent * max(wDir, 0.0) * max(wNoise, 0.0);",
     // Room beyond the visible edge for the soft styles to fall off in, in
     // pixels and growing with the line: a fixed multiple of the width worked
     // for hairlines but melted bold lines into their neighbours.
@@ -832,6 +867,7 @@
     var ATTRS = ['aCur', 'aPrev', 'aNext', 'aIcon', 'aMeta'];
     ATTRS.forEach(function (n) { A[n] = gl.getAttribLocation(prog, n); });
     ['uResolution', 'uTranslate', 'uScale', 'uLineWidthPx', 'uStyleV', 'uLineWidthInner',
+     'uLineWidthCurve', 'uWidthAccent', 'uWidthDir', 'uWidthNoise',
      'uLineStyle', 'uColor', 'uIrregAmt', 'uIrregFreq', 'uWobblePhase', 'uSeedOffset',
      'uAnchorLocal', 'uDeformStrength', 'uDeformRadius', 'uDeformType', 'uRingCountInv',
      'uBaseRadius', 'uSpacing', 'uSpacingVarAmt', 'uEccentricity', 'uEccDir', 'uBulgeAmt',
@@ -1011,6 +1047,11 @@
       gl.uniform1f(U.uLineWidthPx, Math.max(0.1, c.lineWidth) * dpr * c.scale);
       gl.uniform1f(U.uStyleV, LINE_STYLES[c.lineStyle] || 0);
       gl.uniform1f(U.uLineWidthInner, c.lineWidthInner === undefined ? 1 : c.lineWidthInner);
+      gl.uniform1f(U.uLineWidthCurve, Math.max(0.05, c.lineWidthCurve || 1));
+      gl.uniform2f(U.uWidthAccent, c.widthAccentEvery || 0, c.widthAccentAmt || 0);
+      var wdRad = (c.widthDirAngle || 0) * Math.PI / 180;
+      gl.uniform3f(U.uWidthDir, Math.cos(wdRad), Math.sin(wdRad), c.widthDirAmt || 0);
+      gl.uniform2f(U.uWidthNoise, c.widthNoiseAmt || 0, c.widthNoiseFreq || 0);
       gl.uniform1i(U.uLineStyle, LINE_STYLES[c.lineStyle] || 0);
       var rgb = hexToRgb(c.color);
       gl.uniform4f(U.uColor, rgb[0], rgb[1], rgb[2], c.opacity * slot.alpha);

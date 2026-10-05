@@ -179,6 +179,43 @@
   .icon-actions .row button { flex: 1; }
   .hint { font-size: 10px; color: #6fae8f; line-height: 1.5; min-height: 0; }
   .hint.err { color: #e0a08f; }
+
+  /* ---------- Tabs ---------- */
+  #tabs { display: flex; gap: 4px; padding: 10px 12px 0; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
+  #tabs button {
+    flex: 1; border-radius: 7px 7px 0 0; border-bottom: none; margin-bottom: -1px;
+    background: transparent; color: #8a8a8a; border-color: transparent;
+  }
+  #tabs button:hover { color: #ddd; background: #222; }
+  #tabs button.active { background: #1f1f1f; color: #eee; border-color: #2c2c2c; border-bottom: 1px solid #1f1f1f; }
+  .tab { display: none; flex-direction: column; gap: 10px; }
+  .tab.active { display: flex; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .grid3 button { padding: 5px 4px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px; }
+
+  /* ---------- Collapsible sections ---------- */
+  #sections { display: flex; flex-direction: column; gap: 8px; }
+  .sec { background: #202020; border: 1px solid #292929; border-radius: 10px; }
+  .sec-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; user-select: none; }
+  .sec-head:hover { background: #242424; border-radius: 10px; }
+  .sec-head .caret { color: #666; font-size: 9px; width: 10px; transition: transform .15s; }
+  .sec.open .sec-head .caret { transform: rotate(90deg); }
+  .sec-title { font-size: 12px; color: #ddd; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+  .sec-title small { color: #555; font-weight: 400; font-size: 9.5px; margin-left: 6px; letter-spacing: .06em; text-transform: uppercase; }
+  .sec-sum { flex: 1; text-align: right; font-size: 10px; color: #6a6a6a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sec-dot { width: 6px; height: 6px; border-radius: 50%; background: #d9a55b; visibility: hidden; flex-shrink: 0; }
+  .sec.modified .sec-dot { visibility: visible; }
+  .sec-reset { padding: 1px 7px; font-size: 11px; visibility: hidden; }
+  .sec.modified .sec-reset { visibility: visible; }
+  .sec-body { display: none; flex-direction: column; gap: 9px; padding: 2px 12px 12px; }
+  .sec.open .sec-body { display: flex; }
+  .field .label-row span.val { cursor: text; border-bottom: 1px dotted transparent; }
+  .field .label-row span.val:hover { border-bottom-color: #6fae8f; }
+  .val-edit {
+    width: 60px; background: #181818; color: #6fae8f; border: 1px solid #3d5a4b; border-radius: 4px;
+    font-size: 10.5px; padding: 1px 4px; text-align: right; font-variant-numeric: tabular-nums; outline: none;
+  }
 </style>
 </head>
 <body>
@@ -187,74 +224,87 @@
     <div id="sidebar-header">
       <div class="brand">TAIGA ASSOCIATES — Line Art Tester v2</div>
       <h1>年輪ラインアート ジェネレーター</h1>
-      <p>樹木の断面をモチーフに、年輪をフラットで力強いグラフィックとして描くテスターです。外側ほど大きくうねる外形、中心に置くアイコン、線種と線幅の変化で表情を調整できます。</p>
+    </div>
+    <div id="tabs">
+      <button data-tab="art">アート</button>
+      <button data-tab="scenes">シーン</button>
+      <button data-tab="export">書き出し</button>
     </div>
     <div id="sidebar-scroll">
 
-      <div class="panel" id="canvasPanel">
-        <h2>Canvas <span class="tag">背景 / 配置 / 反応</span></h2>
+      <div class="tab" id="tab-art">
+        <div class="panel">
+          <h2>Presets <span class="tag">プリセット</span></h2>
+          <div class="grid3" id="presetGrid"></div>
+        </div>
+        <div class="toolbar">
+          <label class="chk"><input type="checkbox" id="hideInactive" checked> いま効かない項目を隠す</label>
+          <span class="row">
+            <button class="small" id="openAll">すべて開く</button>
+            <button class="small" id="closeAll">閉じる</button>
+          </span>
+        </div>
+        <div id="sections"></div>
       </div>
 
-      <div class="panel">
-        <h2>Presets <span class="tag">プリセット</span></h2>
-        <div class="grid2" id="presetGrid"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Scenes <span class="tag">保存 / モーフ切替</span></h2>
-        <div class="row">
-          <input id="sceneName" type="text" spellcheck="false" placeholder="シーン名"
-            style="flex:1;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:6px 8px;font-size:11px;box-sizing:border-box;">
-          <button id="sceneSave" class="small primary">＋ 現在を保存</button>
-        </div>
-        <div id="sceneList" style="margin-top:8px;"></div>
-        <div class="field">
-          <div class="label-row"><span>遷移時間 (ms)</span><span class="val" id="v-sceneDur">1400</span></div>
-          <input type="range" id="sceneDur" min="200" max="8000" step="100" value="1400">
-        </div>
-        <div class="row between">
-          <label class="chk" style="flex:1;">イージング
-            <select id="sceneEase" style="background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:4px 6px;font-size:11px;">
-              <option value="easeInOutCubic">easeInOutCubic</option>
-              <option value="easeInOutQuad">easeInOutQuad</option>
-              <option value="easeOutCubic">easeOutCubic</option>
-              <option value="linear">linear</option>
-            </select>
-          </label>
-          <button id="scenePlay" class="small">▶ 順に再生</button>
-        </div>
-        <label class="chk"><input type="checkbox" id="sceneForce" checked> 強制モーフ（構造が違ってもモーフで繋ぐ）</label>
-        <label class="chk"><input type="checkbox" id="sceneStage"> 遷移中も配置を動かす（スケール／位置）</label>
-        <div class="field">
-          <div class="label-row"><span>遷移中に残す揺らぎ（0=静止して形の変化だけ）</span><span class="val" id="v-sceneCalm">0.15</span></div>
-          <input type="range" id="sceneCalm" min="0" max="1" step="0.05" value="0.15">
-        </div>
-        <div class="label-row" style="margin-top:4px;"><span id="sceneMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
-      </div>
-
-      <div class="panel">
-        <h2>Export / Restore <span class="tag">書き出し・復元</span></h2>
-        <div class="row">
-          <button id="modeExport" class="small">実装用コードを書き出し</button>
-          <button id="modeSettings" class="small">JSON で保存・復元</button>
-        </div>
-        <div id="settingsBox" style="display:none;">
-          <div class="label-row" style="margin-top:8px;">
-            <input id="exportName" type="text" value="artA" spellcheck="false"
-              style="width:100%;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:6px 8px;font-family:ui-monospace,monospace;font-size:11px;box-sizing:border-box;"
-              placeholder="書き出し名（変数名に使われます）"></div>
-          <textarea id="settingsText" spellcheck="false" style="width:100%;height:180px;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:8px;font-family:ui-monospace,monospace;font-size:10px;line-height:1.5;box-sizing:border-box;margin-top:8px;"></textarea>
-          <div class="row" style="margin-top:8px;">
-            <button id="copySettings" class="small primary">コピー</button>
-            <button id="applySettings" class="small">貼り付けた内容を適用</button>
-            <button id="closeSettings" class="small">閉じる</button>
+      <div class="tab" id="tab-scenes">
+        <div class="panel">
+          <h2>Scenes <span class="tag">保存 / モーフ切替</span></h2>
+          <div class="row">
+            <input id="sceneName" type="text" spellcheck="false" placeholder="シーン名"
+              style="flex:1;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:6px 8px;font-size:11px;box-sizing:border-box;">
+            <button id="sceneSave" class="small primary">＋ 現在を保存</button>
           </div>
-          <div class="label-row" style="margin-top:4px;"><span id="settingsMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
+          <div id="sceneList" style="margin-top:8px;"></div>
+          <div class="label-row" style="margin-top:4px;"><span id="sceneMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
+        </div>
+        <div class="panel">
+          <h2>Transition <span class="tag">遷移の設定</span></h2>
+          <div class="field">
+            <div class="label-row"><span>遷移時間 (ms)</span><span class="val" id="v-sceneDur">1400</span></div>
+            <input type="range" id="sceneDur" min="200" max="8000" step="100" value="1400">
+          </div>
+          <div class="row between">
+            <label class="chk" style="flex:1;">イージング
+              <select id="sceneEase" style="background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:4px 6px;font-size:11px;">
+                <option value="easeInOutCubic">easeInOutCubic</option>
+                <option value="easeInOutQuad">easeInOutQuad</option>
+                <option value="easeOutCubic">easeOutCubic</option>
+                <option value="linear">linear</option>
+              </select>
+            </label>
+            <button id="scenePlay" class="small">▶ 順に再生</button>
+          </div>
+          <label class="chk"><input type="checkbox" id="sceneForce" checked> 強制モーフ（構造が違ってもモーフで繋ぐ）</label>
+          <label class="chk"><input type="checkbox" id="sceneStage"> 遷移中も配置を動かす（スケール／位置）</label>
+          <div class="field">
+            <div class="label-row"><span>遷移中に残す揺らぎ（0=静止して形の変化だけ）</span><span class="val" id="v-sceneCalm">0.15</span></div>
+            <input type="range" id="sceneCalm" min="0" max="1" step="0.05" value="0.15">
+          </div>
         </div>
       </div>
 
-      <div class="panel" id="ringPanel">
-        <h2>Rings <span class="tag">年輪</span></h2>
+      <div class="tab" id="tab-export">
+        <div class="panel">
+          <h2>Export / Restore <span class="tag">書き出し・復元</span></h2>
+          <div class="row">
+            <button id="modeExport" class="small">実装用コードを書き出し</button>
+            <button id="modeSettings" class="small">JSON で保存・復元</button>
+          </div>
+          <div id="settingsBox" style="display:none;">
+            <div class="label-row" style="margin-top:8px;">
+              <input id="exportName" type="text" value="artA" spellcheck="false"
+                style="width:100%;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:6px 8px;font-family:ui-monospace,monospace;font-size:11px;box-sizing:border-box;"
+                placeholder="書き出し名（変数名に使われます）"></div>
+            <textarea id="settingsText" spellcheck="false" style="width:100%;height:320px;background:#181818;color:#ccc;border:1px solid #333;border-radius:6px;padding:8px;font-family:ui-monospace,monospace;font-size:10px;line-height:1.5;box-sizing:border-box;margin-top:8px;"></textarea>
+            <div class="row" style="margin-top:8px;">
+              <button id="copySettings" class="small primary">コピー</button>
+              <button id="applySettings" class="small">貼り付けた内容を適用</button>
+              <button id="closeSettings" class="small">閉じる</button>
+            </div>
+            <div class="label-row" style="margin-top:4px;"><span id="settingsMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -308,6 +358,13 @@
   // running transition (which moves the values itself).
   // ---------------------------------------------------------------
   var controls = [];
+  var STRUCTURAL = NenrinArt.STRUCTURAL_KEYS;
+  // What "revert" goes back to: the look as it was last loaded — a preset,
+  // a scene, pasted JSON — so tweaks can be compared against it and undone
+  // a section, or a single slider, at a time.
+  var baseline = art.getConfig();
+  var currentSection = null;
+
   function el(tag, cls, text){
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -318,26 +375,71 @@
     var dec = step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
     return function (v){ return Number(v).toFixed(dec); };
   }
+  function same(a, b){
+    return typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 1e-9 : a === b;
+  }
   function changed(def){
     if (def.regen) structuralChanged();
     if (def.after) def.after();
+    updateSections();
     scheduleRelevance();
   }
+  function register(def, sync){
+    controls.push({ k: def.k, sync: sync });
+    if (currentSection) currentSection.keys.push(def.k);
+  }
+  function revertKey(def){
+    if (same(state[def.k], baseline[def.k])) return;
+    state[def.k] = baseline[def.k];
+    changed(def);
+    controls.forEach(function(c){ if (c.k === def.k) c.sync(); });
+  }
+
   function slider(def){
     var wrap = el('div', 'field'); wrap.dataset.param = def.k;
     var row = el('div', 'label-row');
     var val = el('span', 'val');
+    val.title = 'クリックで数値を入力';
     row.appendChild(el('span', '', def.label)); row.appendChild(val);
     var input = document.createElement('input');
     input.type = 'range'; input.min = def.min; input.max = def.max; input.step = def.step;
+    input.title = 'ダブルクリックで読み込んだ状態に戻す';
     var fmt = fmtOf(def.step);
+    function sync(){ input.value = state[def.k]; val.textContent = fmt(state[def.k]); }
     input.addEventListener('input', function(){
       state[def.k] = parseFloat(input.value);
       val.textContent = fmt(state[def.k]);
       changed(def);
     });
+    input.addEventListener('dblclick', function(){ revertKey(def); });
+    // type an exact value instead of dragging
+    val.addEventListener('click', function(){
+      var ed = el('input', 'val-edit');
+      ed.value = fmt(state[def.k]);
+      var finished = false;
+      function finish(commit){
+        if (finished) return;
+        finished = true;
+        if (commit){
+          var v = parseFloat(ed.value);
+          if (isFinite(v)){
+            state[def.k] = Math.min(def.max, Math.max(def.min, v));
+            changed(def);
+          }
+        }
+        ed.parentNode.replaceChild(val, ed);
+        sync();
+      }
+      ed.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') finish(true);
+        else if (e.key === 'Escape') finish(false);
+      });
+      ed.addEventListener('blur', function(){ finish(true); });
+      val.parentNode.replaceChild(ed, val);
+      ed.focus(); ed.select();
+    });
+    register(def, sync);
     wrap.appendChild(row); wrap.appendChild(input);
-    controls.push({ k: def.k, sync: function(){ input.value = state[def.k]; val.textContent = fmt(state[def.k]); } });
     return wrap;
   }
   function select(def){
@@ -348,28 +450,35 @@
       var opt = el('option', '', o[1]); opt.value = o[0]; sel.appendChild(opt);
     });
     sel.addEventListener('change', function(){ state[def.k] = sel.value; changed(def); });
+    register(def, function(){ sel.value = state[def.k]; });
     wrap.appendChild(row); wrap.appendChild(sel);
-    controls.push({ k: def.k, sync: function(){ sel.value = state[def.k]; } });
     return wrap;
   }
   function color(def){
     var wrap = el('label', 'chk'); wrap.dataset.param = def.k;
     var input = document.createElement('input'); input.type = 'color';
     input.addEventListener('input', function(){ state[def.k] = input.value; changed(def); });
+    register(def, function(){ input.value = state[def.k]; });
     wrap.appendChild(document.createTextNode(def.label + ' ')); wrap.appendChild(input);
-    controls.push({ k: def.k, sync: function(){ input.value = state[def.k]; } });
     return wrap;
   }
   function check(def){
     var wrap = el('label', 'chk'); wrap.dataset.param = def.k;
     var input = document.createElement('input'); input.type = 'checkbox';
     input.addEventListener('change', function(){ state[def.k] = input.checked; changed(def); });
+    register(def, function(){ input.checked = !!state[def.k]; });
     wrap.appendChild(input); wrap.appendChild(document.createTextNode(' ' + def.label));
-    controls.push({ k: def.k, sync: function(){ input.checked = !!state[def.k]; } });
     return wrap;
   }
-  function grid2(a, b){ var g = el('div', 'grid2'); g.appendChild(a); g.appendChild(b); return g; }
-  function syncAll(){ controls.forEach(function(c){ c.sync(); }); drawIconPreview(); scheduleRelevance(); }
+  function grid2(a, b){ var g = el('div', 'grid2'); g.appendChild(a); if (b) g.appendChild(b); return g; }
+  function sub(title){ return el('div', 'subgroup-label', title); }
+
+  function syncAll(){
+    controls.forEach(function(c){ c.sync(); });
+    drawIconPreview();
+    updateSections();
+    scheduleRelevance();
+  }
 
   function structuralChanged(){
     art.regen();
@@ -378,126 +487,244 @@
   }
 
   // ---------------------------------------------------------------
-  // Canvas panel
+  // Tabs
   // ---------------------------------------------------------------
-  var canvasPanel = document.getElementById('canvasPanel');
-  canvasPanel.appendChild(grid2(
-    color({ k: 'bgColor', label: '背景色' }),
-    color({ k: 'textColor', label: '文字色' })
-  ));
-  canvasPanel.appendChild(slider({ k: 'scale', label: 'スケール（線幅も一緒に拡大縮小）', min: 0.2, max: 3, step: 0.01 }));
-  canvasPanel.appendChild(grid2(
-    slider({ k: 'offsetX', label: 'Xオフセット', min: -600, max: 600, step: 1 }),
-    slider({ k: 'offsetY', label: 'Yオフセット', min: -600, max: 600, step: 1 })
-  ));
-  canvasPanel.appendChild(el('div', 'divider'));
-  canvasPanel.appendChild(check({ k: 'animate', label: '常時アニメーション（揺らぎ・呼吸・波）' }));
-  canvasPanel.appendChild(check({ k: 'mouseDeform', label: 'マウスで形状を歪ませる（年輪自体が反応）' }));
-  canvasPanel.appendChild(check({ k: 'mouseReact', label: 'マウス連動（アート全体が追従して動く）' }));
-  canvasPanel.appendChild(slider({ k: 'mouseStrength', label: '連動の強さ', min: 0, max: 150, step: 1 }));
-  canvasPanel.appendChild(el('div', 'divider'));
-  var hideInactiveWrap = el('label', 'chk');
-  var hideInactiveEl = document.createElement('input');
-  hideInactiveEl.type = 'checkbox'; hideInactiveEl.checked = true;
-  hideInactiveWrap.appendChild(hideInactiveEl);
-  hideInactiveWrap.appendChild(document.createTextNode(' いま効かない項目を隠す'));
-  canvasPanel.appendChild(hideInactiveWrap);
-  hideInactiveEl.addEventListener('change', function(){ scheduleRelevance(); });
+  var UI_KEY = 'nenrin.ui.v2';
+  var ui = (function(){
+    try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch(e){ return {}; }
+  })();
+  ui.open = ui.open || {};
+  function saveUI(){ try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch(e){} }
+
+  var tabBtns = Array.prototype.slice.call(document.querySelectorAll('#tabs button'));
+  function showTab(name){
+    tabBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+      t.classList.toggle('active', t.id === 'tab-' + name);
+    });
+    ui.tab = name; saveUI();
+  }
+  tabBtns.forEach(function(b){ b.addEventListener('click', function(){ showTab(b.dataset.tab); }); });
 
   // ---------------------------------------------------------------
-  // Rings panel
+  // Sections — collapsible groups. Each shows a one-line summary while
+  // closed, and a marker plus a revert button once anything in it differs
+  // from the look that was loaded.
   // ---------------------------------------------------------------
-  var ringPanel = document.getElementById('ringPanel');
-  function group(title){ ringPanel.appendChild(el('div', 'subgroup-label', title)); }
-
-  group('線 / Line');
-  ringPanel.appendChild(color({ k: 'color', label: '線の色' }));
-  ringPanel.appendChild(slider({ k: 'opacity', label: '不透明度', min: 0, max: 1, step: 0.01 }));
-  ringPanel.appendChild(select({ k: 'lineStyle', label: '線種', options: [
-    ['simple', '1 シンプル'], ['blur', '2 ブラー（モアレが出にくい）'],
-    ['ink', '3 インク（かすれ）'], ['watercolor', '4 水彩（にじみ）']
-  ]}));
-  ringPanel.appendChild(slider({ k: 'lineWidth', label: '線幅（最外周）', min: 0.2, max: 30, step: 0.1 }));
-  ringPanel.appendChild(slider({ k: 'lineWidthInner', label: '中心の線幅（最外周を1とした比率）', min: 0.05, max: 2, step: 0.01 }));
-
-  group('量 / Density');
-  ringPanel.appendChild(slider({ k: 'ringCount', label: '本数（リング数）', min: 4, max: 300, step: 1, regen: true }));
-  ringPanel.appendChild(slider({ k: 'segments', label: '分割数（滑らかさ）', min: 24, max: 480, step: 4, regen: true }));
-  ringPanel.appendChild(slider({ k: 'baseRadius', label: '基準半径（中心の空き・アイコンの大きさ）', min: 0, max: 300, step: 1 }));
-  ringPanel.appendChild(slider({ k: 'spacing', label: '間隔', min: 1, max: 40, step: 0.1 }));
-  ringPanel.appendChild(slider({ k: 'spiralBlend', label: '螺旋化（0=同心円 / 1=連続螺旋、中間値は継ぎ目が出ます）', min: 0, max: 1, step: 0.01, regen: true }));
-
-  group('中心のアイコン / Icon');
-  var iconField = el('div', 'field'); iconField.dataset.param = 'icon';
-  var iconRow = el('div', 'icon-row');
-  var iconPreview = document.createElement('canvas');
-  iconPreview.id = 'iconPreview'; iconPreview.width = 112; iconPreview.height = 112;
-  var iconActions = el('div', 'icon-actions');
-  var iconUploadBtn = el('button', 'small', 'SVG を読み込む');
-  var iconSampleRow = el('div', 'row');
-  var iconHeartBtn = el('button', 'small', 'ハート（サンプル）');
-  var iconClearBtn = el('button', 'small danger', '外す');
-  iconSampleRow.appendChild(iconHeartBtn); iconSampleRow.appendChild(iconClearBtn);
-  iconActions.appendChild(iconUploadBtn); iconActions.appendChild(iconSampleRow);
-  iconRow.appendChild(iconPreview); iconRow.appendChild(iconActions);
-  var iconFile = document.createElement('input');
-  iconFile.type = 'file'; iconFile.accept = '.svg,image/svg+xml'; iconFile.hidden = true;
-  var iconMsg = el('div', 'hint');
-  iconField.appendChild(iconRow); iconField.appendChild(iconFile); iconField.appendChild(iconMsg);
-  ringPanel.appendChild(iconField);
-  ringPanel.appendChild(slider({ k: 'iconAmt', label: 'アイコンの効き（0=円 / 1=アイコン形状）', min: 0, max: 1, step: 0.01 }));
-
-  group('外形のうねり / Outline');
-  ringPanel.appendChild(slider({ k: 'outlineAmt', label: 'うねりの大きさ（最外周での振れ幅）', min: 0, max: 200, step: 1 }));
-  ringPanel.appendChild(slider({ k: 'outlineFreq', label: 'うねりの数', min: 0.2, max: 4, step: 0.05 }));
-  ringPanel.appendChild(slider({ k: 'outlineGrowth', label: '外側への増え方（0=一律 / 大きいほど外側に集中）', min: 0, max: 4, step: 0.05 }));
-
-  group('有機的なばらつき / Organic Variance');
-  ringPanel.appendChild(slider({ k: 'spacingVarAmt', label: '年輪の粗密（ばらつき量）', min: 0, max: 1, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'spacingVarFreq', label: 'ばらつきの周波数', min: 0.05, max: 5, step: 0.05, regen: true }));
-  ringPanel.appendChild(slider({ k: 'eccentricity', label: '偏心量（芯のずれ）', min: 0, max: 200, step: 1 }));
-  ringPanel.appendChild(slider({ k: 'eccentricityAngle', label: '偏心角度', min: 0, max: 360, step: 1 }));
-  ringPanel.appendChild(slider({ k: 'bulgeAmt', label: '膨らみ（中間の年輪の広がり）', min: -0.6, max: 0.6, step: 0.01 }));
-
-  group('年輪の個体差 / Ring Individuality');
-  ringPanel.appendChild(slider({ k: 'ringWidthVar', label: '線幅のばらつき（1本ずつ）', min: 0, max: 1, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'ringOpacityVar', label: '濃さのばらつき（1本ずつ）', min: 0, max: 1, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'ringWobbleVar', label: '揺らぎ幅のばらつき（1本ずつ）', min: 0, max: 1.5, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'ringDrift', label: '揺らぎパターンのドリフト（外側ほどコブがズレる）', min: 0, max: 8, step: 0.1 }));
-
-  group('細かな揺らぎ・動き / Motion');
-  ringPanel.appendChild(slider({ k: 'irregAmt', label: '細かな揺らぎ（木目の振れ幅）', min: 0, max: 20, step: 0.1 }));
-  ringPanel.appendChild(slider({ k: 'irregFreq', label: '細かな揺らぎの周波数', min: 0.2, max: 12, step: 0.1 }));
-  ringPanel.appendChild(slider({ k: 'wobbleSpeed', label: '揺らぎ速度（うねりも一緒に動く）', min: 0, max: 2, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'breatheAmp', label: '呼吸振幅（スケール脈動）', min: 0, max: 0.1, step: 0.001 }));
-  ringPanel.appendChild(slider({ k: 'breatheSpeed', label: '呼吸速度', min: 0, max: 3, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'growthAmt', label: '成長波の強さ（濃淡が中心→外側へ流れる）', min: 0, max: 1, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'growthSpeed', label: '成長波の速度', min: 0, max: 1, step: 0.01 }));
-  ringPanel.appendChild(slider({ k: 'growthWaveCount', label: '成長波の本数', min: 0.5, max: 10, step: 0.5 }));
-  ringPanel.appendChild(slider({ k: 'rippleAmt', label: '波紋の振幅（中心から実際に波打つ）', min: -60, max: 60, step: 1 }));
-  ringPanel.appendChild(slider({ k: 'rippleFreq', label: '波紋の本数', min: 0.5, max: 16, step: 0.5 }));
-  ringPanel.appendChild(slider({ k: 'rippleSpeed', label: '波紋の速度（中心→外側）', min: 0, max: 1.5, step: 0.01 }));
-
-  group('変形 / Deform');
-  ringPanel.appendChild(grid2(
-    select({ k: 'deformMode', label: 'アンカー', options: [['mouse', 'マウス追従'], ['fixed', '固定位置']] }),
-    select({ k: 'deformType', label: '種類', options: [['push', '外へ押す'], ['pull', '内へ引く'], ['swirl', '渦を巻く']] })
-  ));
-  ringPanel.appendChild(slider({ k: 'deformStrength', label: '変形の強さ', min: 0, max: 150, step: 1 }));
-  ringPanel.appendChild(slider({ k: 'deformRadius', label: '変形の半径', min: 20, max: 800, step: 5 }));
-  ringPanel.appendChild(grid2(
-    slider({ k: 'anchorX', label: '固定アンカーX', min: -500, max: 500, step: 1 }),
-    slider({ k: 'anchorY', label: '固定アンカーY', min: -500, max: 500, step: 1 })
-  ));
-
-  var seedRow = el('div', 'row');
-  var seedBtn = el('button', 'small', '🎲 シードを変更');
-  seedBtn.addEventListener('click', function(){
-    state.seed = (Math.random() * 1000 | 0);
-    structuralChanged();
+  var sectionsEl = document.getElementById('sections');
+  var sections = [];
+  function section(id, title, en, openByDefault, summary, build){
+    var sec = { id: id, keys: [], summary: summary, el: el('div', 'sec'), body: el('div', 'sec-body') };
+    var head = el('div', 'sec-head');
+    head.appendChild(el('span', 'caret', '▶'));
+    var t = el('span', 'sec-title', title);
+    t.appendChild(el('small', '', en));
+    head.appendChild(t);
+    sec.sumEl = el('span', 'sec-sum');
+    head.appendChild(sec.sumEl);
+    head.appendChild(el('span', 'sec-dot'));
+    var reset = el('button', 'small sec-reset', '↺');
+    reset.title = 'このセクションを読み込んだ状態に戻す';
+    reset.addEventListener('click', function(e){ e.stopPropagation(); revertSection(sec); });
+    head.appendChild(reset);
+    head.addEventListener('click', function(){ setOpen(sec, !sec.el.classList.contains('open')); });
+    sec.el.appendChild(head);
+    sec.el.appendChild(sec.body);
+    if (ui.open[id] === undefined ? openByDefault : ui.open[id]) sec.el.classList.add('open');
+    currentSection = sec;
+    build(function(node){ sec.body.appendChild(node); return node; });
+    currentSection = null;
+    sectionsEl.appendChild(sec.el);
+    sections.push(sec);
+    return sec;
+  }
+  function setOpen(sec, open){
+    sec.el.classList.toggle('open', open);
+    ui.open[sec.id] = open;
+    saveUI();
+  }
+  function revertSection(sec){
+    var structural = false;
+    sec.keys.forEach(function(k){
+      if (same(state[k], baseline[k])) return;
+      if (STRUCTURAL.indexOf(k) >= 0) structural = true;
+      state[k] = baseline[k];
+    });
+    if (structural) structuralChanged();
+    syncAll();
+  }
+  function updateSections(){
+    sections.forEach(function(sec){
+      sec.el.classList.toggle('modified', sec.keys.some(function(k){ return !same(state[k], baseline[k]); }));
+      sec.sumEl.textContent = sec.summary ? sec.summary() : '';
+    });
+  }
+  document.getElementById('openAll').addEventListener('click', function(){
+    sections.forEach(function(s){ setOpen(s, true); });
   });
-  seedRow.appendChild(seedBtn);
-  ringPanel.appendChild(seedRow);
+  document.getElementById('closeAll').addEventListener('click', function(){
+    sections.forEach(function(s){ setOpen(s, false); });
+  });
+
+  var STYLE_LABEL = { simple: 'シンプル', blur: 'ブラー', ink: 'インク', watercolor: '水彩' };
+
+  section('color', '色', 'Color', true, null, function(add){
+    add(grid2(color({ k: 'bgColor', label: '背景' }), color({ k: 'color', label: '線' })));
+    add(color({ k: 'textColor', label: '文字' }));
+    add(slider({ k: 'opacity', label: '不透明度', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'ringOpacityVar', label: '濃さのばらつき（1本ずつ）', min: 0, max: 1, step: 0.01 }));
+  });
+
+  section('line', '線', 'Line', true, function(){
+    return STYLE_LABEL[state.lineStyle] + ' ・ ' + Number(state.lineWidth).toFixed(1);
+  }, function(add){
+    add(select({ k: 'lineStyle', label: '線種', options: [
+      ['simple', '1 シンプル'], ['blur', '2 ブラー（モアレが出にくい）'],
+      ['ink', '3 インク（かすれ）'], ['watercolor', '4 水彩（にじみ）']
+    ]}));
+    add(slider({ k: 'lineWidth', label: '線幅（最外周の基準）', min: 0.2, max: 30, step: 0.1 }));
+  });
+
+  section('width', '線幅の変化', 'Width', true, function(){
+    var n = 0;
+    if (!same(state.lineWidthInner, 1)) n++;
+    if (state.widthAccentEvery) n++;
+    if (state.widthDirAmt) n++;
+    if (state.widthNoiseAmt) n++;
+    if (state.ringWidthVar) n++;
+    return n ? n + ' 種類' : 'なし';
+  }, function(add){
+    add(sub('中心 → 外側'));
+    add(slider({ k: 'lineWidthInner', label: '中心の線幅（最外周を1とした比率）', min: 0.05, max: 2, step: 0.01 }));
+    add(slider({ k: 'lineWidthCurve', label: '変化のカーブ（1未満=中心寄りで変化 / 1超=外周寄りで変化）', min: 0.2, max: 5, step: 0.05 }));
+    add(sub('リズム'));
+    add(slider({ k: 'widthAccentEvery', label: '太くする間隔（外周から N 本ごと / 0=なし）', min: 0, max: 20, step: 1 }));
+    add(slider({ k: 'widthAccentAmt', label: '太くする量（+倍率）', min: 0, max: 4, step: 0.05 }));
+    add(sub('1本の線の中の抑揚'));
+    add(slider({ k: 'widthDirAmt', label: '方向による抑揚（片側を太く・反対側を細く）', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'widthDirAngle', label: '太くなる向き（角度 / 0=右・90=下・270=上）', min: 0, max: 360, step: 1 }));
+    add(slider({ k: 'widthNoiseAmt', label: '筆圧のゆらぎ（線の途中で太さが揺れる）', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'widthNoiseFreq', label: 'ゆらぎの細かさ', min: 0.5, max: 12, step: 0.1 }));
+    add(sub('ばらつき'));
+    add(slider({ k: 'ringWidthVar', label: '1本ずつのランダムな差', min: 0, max: 1, step: 0.01 }));
+  });
+
+  section('rings', '年輪の構成', 'Rings', true, function(){
+    return state.ringCount + ' 本 ・ 間隔 ' + Number(state.spacing).toFixed(1);
+  }, function(add){
+    add(slider({ k: 'ringCount', label: '本数', min: 4, max: 300, step: 1, regen: true }));
+    add(slider({ k: 'baseRadius', label: '基準半径（中心の空き・アイコンの大きさ）', min: 0, max: 300, step: 1 }));
+    add(slider({ k: 'spacing', label: '間隔', min: 1, max: 40, step: 0.1 }));
+    add(sub('粗密・偏心'));
+    add(slider({ k: 'spacingVarAmt', label: '年輪の粗密（ばらつき量）', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'spacingVarFreq', label: 'ばらつきの周波数', min: 0.05, max: 5, step: 0.05, regen: true }));
+    add(slider({ k: 'eccentricity', label: '偏心量（芯のずれ）', min: 0, max: 200, step: 1 }));
+    add(slider({ k: 'eccentricityAngle', label: '偏心角度（0=右・90=下・270=上）', min: 0, max: 360, step: 1 }));
+    add(slider({ k: 'bulgeAmt', label: '膨らみ（中間の年輪の広がり）', min: -0.6, max: 0.6, step: 0.01 }));
+    add(sub('構造'));
+    add(slider({ k: 'spiralBlend', label: '螺旋化（0=同心円 / 1=連続螺旋、中間値は継ぎ目が出ます）', min: 0, max: 1, step: 0.01, regen: true }));
+    add(slider({ k: 'segments', label: '分割数（滑らかさ）', min: 24, max: 480, step: 4, regen: true }));
+    var seedRow = el('div', 'row');
+    var seedBtn = el('button', 'small', '🎲 シードを変更（粗密と揺らぎの模様）');
+    seedBtn.addEventListener('click', function(){
+      state.seed = (Math.random() * 1000 | 0);
+      structuralChanged();
+      updateSections();
+    });
+    seedRow.appendChild(seedBtn);
+    add(seedRow);
+    currentSection.keys.push('seed');
+  });
+
+  // the centre icon widget; its behaviour is wired up further down
+  var iconPreview, iconMsg, iconUploadBtn, iconFile, iconHeartBtn, iconClearBtn;
+  var iconSection = section('icon', '中心のアイコン', 'Icon', false, function(){
+    return state.icon ? 'あり' : 'なし';
+  }, function(add){
+    var iconField = el('div', 'field'); iconField.dataset.param = 'icon';
+    var iconRow = el('div', 'icon-row');
+    iconPreview = document.createElement('canvas');
+    iconPreview.id = 'iconPreview'; iconPreview.width = 112; iconPreview.height = 112;
+    var iconActions = el('div', 'icon-actions');
+    iconUploadBtn = el('button', 'small', 'SVG を読み込む');
+    var iconSampleRow = el('div', 'row');
+    iconHeartBtn = el('button', 'small', 'ハート（サンプル）');
+    iconClearBtn = el('button', 'small danger', '外す');
+    iconSampleRow.appendChild(iconHeartBtn); iconSampleRow.appendChild(iconClearBtn);
+    iconActions.appendChild(iconUploadBtn); iconActions.appendChild(iconSampleRow);
+    iconRow.appendChild(iconPreview); iconRow.appendChild(iconActions);
+    iconFile = document.createElement('input');
+    iconFile.type = 'file'; iconFile.accept = '.svg,image/svg+xml'; iconFile.hidden = true;
+    iconMsg = el('div', 'hint');
+    iconField.appendChild(iconRow); iconField.appendChild(iconFile); iconField.appendChild(iconMsg);
+    add(iconField);
+    currentSection.keys.push('icon');
+    add(slider({ k: 'iconAmt', label: 'アイコンの効き（0=円 / 1=アイコン形状）', min: 0, max: 1, step: 0.01 }));
+  });
+
+  section('outline', '外形のうねり', 'Outline', true, function(){
+    return state.outlineAmt ? '振れ幅 ' + Math.round(state.outlineAmt) : 'なし';
+  }, function(add){
+    add(slider({ k: 'outlineAmt', label: 'うねりの大きさ（最外周での振れ幅）', min: 0, max: 200, step: 1 }));
+    add(slider({ k: 'outlineFreq', label: 'うねりの数', min: 0.2, max: 4, step: 0.05 }));
+    add(slider({ k: 'outlineGrowth', label: '外側への増え方（0=一律 / 大きいほど外側に集中）', min: 0, max: 4, step: 0.05 }));
+  });
+
+  section('wobble', '細かな揺らぎ', 'Wobble', false, function(){
+    return state.irregAmt ? '振れ幅 ' + Number(state.irregAmt).toFixed(1) : 'なし';
+  }, function(add){
+    add(slider({ k: 'irregAmt', label: '細かな揺らぎ（木目の振れ幅）', min: 0, max: 20, step: 0.1 }));
+    add(slider({ k: 'irregFreq', label: '揺らぎの周波数', min: 0.2, max: 12, step: 0.1 }));
+    add(slider({ k: 'ringWobbleVar', label: '揺らぎ幅のばらつき（1本ずつ）', min: 0, max: 1.5, step: 0.01 }));
+    add(slider({ k: 'ringDrift', label: '揺らぎパターンのドリフト（外側ほどコブがズレる）', min: 0, max: 8, step: 0.1 }));
+  });
+
+  section('motion', '動き', 'Motion', false, function(){
+    return state.animate ? 'ON' : 'OFF';
+  }, function(add){
+    add(check({ k: 'animate', label: '常時アニメーション（揺らぎ・呼吸・波）' }));
+    add(slider({ k: 'wobbleSpeed', label: '揺らぎの速度（うねりも一緒に動く）', min: 0, max: 2, step: 0.01 }));
+    add(sub('呼吸'));
+    add(slider({ k: 'breatheAmp', label: '呼吸の振幅（スケール脈動）', min: 0, max: 0.1, step: 0.001 }));
+    add(slider({ k: 'breatheSpeed', label: '呼吸の速度', min: 0, max: 3, step: 0.01 }));
+    add(sub('成長波（濃淡が中心から外へ流れる）'));
+    add(slider({ k: 'growthAmt', label: '成長波の強さ', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'growthSpeed', label: '成長波の速度', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'growthWaveCount', label: '成長波の本数', min: 0.5, max: 10, step: 0.5 }));
+    add(sub('波紋（形が中心から外へ波打つ）'));
+    add(slider({ k: 'rippleAmt', label: '波紋の振幅', min: -60, max: 60, step: 1 }));
+    add(slider({ k: 'rippleFreq', label: '波紋の本数', min: 0.5, max: 16, step: 0.5 }));
+    add(slider({ k: 'rippleSpeed', label: '波紋の速度', min: 0, max: 1.5, step: 0.01 }));
+  });
+
+  section('interact', 'マウス・変形', 'Interaction', false, function(){
+    return state.mouseDeform ? 'マウス変形 ON' : 'マウス変形 OFF';
+  }, function(add){
+    add(check({ k: 'mouseDeform', label: 'マウスで形状を歪ませる（年輪自体が反応）' }));
+    add(grid2(
+      select({ k: 'deformMode', label: 'アンカー', options: [['mouse', 'マウス追従'], ['fixed', '固定位置']] }),
+      select({ k: 'deformType', label: '種類', options: [['push', '外へ押す'], ['pull', '内へ引く'], ['swirl', '渦を巻く']] })
+    ));
+    add(slider({ k: 'deformStrength', label: '変形の強さ', min: 0, max: 150, step: 1 }));
+    add(slider({ k: 'deformRadius', label: '変形の半径', min: 20, max: 800, step: 5 }));
+    add(grid2(
+      slider({ k: 'anchorX', label: '固定アンカーX', min: -500, max: 500, step: 1 }),
+      slider({ k: 'anchorY', label: '固定アンカーY', min: -500, max: 500, step: 1 })
+    ));
+    add(sub('全体の追従'));
+    add(check({ k: 'mouseReact', label: 'マウス連動（アート全体が追従して動く）' }));
+    add(slider({ k: 'mouseStrength', label: '連動の強さ', min: 0, max: 150, step: 1 }));
+  });
+
+  section('layout', '配置', 'Layout', false, function(){
+    return '×' + Number(state.scale).toFixed(2);
+  }, function(add){
+    add(slider({ k: 'scale', label: 'スケール（線幅も一緒に拡大縮小）', min: 0.2, max: 3, step: 0.01 }));
+    add(grid2(
+      slider({ k: 'offsetX', label: 'Xオフセット', min: -600, max: 600, step: 1 }),
+      slider({ k: 'offsetY', label: 'Yオフセット', min: -600, max: 600, step: 1 })
+    ));
+  });
 
   // ---------------------------------------------------------------
   // Centre icon
@@ -541,6 +768,7 @@
   }
   function setIcon(str, label){
     state.icon = str || '';
+    if (str) setOpen(iconSection, true);
     iconMsg.className = 'hint';
     if (str && state.baseRadius < 40){
       // The icon is drawn at the base radius, so a tiny base would hide it.
@@ -578,16 +806,24 @@
 
   // ---------------------------------------------------------------
   // "Hide what does nothing right now" — mirrors the vertex shader: an amount
-  // at zero makes its own frequency/speed settings inert, and so on.
+  // at zero makes its own frequency/speed/angle settings inert, and so on.
   // ---------------------------------------------------------------
+  var hideInactiveEl = document.getElementById('hideInactive');
+  hideInactiveEl.addEventListener('change', function(){ scheduleRelevance(); });
+
   function inactiveParams(s){
     var out = {};
     function off(){ for (var i = 0; i < arguments.length; i++) out[arguments[i]] = true; }
+    // with the centre as wide as the rim there is no change for a curve to shape
+    if (same(s.lineWidthInner, 1)) off('lineWidthCurve');
+    if (!s.widthAccentEvery) off('widthAccentAmt');
+    if (!s.widthDirAmt) off('widthDirAngle');
+    if (!s.widthNoiseAmt) off('widthNoiseFreq');
     if (!s.spacingVarAmt) off('spacingVarFreq');
     if (!s.eccentricity) off('eccentricityAngle');
     if (!s.irregAmt) off('irregFreq', 'ringWobbleVar', 'ringDrift');
-    // the outline undulation runs on the wobble clock too
-    if (!s.irregAmt && !s.outlineAmt) off('wobbleSpeed');
+    // the outline undulation and the pressure wander run on the wobble clock too
+    if (!s.irregAmt && !s.outlineAmt && !s.widthNoiseAmt) off('wobbleSpeed');
     if (!s.outlineAmt) off('outlineFreq', 'outlineGrowth');
     if (!s.icon) off('iconAmt');
     if (!s.breatheAmp) off('breatheSpeed');
@@ -603,8 +839,7 @@
     if (!s.animate) off('wobbleSpeed', 'breatheSpeed', 'growthSpeed', 'rippleSpeed');
     return out;
   }
-  function applyRelevance(root){
-    var hide = hideInactiveEl.checked ? inactiveParams(state) : {};
+  function applyRelevance(root, hide){
     Array.prototype.forEach.call(root.querySelectorAll('[data-param]'), function(n){
       n.style.display = hide[n.dataset.param] ? 'none' : '';
     });
@@ -630,8 +865,8 @@
     relevanceQueued = true;
     requestAnimationFrame(function(){
       relevanceQueued = false;
-      applyRelevance(canvasPanel);
-      applyRelevance(ringPanel);
+      var hide = hideInactiveEl.checked ? inactiveParams(state) : {};
+      sections.forEach(function(sec){ applyRelevance(sec.body, hide); });
     });
   }
 
@@ -656,6 +891,17 @@
       bgColor: '#f3f0e8', color: '#1e1c1a', lineStyle: 'ink', scale: 0.85, ringCount: 32, spacing: 11.5,
       baseRadius: 10, lineWidth: 7, lineWidthInner: 0.55, outlineAmt: 64, outlineFreq: 1.25,
       outlineGrowth: 1.4, irregAmt: 2.2, irregFreq: 3.4, seed: 41
+    }],
+    ['brush', '抑揚 / Brush', {
+      bgColor: '#f4f1ea', color: '#26231f', scale: 0.85, ringCount: 30, spacing: 12,
+      baseRadius: 10, lineWidth: 7, lineWidthInner: 0.4, lineWidthCurve: 0.7,
+      widthDirAmt: 0.75, widthDirAngle: 315, widthNoiseAmt: 0.45, widthNoiseFreq: 2.2,
+      outlineAmt: 50, irregAmt: 0.8, seed: 23
+    }],
+    ['bands', '年層 / Bands', {
+      color: '#8f8a80', scale: 0.95, ringCount: 60, spacing: 6, baseRadius: 4,
+      lineWidth: 1.6, lineWidthInner: 0.5, widthAccentEvery: 5, widthAccentAmt: 2.2,
+      outlineAmt: 50, seed: 7
     }],
     ['fine', '繊細 / Fine', {
       bgColor: '#f4f2ec', color: '#3a3733', opacity: 0.8, ringCount: 80, segments: 200,
@@ -715,6 +961,7 @@
 
   function applyConfig(cfg){
     art.setConfig(cfg);
+    baseline = art.getConfig();
     syncAll();
     renderSceneList();
   }
@@ -741,6 +988,13 @@
       irregFreq: rnd(1, 8),
       eccentricity: Math.random() < 0.6 ? 0 : rnd(10, 120),
       eccentricityAngle: rnd(0, 360),
+      lineWidthCurve: rnd(0.5, 2),
+      widthAccentEvery: Math.random() < 0.75 ? 0 : 3 + (Math.random() * 6 | 0),
+      widthAccentAmt: rnd(0.5, 2),
+      widthDirAmt: Math.random() < 0.7 ? 0 : rnd(0.2, 0.8),
+      widthDirAngle: rnd(0, 360),
+      widthNoiseAmt: Math.random() < 0.7 ? 0 : rnd(0.2, 0.6),
+      widthNoiseFreq: rnd(1, 6),
       ringWidthVar: Math.random() < 0.5 ? 0 : rnd(0, 0.5),
       ringOpacityVar: Math.random() < 0.5 ? 0 : rnd(0, 0.5),
       rippleAmt: Math.random() < 0.75 ? 0 : rnd(-30, 30),
@@ -816,6 +1070,7 @@
       calm: parseFloat(sceneCalmEl.value),
       stage: sceneStageEl.checked,
       onComplete: function(){
+        baseline = art.getConfig();
         syncAll();
         renderSceneList();
         sceneMsgEl.textContent = '「' + sc.name + '」へ ' + MODE_LABEL[mode] + 'で切り替えました';
@@ -1116,6 +1371,7 @@
   // Init
   // ---------------------------------------------------------------
   restoreScenes();
+  showTab(ui.tab || 'art');
   syncAll();
   renderSceneList();
 
