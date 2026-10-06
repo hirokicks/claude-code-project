@@ -153,6 +153,34 @@
     return r;
   }
 
+  // Rounds off the creases a parallel offset keeps wherever the icon is
+  // concave — between a heart's lobes, under a nose or a chin. A true offset
+  // carries a sharp V there for many rings; a drawn contour lets it melt into
+  // a smooth curve. This is a circular gaussian along the ring (three box
+  // passes) whose width, in arc length, is sigmaArc; the caller grows it with
+  // the distance from the icon, so the first ring is still the icon itself.
+  function smoothRing(row, sigmaArc){
+    var n = row.length;
+    if (!(sigmaArc > 0)) return;
+    var mean = 0;
+    for (var i = 0; i < n; i++) mean += row[i];
+    mean /= n;
+    var sigma = sigmaArc / (2 * Math.PI * Math.max(mean, 1e-3) / n);   // in samples
+    if (sigma < 0.3) return;
+    // three passes of a box of width w give variance 3 * (w*w - 1) / 12
+    var rad = Math.max(1, Math.min(Math.floor(n / 2) - 1, Math.round((Math.sqrt(4 * sigma * sigma + 1) - 1) / 2)));
+    var tmp = new Float32Array(n), w = 2 * rad + 1;
+    for (var pass = 0; pass < 3; pass++){
+      var acc = 0;
+      for (var k = -rad; k <= rad; k++) acc += row[(k + n) % n];
+      for (var c = 0; c < n; c++){
+        tmp[c] = acc / w;
+        acc += row[(c + rad + 1) % n] - row[(c - rad + n) % n];
+      }
+      row.set(tmp);
+    }
+  }
+
   // Turns any SVG into the icon string the config stores. Needs a browser:
   // the SVG is mounted off-screen so the browser itself resolves every shape
   // type, transform and viewBox, then each outline is sampled point by point.
@@ -338,9 +366,47 @@
       return noise(u * p.spacingVarFreq * 0.5 + 100, p.seed * 0.017) * u * 0.02;
     }
 
+    // How far out a ring sits, in ring steps. With spacingCurve 1 the rings
+    // are evenly spaced; above 1 they pack toward the pith and open toward the
+    // bark (below 1 the reverse). The outermost ring stays where it was, so
+    // the piece keeps its size. Mirrors span() in the vertex shader.
+    var N1 = Math.max(1, ringCount - 1), pCurve = p.spacingCurve || 1;
+    function span(rp){ return N1 * Math.pow(Math.max(0, rp) / N1, pCurve); }
+
     var icon = parseIcon(p.icon);
     var S = p.baseRadius;
     var prof = (icon && S > 0.5) ? iconProfile(icon, segments) : null;
+    // the icon bend of every whole ring, offset and then smoothed; a sample
+    // part-way along a spiral interpolates between the two rings around it
+    var iconRows = null;
+    if (prof){
+      iconRows = [];
+      var prevDn = 0;
+      for (var lv = 0; lv <= ringCount; lv++){
+        var dn = span(lv) * p.spacing / S;
+        var row = new Float32Array(segments);
+        for (var jj = 0; jj < segments; jj++) row[jj] = iconRadius(prof, jj, dn);
+        var sm = (p.iconSmooth || 0) * dn;
+        if (sm > 0 && lv > 0){
+          smoothRing(row, sm);
+          // Smoothing also pulls convex points (a nose tip, the corners of a
+          // flat base) inward, and strong settings brought rings up against
+          // the ones inside them. A ring may come at most 30% closer to the
+          // icon than its true offset: those floors are themselves evenly
+          // spaced, so nothing gets packed into a dark band, and rings stay
+          // at least 70% of a step apart.
+          for (jj = 0; jj < segments; jj++){
+            var floorR = iconRadius(prof, jj, dn * 0.7);
+            if (row[jj] < floorR) row[jj] = floorR;
+          }
+          // a last guard: never at or inside the ring before
+          var prev = iconRows[lv - 1], gap = (dn - prevDn) * 0.15;
+          for (jj = 0; jj < segments; jj++) if (row[jj] < prev[jj] + gap) row[jj] = prev[jj] + gap;
+        }
+        prevDn = dn;
+        iconRows.push(row);
+      }
+    }
 
     // Parallel wobble — the gap between neighbouring rings changing along the
     // ring, the way a real cross-section bunches its rings tightly on one side
@@ -400,9 +466,11 @@
       var ringPos = i + frac * sb;
       var gi = growthNorm(i), gu = growthNorm(i + frac);
       var f = 1;
-      if (prof){
-        var rNom = Math.max(0.4, S + ringPos * p.spacing);
-        f = S * iconRadius(prof, j % segments, ringPos * p.spacing / S) / rNom;
+      if (iconRows){
+        var lv0 = Math.min(ringCount, Math.floor(ringPos)), lf = ringPos - lv0, jm = j % segments;
+        var rr = iconRows[lv0][jm];
+        if (lf > 0 && lv0 < ringCount) rr += (iconRows[lv0 + 1][jm] - rr) * lf;
+        f = S * rr / Math.max(0.4, S + span(ringPos) * p.spacing);
       }
       // wobbleU must match at a closed ring's two ends (same angle), so only
       // the spiral's own advance moves it along the ring
@@ -457,7 +525,7 @@
     return {
       data: data, index: index, verts: nVerts,
       // the icon bend is baked against these; see the re-bake check in render()
-      bakedBase: p.baseRadius, bakedSpacing: p.spacing, hasIcon: !!prof
+      bakedBase: p.baseRadius, bakedSpacing: p.spacing, bakedCurve: pCurve, hasIcon: !!prof
     };
   }
 
@@ -500,10 +568,15 @@
       segments: 240,
       baseRadius: 6,
       spacing: 8,
+      // 1 = evenly spaced; above 1 the rings pack toward the pith and open
+      // toward the bark
+      spacingCurve: 1,
       spiralBlend: 0,
       // centre icon
       icon: '',
       iconAmt: 1,
+      // how quickly the creases at the icon's concave corners round off
+      iconSmooth: 1,
       // large undulation of the whole cross-section, growing toward the bark
       outlineAmt: 58,
       outlineFreq: 1.45,
@@ -554,7 +627,7 @@
   // vertex count, spiralBlend how the rings chain, seed / spacingVarFreq which
   // noise is sampled, icon the shape every ring is bent toward.
   var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon',
-                         'parallelFreq', 'parallelLength'];
+                         'parallelFreq', 'parallelLength', 'iconSmooth'];
   // Not interpolatable: snapped at the midpoint of a morph.
   var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact'];
   var COLOR_KEYS = ['bgColor', 'textColor', 'color'];
@@ -666,6 +739,7 @@
     "uniform float uOutlineGrowth;",
     "uniform float uIconAmt;",
     "uniform float uParallelAmt;",
+    "uniform float uSpacingCurve;",
     "varying float vEdge;",
     "varying float vExtent;",
     "varying float vHalfW;",
@@ -700,18 +774,28 @@
     // sample and both neighbours, so the line direction follows every live
     // deformation. smoothP leaves out the fine wobble — the cursor deform
     // measures distance against it so the wobble cannot facet the line.
+    // ring steps from the pith, along the spacing curve (see span() in
+    // buildGeometry); the outermost ring always lands at the same place
+    "float span(float rp){",
+    "  float n = 1.0 / uRingCountInv;",
+    "  return n * pow(max(rp, 0.0) / n, uSpacingCurve);",
+    "}",
     "vec2 place(vec4 s, float iconF, float par, float wobMod, out vec2 smoothP){",
     "  float ringPos = s.x;",
     "  vec2 dir = vec2(cos(s.z), sin(s.z));",
     "  float ringN = clamp(ringPos * uRingCountInv, 0.0, 1.0);",
-    "  float R = max(0.4, uBaseRadius + ringPos * uSpacing + s.y * uSpacing * uSpacingVarAmt",
+    "  float R = max(0.4, uBaseRadius + span(ringPos) * uSpacing + s.y * uSpacing * uSpacingVarAmt",
     "                + par * uSpacing * uParallelAmt);",
     "  R *= mix(1.0, iconF, uIconAmt);",
     // one low-frequency field shared by every ring, so the rings bend together
     // and stay nested; its amplitude rises toward the bark, the way a real
     // cross-section is round at the pith and lobed at the edge
+    // grows with the ring's distance from the pith rather than its index:
+    // when the spacing curve packs the inner rings in, their small radius
+    // would otherwise carry lobes as large as an evenly spaced ring's
+    "  float spanN = clamp(span(ringPos) * uRingCountInv, 0.0, 1.0);",
     "  float outline = noise3D(vec3(dir * uOutlineFreq + uSeedOffset * 0.37 + 17.0, uWobblePhase * 0.3))",
-    "                * uOutlineAmt * pow(max(ringN, 0.0001), uOutlineGrowth);",
+    "                * uOutlineAmt * pow(max(spanN, 0.0001), uOutlineGrowth);",
     "  float ripple = uRippleAmt * sin((ringN * uRippleFreq - uRipplePhase) * 6.28318530718);",
     "  vec2 center = uEccDir * (uEccentricity * ringPos * uRingCountInv);",
     "  float rs = R + outline + ripple;",
@@ -814,7 +898,7 @@
     // whose circumference tracks the ring's own, so ink and watercolour
     // grain keep the same density on small and large rings and wrap without
     // a seam at angle 0
-    "  vAlong = vec2(cos(aCur.z), sin(aCur.z)) * (uBaseRadius + aCur.x * uSpacing) * 0.09;",
+    "  vAlong = vec2(cos(aCur.z), sin(aCur.z)) * (uBaseRadius + span(aCur.x) * uSpacing) * 0.09;",
     "  float ringNd = clamp(ring * uRingCountInv, 0.0, 1.0);",
     "  float growthWave = 0.5 + 0.5 * cos((ringNd * uGrowthWaveCount - uGrowthPhase) * 6.28318530718);",
     "  vGrowth = mix(1.0, growthWave, uGrowthAmt);",
@@ -942,7 +1026,7 @@
      'uBaseRadius', 'uSpacing', 'uSpacingVarAmt', 'uEccentricity', 'uEccDir', 'uBulgeAmt',
      'uGrowthPhase', 'uGrowthWaveCount', 'uGrowthAmt', 'uRippleAmt', 'uRippleFreq', 'uRipplePhase',
      'uRingWidthVar', 'uRingOpacityVar', 'uRingWobbleVar', 'uRingDrift',
-     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt'
+     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt', 'uSpacingCurve'
     ].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -1004,7 +1088,8 @@
 
     function uploadGeometry(built){
       var g = { vbo: gl.createBuffer(), ibo: null, count: 0, indexType: 0,
-                bakedBase: built.bakedBase, bakedSpacing: built.bakedSpacing, hasIcon: built.hasIcon,
+                bakedBase: built.bakedBase, bakedSpacing: built.bakedSpacing, bakedCurve: built.bakedCurve,
+                hasIcon: built.hasIcon,
                 verts: built.verts };
       var data = built.data, index = built.index;
       gl.bindBuffer(gl.ARRAY_BUFFER, g.vbo);
@@ -1156,6 +1241,7 @@
       gl.uniform1f(U.uOutlineGrowth, Math.max(0, c.outlineGrowth || 0));
       gl.uniform1f(U.uIconAmt, g.hasIcon ? Math.min(1, Math.max(0, c.iconAmt)) : 0);
       gl.uniform1f(U.uParallelAmt, c.parallelAmt || 0);
+      gl.uniform1f(U.uSpacingCurve, Math.max(0.1, c.spacingCurve || 1));
 
       // pass 1: coverage mask with MAX blending
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
@@ -1201,7 +1287,8 @@
       // values the geometry is rebuilt to match — never mid-transition, where
       // the ratio-based bend is a close enough approximation.
       if (!_tr && live.geom && live.geom.hasIcon &&
-          (live.geom.bakedBase !== state.baseRadius || live.geom.bakedSpacing !== state.spacing)){
+          (live.geom.bakedBase !== state.baseRadius || live.geom.bakedSpacing !== state.spacing ||
+           live.geom.bakedCurve !== (state.spacingCurve || 1))){
         regen();
       }
       ensureFBO(canvas.width, canvas.height);

@@ -373,6 +373,9 @@
   window.nenrinArt = art;
   var state = art.state;
 
+  // a profile facing right: forehead, nose, lips, chin and neck give the
+  // concave corners that show how the rings' creases are rounded off
+  var HEAD_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120"><path d="M45 5C25 5 12 20 12 42C12 58 18 68 24 74L27 92L22 118L72 118L67 100C71 97 74 96 78 96C82 96 84 92 83 88L82 84L85 82L83 78L86 75C88 73 86 70 84 68L90 60C92 58 90 55 86 54C84 40 80 22 70 12C63 6 54 5 45 5Z"/></svg>';
   var HEART_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
   // ---------------------------------------------------------------
@@ -638,6 +641,7 @@
     add(slider({ k: 'ringCount', label: '本数', min: 4, max: 300, step: 1, regen: true }));
     add(slider({ k: 'baseRadius', label: '基準半径（中心の空き・アイコンの大きさ）', min: 0, max: 300, step: 1 }));
     add(slider({ k: 'spacing', label: '間隔', min: 1, max: 40, step: 0.1 }));
+    add(slider({ k: 'spacingCurve', label: '間隔の変化（1=均等 / 1超=中心が詰まり外側が開く / 1未満=その逆）', min: 0.4, max: 3, step: 0.05 }));
     add(sub('粗密・偏心'));
     add(slider({ k: 'spacingVarAmt', label: '年輪の粗密（ばらつき量）', min: 0, max: 1, step: 0.01 }));
     add(slider({ k: 'spacingVarFreq', label: 'ばらつきの周波数', min: 0.05, max: 5, step: 0.05, regen: true }));
@@ -668,7 +672,7 @@
   });
 
   // the centre icon widget; its behaviour is wired up further down
-  var iconPreview, iconMsg, iconUploadBtn, iconFile, iconHeartBtn, iconClearBtn;
+  var iconPreview, iconMsg, iconUploadBtn, iconFile, iconHeartBtn, iconHeadBtn, iconClearBtn;
   var iconSection = section('icon', '中心のアイコン', 'Icon', false, function(){
     return state.icon ? 'あり' : 'なし';
   }, function(add){
@@ -679,9 +683,10 @@
     var iconActions = el('div', 'icon-actions');
     iconUploadBtn = el('button', 'small', 'SVG を読み込む');
     var iconSampleRow = el('div', 'row');
-    iconHeartBtn = el('button', 'small', 'ハート（サンプル）');
+    iconHeartBtn = el('button', 'small', 'ハート');
+    iconHeadBtn = el('button', 'small', '横顔');
     iconClearBtn = el('button', 'small danger', '外す');
-    iconSampleRow.appendChild(iconHeartBtn); iconSampleRow.appendChild(iconClearBtn);
+    iconSampleRow.appendChild(iconHeartBtn); iconSampleRow.appendChild(iconHeadBtn); iconSampleRow.appendChild(iconClearBtn);
     iconActions.appendChild(iconUploadBtn); iconActions.appendChild(iconSampleRow);
     iconRow.appendChild(iconPreview); iconRow.appendChild(iconActions);
     iconFile = document.createElement('input');
@@ -691,6 +696,7 @@
     add(iconField);
     currentSection.keys.push('icon');
     add(slider({ k: 'iconAmt', label: 'アイコンの効き（0=円 / 1=アイコン形状）', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'iconSmooth', label: '稜のなめらかさ（くぼみの角が外側ほど丸くなる / 0=角を残す）', min: 0, max: 3, step: 0.05, regen: true }));
   });
 
   section('outline', '外形のうねり', 'Outline', true, function(){
@@ -833,6 +839,7 @@
     reader.readAsText(f);
   });
   iconHeartBtn.addEventListener('click', function(){ setIcon(NenrinArt.svgToIcon(HEART_SVG), 'ハート'); });
+  iconHeadBtn.addEventListener('click', function(){ setIcon(NenrinArt.svgToIcon(HEAD_SVG), '横顔'); });
   iconClearBtn.addEventListener('click', function(){ setIcon('', ''); });
 
   // ---------------------------------------------------------------
@@ -857,7 +864,7 @@
     // the outline undulation and the pressure wander run on the wobble clock too
     if (!s.irregAmt && !s.outlineAmt && !s.widthNoiseAmt) off('wobbleSpeed');
     if (!s.outlineAmt) off('outlineFreq', 'outlineGrowth');
-    if (!s.icon) off('iconAmt');
+    if (!s.icon) off('iconAmt', 'iconSmooth');
     if (!s.breatheAmp) off('breatheSpeed');
     if (!s.growthAmt) off('growthSpeed', 'growthWaveCount');
     if (!s.rippleAmt) off('rippleFreq', 'rippleSpeed');
@@ -914,11 +921,20 @@
   // ---------------------------------------------------------------
   var PRESETS = [
     ['section', '断面 / Section', {}],
-    ['heart', 'ハート / Heart', function(){ return {
-      icon: NenrinArt.svgToIcon(HEART_SVG), scale: 0.88, baseRadius: 95, ringCount: 34, spacing: 9.5,
-      lineWidth: 5.5, lineWidthInner: 0.12, outlineAmt: 55, outlineFreq: 1.4, outlineGrowth: 2.2,
-      irregAmt: 0.4, seed: 7
-    }; }],
+    ['stripe', '太縞 / Stripe', {
+      color: '#111111', textColor: '#111111', ringCount: 13, segments: 360, baseRadius: 6,
+      spacing: 24, spacingCurve: 1.45, spacingVarAmt: 0.05, lineWidth: 22, lineWidthInner: 0.2,
+      lineWidthCurve: 0.8, outlineAmt: 80, outlineFreq: 1.2, outlineGrowth: 1.25,
+      eccentricity: 45, eccentricityAngle: 45, offsetX: -30, offsetY: -30, irregAmt: 0,
+      ringWobbleVar: 0, scale: 0.95, seed: 12
+    }],
+    ['emerge', '萌芽 / Emerge', {
+      bgColor: '#dde2dc', color: '#111111', textColor: '#111111', ringCount: 60, segments: 360,
+      baseRadius: 10, spacing: 8, spacingCurve: 2, lineWidth: 12, lineWidthInner: 0.06,
+      lineWidthCurve: 2.5, ringWidthVar: 0.35, parallelAmt: 0.55, parallelFreq: 2.4,
+      parallelLength: 4, outlineAmt: 110, outlineFreq: 1.5, outlineGrowth: 1.6,
+      eccentricity: 70, eccentricityAngle: 220, irregAmt: 1.5, irregFreq: 6, scale: 0.62, seed: 33
+    }],
     ['sumi', '墨 / Sumi', {
       bgColor: '#f3f0e8', color: '#1e1c1a', lineStyle: 'ink', scale: 0.85, ringCount: 32, spacing: 11.5,
       baseRadius: 10, lineWidth: 7, lineWidthInner: 0.55, outlineAmt: 64, outlineFreq: 1.25,
@@ -944,50 +960,17 @@
       lineWidth: 1.6, lineWidthInner: 0.5, widthAccentEvery: 5, widthAccentAmt: 2.2,
       outlineAmt: 50, seed: 7
     }],
-    ['fine', '繊細 / Fine', {
-      bgColor: '#f4f2ec', color: '#3a3733', opacity: 0.8, ringCount: 80, segments: 200,
-      baseRadius: 50, spacing: 4.2, lineWidth: 0.6, lineWidthInner: 1, spacingVarAmt: 0.25,
-      spacingVarFreq: 0.5, irregAmt: 2, irregFreq: 2.2, eccentricity: 4, eccentricityAngle: 40,
-      outlineAmt: 18, outlineFreq: 1.1, outlineGrowth: 1, ringWidthVar: 0.35, ringOpacityVar: 0.35,
-      ringWobbleVar: 0.4, ringDrift: 3.5, seed: 11
-    }],
     ['bold', 'ラフ / Bold', {
       bgColor: '#efece2', color: '#2c2925', scale: 0.8, ringCount: 34, segments: 240,
       baseRadius: 40, spacing: 14, spacingVarAmt: 0.7, spacingVarFreq: 1.2, irregAmt: 14,
       irregFreq: 2.4, eccentricity: 30, eccentricityAngle: 60, lineWidth: 3, lineWidthInner: 0.7,
       outlineAmt: 30, ringWidthVar: 0.35, ringWobbleVar: 0.4, ringDrift: 3.5, seed: 5
     }],
-    ['calm', '静謐 / Calm', {
-      bgColor: '#f6f4ee', color: '#55503f', opacity: 0.6, ringCount: 55, segments: 200,
-      baseRadius: 45, spacing: 5.2, spacingVarAmt: 0.12, spacingVarFreq: 0.3, irregAmt: 1,
-      irregFreq: 1.3, lineWidth: 0.6, lineWidthInner: 1, outlineAmt: 10, outlineGrowth: 1,
-      wobbleSpeed: 0.05, breatheAmp: 0.005, breatheSpeed: 0.15, deformStrength: 8,
-      deformRadius: 150, growthAmt: 0.15, growthSpeed: 0.05, growthWaveCount: 2, seed: 60
-    }],
     ['growth', '成長 / Growth', {
       bgColor: '#f3efe4', color: '#4a3524', scale: 0.85, ringCount: 75, segments: 200,
       baseRadius: 12, spacing: 5.8, spacingVarAmt: 0.6, spacingVarFreq: 0.8, irregAmt: 5,
       irregFreq: 2.6, eccentricity: 65, eccentricityAngle: 70, lineWidth: 1.2, lineWidthInner: 0.6,
       outlineAmt: 30, wobbleSpeed: 0.2, deformStrength: 32, deformRadius: 210, seed: 71
-    }],
-    ['eccentric', '偏心 / Eccentric', {
-      bgColor: '#f2f0e9', color: '#332e26', ringCount: 70, segments: 200, baseRadius: 8,
-      spacing: 4.2, spacingVarAmt: 0.3, spacingVarFreq: 0.6, irregAmt: 2, irregFreq: 2.5,
-      eccentricity: 140, eccentricityAngle: 0, lineWidth: 1, lineWidthInner: 0.5,
-      outlineAmt: 22, seed: 101
-    }],
-    ['ripple', '波紋 / Ripple', {
-      bgColor: '#f4f2ec', color: '#33302a', scale: 0.8, ringCount: 90, segments: 240,
-      baseRadius: 20, spacing: 5.5, spacingVarAmt: 0.15, spacingVarFreq: 0.4, irregAmt: 1.5,
-      irregFreq: 2, lineWidth: 1, lineWidthInner: 0.5, outlineAmt: 14, deformStrength: 0,
-      rippleAmt: 22, rippleFreq: 5, rippleSpeed: 0.25, seed: 251
-    }],
-    ['vortex', '渦 / Vortex', {
-      bgColor: '#efece2', color: '#201d19', scale: 0.9, ringCount: 64, segments: 200,
-      baseRadius: 8, spacing: 6, spacingVarAmt: 0.2, spacingVarFreq: 0.8, irregAmt: 1.2,
-      irregFreq: 3.2, ringWobbleVar: 0.2, ringDrift: 1, lineWidth: 1.6, lineWidthInner: 0.35,
-      outlineAmt: 26, spiralBlend: 1, wobbleSpeed: 0.22, deformMode: 'fixed', deformType: 'swirl',
-      deformStrength: 150, deformRadius: 260, growthAmt: 0.25, growthWaveCount: 3, seed: 81
     }]
   ];
   var presetGrid = document.getElementById('presetGrid');
@@ -1029,6 +1012,7 @@
       irregFreq: rnd(1, 8),
       eccentricity: Math.random() < 0.6 ? 0 : rnd(10, 120),
       eccentricityAngle: rnd(0, 360),
+      spacingCurve: Math.random() < 0.5 ? 1 : rnd(0.8, 2),
       parallelAmt: Math.random() < 0.4 ? 0 : rnd(0.2, 0.8),
       parallelFreq: rnd(0.8, 3.5),
       parallelLength: rnd(2, 14),
