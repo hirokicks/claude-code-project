@@ -707,6 +707,7 @@
     add(iconField);
     currentSection.keys.push('icon');
     add(slider({ k: 'iconAmt', label: 'アイコンの効き（0=円 / 1=アイコン形状）', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'iconFlow', label: 'アイコンからの広がり方（0=等間隔 / 1=アイコンの形が外まで伝わり、粗密が生まれる）', min: 0, max: 1, step: 0.05, regen: true }));
     add(slider({ k: 'iconSmooth', label: '稜のなめらかさ（アイコンの細部が外側ほど溶ける / 0=角を残す）', min: 0, max: 3, step: 0.05, regen: true }));
   });
 
@@ -887,7 +888,7 @@
     // the outline undulation and the pressure wander run on the wobble clock too
     if (!s.irregAmt && !s.outlineAmt && !s.widthNoiseAmt) off('wobbleSpeed');
     if (!s.outlineAmt) off('outlineFreq', 'outlineGrowth');
-    if (!s.icon) off('iconAmt', 'iconSmooth');
+    if (!s.icon) off('iconAmt', 'iconSmooth', 'iconFlow');
     if (!s.breatheAmp) off('breatheSpeed');
     if (!s.growthAmt) off('growthSpeed', 'growthWaveCount');
     if (!s.rippleAmt) off('rippleFreq', 'rippleSpeed');

@@ -262,18 +262,9 @@
     return len;
   }
 
-  // The rings around an icon at the given distances (icon units, ascending):
-  // per level, a list of closed loops in icon units.
-  function iconRingLoops(icon, levels, smooth){
-    var maxL = levels[levels.length - 1];
-    var H = 1 + maxL * 1.12 + 0.3;               // half-size of the grid, icon units
-    var minStep = levels[0];
-    for (var k = 1; k < levels.length; k++) minStep = Math.min(minStep, levels[k] - levels[k - 1]);
-    // fine enough for several samples between neighbouring rings, within limits
-    var N = Math.max(640, Math.min(1024, Math.ceil(2 * H / Math.max(1e-4, minStep / 8))));
+  // the icon filled into an N x N grid spanning [-H, H] (icon units): 1 inside
+  function rasterIcon(icon, N, H){
     var cell = 2 * H / N;
-
-    // rasterise the icon
     var cv = document.createElement('canvas');
     cv.width = N; cv.height = N;
     var ctx = cv.getContext('2d');
@@ -286,12 +277,80 @@
     });
     ctx.fillStyle = '#000';
     ctx.fill('nonzero');
-    var alpha = ctx.getImageData(0, 0, N, N).data;
+    var alpha = ctx.getImageData(0, 0, N, N).data, mask = new Uint8Array(N * N);
+    for (var p = 0; p < N * N; p++) mask[p] = alpha[p * 4 + 3] > 127 ? 1 : 0;
+    return mask;
+  }
+
+  // The flow around the icon: the harmonic (Laplace) field that is 0 on the
+  // icon and 1 on a circle of radius R around it — how a potential, heat or
+  // a fluid settles between the two. Its flow lines run from every point of
+  // the icon out to the circle, fill the space between without crossing,
+  // and are what the blended rings travel along (see iconRingLoops). Solved
+  // coarse to fine with red-black over-relaxation, returned on a G x G grid
+  // over [-H, H].
+  function harmonicField(icon, H, R, G){
+    var size = 64, phi = null, prev = 0;
+    while (true){
+      var n = size, cell = 2 * H / n, mask = rasterIcon(icon, n, H);
+      var fixed = new Uint8Array(n * n), val = new Float32Array(n * n), x, y, p;
+      for (y = 0; y < n; y++){
+        for (x = 0; x < n; x++){
+          p = y * n + x;
+          var r = Math.hypot((x + 0.5) * cell - H, (y + 0.5) * cell - H);
+          if (mask[p]){ fixed[p] = 1; val[p] = 0; }
+          else if (r >= R || x === 0 || y === 0 || x === n - 1 || y === n - 1){ fixed[p] = 1; val[p] = 1; }
+          else if (phi){
+            // start from the coarser solution
+            var fx = Math.min(prev - 1, Math.max(0, (x + 0.5) * prev / n - 0.5));
+            var fy = Math.min(prev - 1, Math.max(0, (y + 0.5) * prev / n - 0.5));
+            var x0 = Math.min(prev - 2, Math.floor(fx)), y0 = Math.min(prev - 2, Math.floor(fy));
+            var tx = fx - x0, ty = fy - y0, q = y0 * prev + x0;
+            val[p] = (phi[q] * (1 - tx) + phi[q + 1] * tx) * (1 - ty) +
+                     (phi[q + prev] * (1 - tx) + phi[q + prev + 1] * tx) * ty;
+          } else val[p] = r / R;
+        }
+      }
+      var iters = n <= 64 ? 400 : n <= 128 ? 200 : n <= 256 ? 100 : 60;
+      var w = 2 / (1 + Math.sin(Math.PI / n));
+      for (var it = 0; it < iters; it++){
+        for (var col = 0; col < 2; col++){
+          for (y = 1; y < n - 1; y++){
+            for (x = 1 + ((y + col) & 1); x < n - 1; x += 2){
+              p = y * n + x;
+              if (fixed[p]) continue;
+              var g = 0.25 * (val[p - 1] + val[p + 1] + val[p - n] + val[p + n]);
+              val[p] += w * (g - val[p]);
+            }
+          }
+        }
+      }
+      phi = val; prev = n;
+      if (n >= G) break;
+      size = Math.min(G, n * 2);
+    }
+    return phi;
+  }
+
+  // The rings around an icon at the given distances (icon units, ascending):
+  // per level, a list of closed loops in icon units. flow (0..1) mixes the
+  // even distance contours toward the harmonic flow around the icon.
+  function iconRingLoops(icon, levels, smooth, flow){
+    var maxL = levels[levels.length - 1];
+    var H = 1 + maxL * 1.12 + 0.3;               // half-size of the grid, icon units
+    var minStep = levels[0];
+    for (var k = 1; k < levels.length; k++) minStep = Math.min(minStep, levels[k] - levels[k - 1]);
+    // fine enough for several samples between neighbouring rings, within limits
+    var N = Math.max(640, Math.min(1024, Math.ceil(2 * H / Math.max(1e-4, minStep / 8))));
+    var cell = 2 * H / N;
+
+    var mask = rasterIcon(icon, N, H);
 
     // signed distance in icon units: negative inside, positive outside
-    var NN = N * N, out = new Float64Array(NN), inn = new Float64Array(NN), p;
+    var NN = N * N, out = new Float64Array(NN), inn = new Float64Array(NN), p, area = 0;
     for (p = 0; p < NN; p++){
-      var inside = alpha[p * 4 + 3] > 127;
+      var inside = mask[p] === 1;
+      area += mask[p];
       out[p] = inside ? 0 : EDT_INF;
       inn[p] = inside ? EDT_INF : 0;
     }
@@ -329,8 +388,146 @@
       field[p] = cone[p] + blurred[b0][p] + (blurred[b1][p] - blurred[b0][p]) * f;
     }
 
+    if (flow > 0){
+      // The blend: every ring moves from the icon to the outer circle along
+      // the flow lines of the harmonic field, ring k at the same fraction of
+      // the way on every flow line — as a drawn blend between the icon and an
+      // outline does. Where the icon reaches close to the circle the rings
+      // crowd, where it dips far from it they open; the icon's detail is
+      // carried outward and fades evenly, and its corners leave a trail of
+      // kinks with the lines pressed together around it. Flow lines never
+      // cross, so neither do the rings. The fraction is laid out on the grid
+      // (the length along the flow line behind each point, over the whole
+      // length through it) and contoured like the distance.
+      var R = 1 + maxL;
+      var G = Math.min(512, N), gc = 2 * H / G, GG = G * G;
+      var phi = harmonicField(icon, H, R, G);
+      var gMask = rasterIcon(icon, G, H);
+      var lin = new Float32Array(GG), lout = new Float32Array(GG);
+      var done = new Uint8Array(GG), gr = new Float32Array(GG), free = [];
+      var gxv = new Float32Array(GG), gyv = new Float32Array(GG);
+      for (var gy = 0; gy < G; gy++){
+        for (var gx = 0; gx < G; gx++){
+          p = gy * G + gx;
+          gr[p] = Math.hypot((gx + 0.5) * gc - H, (gy + 0.5) * gc - H);
+          if (gx > 0 && gy > 0 && gx < G - 1 && gy < G - 1){
+            gxv[p] = phi[p + 1] - phi[p - 1];
+            gyv[p] = phi[p + G] - phi[p - G];
+          }
+          if (!gMask[p] && gr[p] < R) free.push(p);
+        }
+      }
+      // Each point takes the length at a point one and a half cells back along
+      // the flow, read between cells from only those already settled (the
+      // sweep runs in order of the field, so those lie behind it), plus that
+      // step. A longer step reaches further into settled ground.
+      var STEP = 1.5;
+      function sweep(arr, dirSign, order){
+        for (var oi = 0; oi < order.length; oi++){
+          var q = order[oi];
+          var vx = gxv[q], vy = gyv[q], vl = Math.hypot(vx, vy);
+          var acc = 0, wsum = 0;
+          if (vl > 1e-9){
+            var ux = (q % G) - STEP * dirSign * vx / vl, uy = ((q / G) | 0) - STEP * dirSign * vy / vl;
+            var ix = Math.floor(ux), iy = Math.floor(uy), fx = ux - ix, fy = uy - iy;
+            for (var c = 0; c < 4; c++){
+              var cx = ix + (c & 1), cy = iy + (c >> 1);
+              if (cx < 0 || cy < 0 || cx >= G || cy >= G) continue;
+              var cq = cy * G + cx;
+              if (!done[cq]) continue;
+              var w = ((c & 1) ? fx : 1 - fx) * ((c >> 1) ? fy : 1 - fy) + 1e-6;
+              acc += arr[cq] * w; wsum += w;
+            }
+          }
+          arr[q] = (wsum > 0 ? acc / wsum : 0) + STEP * gc;
+          done[q] = 1;
+        }
+      }
+      free.sort(function (a, b) { return phi[a] - phi[b]; });
+      // behind each point: back down the flow to the icon
+      for (p = 0; p < GG; p++) done[p] = gMask[p];
+      sweep(lin, 1, free);
+      // ahead of it: on up the flow to the circle
+      for (p = 0; p < GG; p++){ done[p] = gr[p] >= R ? 1 : 0; lout[p] = 0; }
+      free.reverse();
+      sweep(lout, -1, free);
+      var tau = new Float32Array(GG);
+      for (p = 0; p < GG; p++){
+        if (gMask[p]) tau[p] = 0;
+        else if (gr[p] >= R) tau[p] = 1 + (gr[p] - R) / maxL;
+        else tau[p] = lin[p] / Math.max(1e-6, lin[p] + lout[p]);
+      }
+      // the sweep leaves a faint ripple of a cell or so; ironed out away from
+      // the icon, where the first rings keep its exact outline
+      var tauS = blurField(tau, G, 2);
+      // Deep in a pocket of the icon (the inside of a U) the flow all but
+      // stops and the fraction along it means little; there the rings fall
+      // back to the even offsets. Measured against how strong the flow
+      // around a disc of the icon's area would be at that radius.
+      var r0 = Math.max(0.05, Math.sqrt(area * cell * cell / Math.PI)), lnR = Math.log(R / r0);
+      var trust = new Float32Array(GG);
+      for (p = 0; p < GG; p++){
+        if (gMask[p] || gr[p] >= R){ trust[p] = 1; continue; }
+        var gref = 1 / (Math.max(gr[p], r0) * lnR);
+        var rel = Math.hypot(gxv[p], gyv[p]) / (2 * gc) / gref;
+        var tt = Math.min(1, Math.max(0, (rel - 0.08) / 0.27));
+        trust[p] = tt * tt * (3 - 2 * tt);
+      }
+      trust = blurField(trust, G, 3);
+      for (var yy = 0; yy < N; yy++){
+        for (var xx = 0; xx < N; xx++){
+          p = yy * N + xx;
+          if (sd[p] <= 0){ field[p] = (1 - flow) * field[p] + flow * sd[p]; continue; }
+          var sx = Math.min(G - 1.001, Math.max(0, (xx + 0.5) * G / N - 0.5));
+          var sy = Math.min(G - 1.001, Math.max(0, (yy + 0.5) * G / N - 0.5));
+          var jx = Math.floor(sx), jy = Math.floor(sy), ax = sx - jx, ay = sy - jy, k0 = jy * G + jx;
+          var tv = (tau[k0] * (1 - ax) + tau[k0 + 1] * ax) * (1 - ay) +
+                   (tau[k0 + G] * (1 - ax) + tau[k0 + G + 1] * ax) * ay;
+          var ts = (tauS[k0] * (1 - ax) + tauS[k0 + 1] * ax) * (1 - ay) +
+                   (tauS[k0 + G] * (1 - ax) + tauS[k0 + G + 1] * ax) * ay;
+          var near = Math.min(1, sd[p] / (4 * gc));
+          tv += (ts - tv) * near;
+          var tw = (trust[k0] * (1 - ax) + trust[k0 + 1] * ax) * (1 - ay) +
+                   (trust[k0 + G] * (1 - ax) + trust[k0 + G + 1] * ax) * ay;
+          var fw = flow * tw;
+          field[p] = (1 - fw) * field[p] + fw * tv * maxL;
+        }
+      }
+    }
+
+    // Every true ring wraps the icon (or one of its parts), or sits in a hole
+    // of the icon. A loop out in the open that wraps nothing is a stray
+    // island where the field merely dips — dropped.
+    var open = new Uint8Array(NN), stack = [];
+    for (p = 0; p < N; p++){ stack.push(p, NN - 1 - p, p * N, p * N + N - 1); }
+    while (stack.length){
+      p = stack.pop();
+      if (open[p] || mask[p]) continue;
+      open[p] = 1;
+      var px = p % N;
+      if (px > 0) stack.push(p - 1);
+      if (px < N - 1) stack.push(p + 1);
+      if (p >= N) stack.push(p - N);
+      if (p < NN - N) stack.push(p + N);
+    }
+    var probes = icon.subs.map(function (sp) { return [(sp[0][0] + H) / cell - 0.5, (sp[0][1] + H) / cell - 0.5]; });
+    function wraps(lp, pt){
+      var inside = false;
+      for (var a2 = 0, b2 = lp.length - 1; a2 < lp.length; b2 = a2++){
+        var pa = lp[a2], pb = lp[b2];
+        if ((pa[1] > pt[1]) !== (pb[1] > pt[1]) &&
+            pt[0] < (pb[0] - pa[0]) * (pt[1] - pa[1]) / (pb[1] - pa[1]) + pa[0]) inside = !inside;
+      }
+      return inside;
+    }
+    function genuine(lp){
+      var g0 = lp[0], cx = Math.min(N - 1, Math.max(0, Math.round(g0[0]))), cy = Math.min(N - 1, Math.max(0, Math.round(g0[1])));
+      if (!open[cy * N + cx]) return true;
+      return probes.some(function (pt) { return wraps(lp, pt); });
+    }
+
     return contourLoops(field, N, levels).map(function (loops) {
-      return loops.map(function (lp) {
+      return loops.filter(genuine).map(function (lp) {
         var pts = lp.map(function (g) { return [(g[0] + 0.5) * cell - H, (g[1] + 0.5) * cell - H]; });
         // a light pass along the curve for what is left of the pixel grid:
         // marching squares places points on cell edges, so neighbouring
@@ -548,7 +745,8 @@
     if (icon && S > 0.5 && ringCount > 1){
       var levels = [];
       for (var lv = 1; lv < ringCount; lv++) levels.push(span(lv) * p.spacing / S);
-      iconLoops = iconRingLoops(icon, levels, Math.max(0, p.iconSmooth || 0));
+      iconLoops = iconRingLoops(icon, levels, Math.max(0, p.iconSmooth || 0),
+                                Math.min(1, Math.max(0, p.iconFlow || 0)));
     }
 
     // Parallel wobble — the gap between neighbouring rings changing along the
@@ -785,6 +983,10 @@
       // how quickly the icon's detail melts away ring by ring (0 = keep the
       // crisp creases of a pure offset)
       iconSmooth: 1,
+      // 0 = rings as evenly spaced offsets of the icon; 1 = a blend from the
+      // icon out to the round rim, so its detail carries outward fading and
+      // the rings crowd and open with its shape (see iconRingLoops)
+      iconFlow: 0,
       // large undulation of the whole cross-section, growing toward the bark
       outlineAmt: 58,
       outlineFreq: 1.45,
@@ -844,7 +1046,7 @@
   // vertex count, spiralBlend how the rings chain, seed / spacingVarFreq which
   // noise is sampled, icon the shape every ring is bent toward.
   var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon',
-                         'parallelFreq', 'parallelLength', 'iconSmooth'];
+                         'parallelFreq', 'parallelLength', 'iconSmooth', 'iconFlow'];
   // Not interpolatable: snapped at the midpoint of a morph.
   var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact'];
   var COLOR_KEYS = ['bgColor', 'textColor', 'color'];
