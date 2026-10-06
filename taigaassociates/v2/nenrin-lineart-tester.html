@@ -190,6 +190,20 @@
   #tabs button.active { background: #1f1f1f; color: #eee; border-color: #2c2c2c; border-bottom: 1px solid #1f1f1f; }
   .tab { display: none; flex-direction: column; gap: 10px; }
   .tab.active { display: flex; }
+  .note { font-size: 10.5px; color: #8a8a8a; line-height: 1.6; }
+  #toast {
+    position: absolute; left: 50%; top: 22px; transform: translateX(-50%); z-index: 6;
+    background: rgba(20,19,17,.9); color: #eee; font-size: 12px; padding: 8px 14px; border-radius: 999px;
+    pointer-events: none; opacity: 0; transition: opacity .25s; max-width: 80%; text-align: center;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err { background: rgba(110,40,30,.92); }
+  #dropHint {
+    position: absolute; inset: 14px; z-index: 6; display: none; align-items: center; justify-content: center;
+    border: 2px dashed rgba(60,60,60,.5); border-radius: 14px; background: rgba(255,255,255,.55);
+    font-size: 15px; color: #333; letter-spacing: .04em; pointer-events: none;
+  }
+  #stage.dragging #dropHint { display: flex; }
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
   .grid3 button { padding: 5px 4px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px; }
@@ -305,13 +319,20 @@
             <div class="label-row" style="margin-top:4px;"><span id="settingsMsg" style="color:#6fae8f;font-size:10px;line-height:1.5;"></span></div>
           </div>
         </div>
+        <div class="panel">
+          <h2>Image <span class="tag">画像から復元</span></h2>
+          <p class="note">「PNG書き出し」で保存した画像には、アートの設定が埋め込まれています。読み込むと同じアートを再生成します。画像をキャンバスにドラッグ＆ドロップしても読み込めます。</p>
+          <button id="importPng" class="small wide">PNG を読み込んで復元</button>
+          <input type="file" id="importPngFile" accept="image/png,.png" hidden>
+          <div class="hint" id="importMsg"></div>
+        </div>
       </div>
 
     </div>
     <div id="footer-actions">
       <button id="randomizeAll" class="primary">🎲 ランダマイズ</button>
       <button id="resetAll">初期化</button>
-      <button id="exportPng">PNG書き出し</button>
+      <button id="exportPng" title="アートの設定を埋め込んだPNGを保存します。書き出しタブの「画像から復元」で同じアートを再生成できます">PNG書き出し</button>
     </div>
   </div>
 
@@ -322,6 +343,8 @@
       <div class="mark">TAIGA ASSOCIATES</div>
       <div class="meta">年輪 LINE STUDY<br><span id="statsLine">—</span></div>
     </div>
+    <div id="dropHint">PNG をドロップしてアートを復元</div>
+    <div id="toast"></div>
     <div id="typeOverlay">
       <div class="line1">Discover New Way</div>
       <div class="line2">新しい価値を紡ぐ</div>
@@ -1025,13 +1048,176 @@
   document.getElementById('resetAll').addEventListener('click', function(){
     applyConfig(NenrinArt.defaultConfig());
   });
-  document.getElementById('exportPng').addEventListener('click', function(){
+  // ---------------------------------------------------------------
+  // PNG with the art inside. An exported image carries the full config — and
+  // the animation phase it was captured at — in an iTXt text chunk, so the
+  // image on its own is enough to regenerate the same art. Recovering the
+  // parameters from the pixels would not be possible: the same picture can
+  // come from many settings.
+  // ---------------------------------------------------------------
+  var PNG_KEY = 'nenrin-lineart';
+  var PNG_SIG = [137, 80, 78, 71, 13, 10, 26, 10];
+  var CRC_TABLE = (function(){
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++){
+      var c = n;
+      for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(bytes){
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function pngChunks(b){
+    var out = [], p = 8, dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    while (p + 12 <= b.length){
+      var len = dv.getUint32(p);
+      var type = String.fromCharCode(b[p + 4], b[p + 5], b[p + 6], b[p + 7]);
+      out.push({ type: type, start: p, data: b.subarray(p + 8, p + 8 + len) });
+      p += 12 + len;
+      if (type === 'IEND') break;
+    }
+    return out;
+  }
+  function isPng(b){
+    return b.length > 8 && PNG_SIG.every(function(v, i){ return b[i] === v; });
+  }
+  // iTXt layout: keyword \0, compression flag, compression method,
+  // language tag \0, translated keyword \0, then UTF-8 text. The five bytes
+  // after the keyword are all zero here: uncompressed, no language.
+  function pngWithSettings(png, payload){
+    var enc = new TextEncoder();
+    var kw = enc.encode(PNG_KEY), text = enc.encode(JSON.stringify(payload));
+    var data = new Uint8Array(kw.length + 5 + text.length);
+    data.set(kw, 0);
+    data.set(text, kw.length + 5);
+    var chunk = new Uint8Array(12 + data.length), dv = new DataView(chunk.buffer);
+    dv.setUint32(0, data.length);
+    chunk.set(enc.encode('iTXt'), 4);
+    chunk.set(data, 8);
+    dv.setUint32(8 + data.length, crc32(chunk.subarray(4, 8 + data.length)));
+    var iend = pngChunks(png).filter(function(c){ return c.type === 'IEND'; })[0];
+    var out = new Uint8Array(png.length + chunk.length);
+    out.set(png.subarray(0, iend.start), 0);
+    out.set(chunk, iend.start);
+    out.set(png.subarray(iend.start), iend.start + chunk.length);
+    return out;
+  }
+  function settingsFromPng(bytes){
+    if (!isPng(bytes)) throw new Error('PNG 画像ではありません');
+    var dec = new TextDecoder(), found = null;
+    pngChunks(bytes).forEach(function(c){
+      if (found || (c.type !== 'iTXt' && c.type !== 'tEXt')) return;
+      var z = c.data.indexOf(0);
+      if (z < 0 || dec.decode(c.data.subarray(0, z)) !== PNG_KEY) return;
+      var start = z + 1;
+      if (c.type === 'iTXt'){
+        start = c.data.indexOf(0, z + 3) + 1;   // past the language tag
+        start = c.data.indexOf(0, start) + 1;   // past the translated keyword
+      }
+      found = JSON.parse(dec.decode(c.data.subarray(start)));
+    });
+    if (!found || !found.config){
+      throw new Error('この画像には設定が埋め込まれていません（このジェネレーターの「PNG書き出し」で保存した画像のみ復元できます）');
+    }
+    return found;
+  }
+
+  // the current frame as a PNG with the settings embedded
+  function capturePng(){
     art.renderNow(); // ensure a fresh frame is in the buffer before capture
-    var link = document.createElement('a');
-    link.download = 'nenrin-lineart.png';
-    link.href = art.canvas.toDataURL('image/png');
-    link.click();
+    var payload = {
+      app: PNG_KEY,
+      runtime: NenrinArt.version,
+      savedAt: new Date().toISOString(),
+      canvas: [art.canvas.width, art.canvas.height],
+      config: art.getConfig(),
+      phase: art.getPhase()
+    };
+    return new Promise(function(resolve, reject){
+      art.canvas.toBlob(function(blob){
+        if (!blob) return reject(new Error('画像を作れませんでした'));
+        blob.arrayBuffer().then(function(buf){
+          resolve(new Blob([pngWithSettings(new Uint8Array(buf), payload)], { type: 'image/png' }));
+        }, reject);
+      }, 'image/png');
+    });
+  }
+  function restoreFromPng(file){
+    return file.arrayBuffer().then(function(buf){
+      var saved = settingsFromPng(new Uint8Array(buf));
+      applyConfig(saved.config);
+      // same phase as the moment of capture, so the first frame is the image
+      if (saved.phase) art.setPhase(saved.phase);
+      return saved;
+    });
+  }
+
+  var toastEl = document.getElementById('toast'), toastTimer = 0;
+  function toast(msg, isErr){
+    toastEl.textContent = msg;
+    toastEl.className = 'show' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.className = isErr ? 'err' : ''; }, isErr ? 5000 : 3000);
+  }
+  var importMsg = document.getElementById('importMsg');
+  function importFile(file){
+    if (!file) return;
+    restoreFromPng(file).then(function(saved){
+      var when = saved.savedAt ? new Date(saved.savedAt).toLocaleString('ja-JP') : '';
+      var msg = '「' + file.name + '」からアートを復元しました' + (when ? '（' + when + ' に書き出し）' : '');
+      importMsg.className = 'hint'; importMsg.textContent = msg;
+      toast(msg);
+    }, function(e){
+      importMsg.className = 'hint err'; importMsg.textContent = e.message;
+      toast(e.message, true);
+    });
+  }
+
+  document.getElementById('exportPng').addEventListener('click', function(){
+    capturePng().then(function(blob){
+      var d = new Date(), pad = function(n){ return (n < 10 ? '0' : '') + n; };
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.download = 'nenrin-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+        + '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) + '.png';
+      link.href = url;
+      link.click();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      toast('PNGを書き出しました（設定入り。「画像から復元」で再生成できます）');
+    }, function(e){ toast(e.message, true); });
   });
+
+  var importPngFile = document.getElementById('importPngFile');
+  document.getElementById('importPng').addEventListener('click', function(){ importPngFile.click(); });
+  importPngFile.addEventListener('change', function(){
+    importFile(importPngFile.files && importPngFile.files[0]);
+    importPngFile.value = '';
+  });
+
+  // drop an exported PNG anywhere on the canvas
+  var stageEl = document.getElementById('stage'), dragDepth = 0;
+  function hasFiles(e){ return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') >= 0; }
+  stageEl.addEventListener('dragenter', function(e){
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth++; stageEl.classList.add('dragging');
+  });
+  stageEl.addEventListener('dragover', function(e){ if (hasFiles(e)) e.preventDefault(); });
+  stageEl.addEventListener('dragleave', function(){
+    if (--dragDepth <= 0){ dragDepth = 0; stageEl.classList.remove('dragging'); }
+  });
+  stageEl.addEventListener('drop', function(e){
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0; stageEl.classList.remove('dragging');
+    importFile(e.dataTransfer.files[0]);
+  });
+
+  // for scripted checks
+  window.nenrinPng = { capture: capturePng, read: settingsFromPng, restore: restoreFromPng };
   document.getElementById('toggle-sidebar').addEventListener('click', function(){
     document.body.classList.toggle('sidebar-hidden');
   });

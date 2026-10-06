@@ -1360,6 +1360,15 @@
       isTransitioning: function () { return !!_tr; },
       regen: regen,
       updateStats: updateStats,
+      // The idle-animation phases (wobble, ripple, growth wave, breathing).
+      // Saving them alongside the config and restoring both reproduces one
+      // exact frame — the tester embeds them in exported PNGs for that.
+      getPhase: function () { return Object.assign({}, live.ph); },
+      setPhase: function (ph) {
+        Object.keys(live.ph).forEach(function (k) {
+          if (ph && typeof ph[k] === 'number' && isFinite(ph[k])) live.ph[k] = ph[k];
+        });
+      },
       // Draw one frame synchronously — needed before canvas.toDataURL().
       // _running is cleared so this extra draw does not queue a second loop.
       renderNow: function () {
