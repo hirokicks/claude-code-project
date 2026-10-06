@@ -906,7 +906,12 @@
     var defaultStage = opts.stage === undefined ? true : !!opts.stage;
 
     var canvas = canvasEl;
-    var gl = canvas.getContext('webgl', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+    // An alpha channel lets renderNow({ transparent: true }) produce a frame
+    // with no background (for transparent PNGs). Normal frames clear to the
+    // opaque background colour, so on the page nothing changes.
+    var gl = canvas.getContext('webgl', {
+      antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true
+    });
     if (!gl) throw new Error('NenrinArt: WebGL is not supported in this browser.');
     var extUint = gl.getExtension('OES_element_index_uint');
 
@@ -1163,11 +1168,14 @@
       if (g.ibo) gl.drawElements(gl.TRIANGLES, g.count, g.indexType, 0);
       else gl.drawArrays(gl.TRIANGLES, 0, g.count);
 
-      // pass 2: composite onto the canvas once
+      // pass 2: composite onto the canvas once. Colour is premultiplied on
+      // the way in, and alpha accumulates as a + dst*(1-a), which keeps a
+      // transparent frame's coverage correct (plain SRC_ALPHA would square it
+      // and thin every soft edge) and changes nothing over an opaque one.
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.blendEquation(gl.FUNC_ADD);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.useProgram(blitProg);
       gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
       gl.vertexAttribPointer(locQuadPos, 2, gl.FLOAT, false, 8, 0);
@@ -1178,7 +1186,10 @@
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
-    function render(){
+    // opts.transparent leaves the background out (renderNow only; the rAF
+    // loop passes a timestamp here, which has no such field)
+    function render(opts){
+      var transparent = !!(opts && opts.transparent);
       _stepTransition();
       var dpr = resize();
       if (canvas.width <= 0 || canvas.height <= 0){
@@ -1197,7 +1208,8 @@
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, canvas.width, canvas.height);
       var bg = hexToRgb(state.bgColor);
-      gl.clearColor(bg[0], bg[1], bg[2], 1);
+      if (transparent) gl.clearColor(0, 0, 0, 0);
+      else gl.clearColor(bg[0], bg[1], bg[2], 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       var nowMs = performance.now();
@@ -1371,10 +1383,12 @@
       },
       // Draw one frame synchronously — needed before canvas.toDataURL().
       // _running is cleared so this extra draw does not queue a second loop.
-      renderNow: function () {
+      // { transparent: true } draws the art with no background; copy the
+      // canvas straight away and call renderNow() again to put it back.
+      renderNow: function (o) {
         var wasRunning = _running;
         _running = false;
-        render();
+        render(o || null);
         _running = wasRunning;
       },
       destroy: destroy
