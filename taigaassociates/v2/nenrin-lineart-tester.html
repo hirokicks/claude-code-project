@@ -671,17 +671,6 @@
     add(slider({ k: 'parallelLength', label: '続く長さ（何本の年輪にわたって続くか）', min: 1, max: 40, step: 0.5, regen: true }));
   });
 
-  section('crease', '詰まりの帯', 'Crease', true, function(){
-    if (!state.creaseAmt && !state.creaseShear) return 'なし';
-    return '詰まり ' + Number(state.creaseAmt).toFixed(2) + ' ・ ずれ ' + Math.round(state.creaseShear);
-  }, function(add){
-    add(slider({ k: 'creaseAmt', label: '詰まり（帯の中で線の間隔が縮む / 0.9で1割まで）', min: 0, max: 0.9, step: 0.01 }));
-    add(slider({ k: 'creaseShear', label: 'ずれ（帯の両側が逆向きにずれる量）', min: -200, max: 200, step: 1 }));
-    add(slider({ k: 'creaseAngle', label: '帯の向き（0=横・90=縦）', min: 0, max: 180, step: 1 }));
-    add(slider({ k: 'creaseOffset', label: '帯の位置（中心からの距離）', min: -500, max: 500, step: 1 }));
-    add(slider({ k: 'creaseWidth', label: '帯の幅（小さいほど鋭い折れ目）', min: 4, max: 300, step: 1 }));
-  });
-
   // the centre icon widget; its behaviour is wired up further down
   var iconPreview, iconMsg, iconUploadBtn, iconFile, iconHeartBtn, iconHeadBtn, iconClearBtn;
   var iconSection = section('icon', '中心のアイコン', 'Icon', false, function(){
@@ -880,7 +869,6 @@
     if (!s.widthNoiseAmt) off('widthNoiseFreq');
     if (!s.spacingVarAmt) off('spacingVarFreq');
     if (!s.parallelAmt) off('parallelFreq', 'parallelLength');
-    if (!s.creaseAmt && !s.creaseShear) off('creaseAngle', 'creaseOffset', 'creaseWidth');
     if (!s.barkWidth) off('barkRough', 'barkDetail', 'barkGap');
     else if (!s.barkRough) off('barkDetail');
     if (!s.eccentricity) off('eccentricityAngle');
@@ -990,6 +978,14 @@
       irregFreq: 2.4, eccentricity: 30, eccentricityAngle: 60, lineWidth: 3, lineWidthInner: 0.7,
       outlineAmt: 30, ringWidthVar: 0.35, ringWobbleVar: 0.4, ringDrift: 3.5, seed: 5
     }],
+    // the head blended out to a rim that sits off-centre and swells: the
+    // rings crowd beside the neck and open wide above, all from the icon
+    ['immersion', '没入 / Immersion', function(){ return {
+      icon: NenrinArt.svgToIcon(HEAD_SVG), iconFlow: 1, color: '#161616', bgColor: '#f2efe9',
+      textColor: '#161616', baseRadius: 150, ringCount: 26, spacing: 9.5, lineWidth: 4.5,
+      eccentricity: 100, eccentricityAngle: 270, outlineAmt: 100, outlineFreq: 1.2, outlineGrowth: 1,
+      irregAmt: 0, spacingVarAmt: 0, scale: 0.9, seed: 44
+    }; }],
     ['growth', '成長 / Growth', {
       bgColor: '#f3efe4', color: '#4a3524', scale: 0.85, ringCount: 75, segments: 200,
       baseRadius: 12, spacing: 5.8, spacingVarAmt: 0.6, spacingVarFreq: 0.8, irregAmt: 5,
@@ -1043,11 +1039,6 @@
       parallelAmt: Math.random() < 0.4 ? 0 : rnd(0.2, 0.8),
       parallelFreq: rnd(0.8, 3.5),
       parallelLength: rnd(2, 14),
-      creaseAmt: Math.random() < 0.7 ? 0 : rnd(0.3, 0.85),
-      creaseShear: Math.random() < 0.7 ? 0 : rnd(-80, 80),
-      creaseAngle: rnd(0, 180),
-      creaseOffset: rnd(-150, 150),
-      creaseWidth: rnd(15, 120),
       lineWidthCurve: rnd(0.5, 2),
       widthAccentEvery: Math.random() < 0.75 ? 0 : 3 + (Math.random() * 6 | 0),
       widthAccentAmt: rnd(0.5, 2),

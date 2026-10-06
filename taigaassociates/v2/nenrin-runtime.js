@@ -997,15 +997,6 @@
       parallelAmt: 0,
       parallelFreq: 1.6,
       parallelLength: 6,
-      // a crease: one straight band across the whole piece where every line
-      // is pressed closer together (amount 0..0.9 — the gap inside shrinks
-      // to 1 - amount) and the two sides slide past each other (shear, in
-      // px), as in a folded or sheared stack of lines. Lines never cross.
-      creaseAmt: 0,
-      creaseShear: 0,
-      creaseAngle: 30,
-      creaseOffset: 0,
-      creaseWidth: 40,
       spacingVarAmt: 0.12,
       spacingVarFreq: 0.7,
       eccentricity: 0,
@@ -1058,7 +1049,7 @@
   // transition leaves these alone so only the form changes.
   var STAGING_KEYS = ['scale', 'offsetX', 'offsetY'];
   // interpolated the short way round, so 350 -> 10 moves 20 degrees, not 340
-  var ANGLE_KEYS = ['eccentricityAngle', 'widthDirAngle', 'creaseAngle'];
+  var ANGLE_KEYS = ['eccentricityAngle', 'widthDirAngle'];
   function lerpAngle(a, b, t) {
     var d = ((b - a) % 360 + 540) % 360 - 180;
     return a + d * t;
@@ -1159,9 +1150,7 @@
     "uniform float uIconAmt;",
     "uniform float uParallelAmt;",
     "uniform float uSpacingCurve;",
-    "uniform vec4 uBark;",
-    "uniform vec4 uCrease;",   // band direction (x, y), offset px, width px
-    "uniform vec2 uCreaseK;",  // compression amount, shear px   // thickness px, roughness, gap px, detail
+    "uniform vec4 uBark;",   // thickness px, roughness, gap px, detail
     "varying float vEdge;",
     "varying float vExtent;",
     "varying float vHalfW;",
@@ -1202,19 +1191,6 @@
     "  float n = 1.0 / uRingCountInv;",
     "  return n * pow(max(rp, 0.0) / n, uSpacingCurve);",
     "}",
-    // The crease: a monotonic warp across the band, so it squeezes and slides
-    // the plane but can never fold it — whatever was nested stays nested.
-    // Across the band u maps to u - amt*w*tanh(u/w) (slope 1 - amt at the
-    // centre, 1 outside), and along it the sides shift by +-shear*tanh(u/w).
-    "vec2 crease(vec2 q){",
-    "  if (uCreaseK.x <= 0.0 && uCreaseK.y == 0.0) return q;",
-    "  vec2 t = uCrease.xy, n = vec2(-t.y, t.x);",
-    "  float w = uCrease.w;",
-    "  float x = (dot(q, n) - uCrease.z) / w;",
-    "  float e = exp(-2.0 * abs(x));",
-    "  float th = sign(x) * (1.0 - e) / (1.0 + e);",
-    "  return q - n * (uCreaseK.x * w * th) + t * (uCreaseK.y * th);",
-    "}",
     "vec2 place(vec4 s, float iconF, float par, float wobMod, out vec2 smoothP){",
     "  float ringPos = s.x;",
     "  vec2 dir = vec2(cos(s.z), sin(s.z));",
@@ -1249,8 +1225,6 @@
     "  float bulge = 1.0 + uBulgeAmt * sin(ringN * 3.14159265);",
     "  smoothP = (center + dir * rs) * bulge;",
     "  vec2 p = (center + dir * (rs + wob)) * bulge;",
-    "  smoothP = crease(smoothP);",
-    "  p = crease(p);",
     "  float d = distance(smoothP, uAnchorLocal);",
     "  float influence = exp(-(d*d) / (2.0 * uDeformRadius * uDeformRadius + 0.001));",
     "  vec2 rel = smoothP - uAnchorLocal;",
@@ -1487,8 +1461,7 @@
      'uBaseRadius', 'uSpacing', 'uSpacingVarAmt', 'uEccentricity', 'uEccDir', 'uBulgeAmt',
      'uGrowthPhase', 'uGrowthWaveCount', 'uGrowthAmt', 'uRippleAmt', 'uRippleFreq', 'uRipplePhase',
      'uRingWidthVar', 'uRingOpacityVar', 'uRingWobbleVar', 'uRingDrift',
-     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt', 'uSpacingCurve', 'uBark',
-     'uCrease', 'uCreaseK'
+     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt', 'uSpacingCurve', 'uBark'
     ].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -1707,11 +1680,6 @@
       // the bark scales with the art, like the line width
       gl.uniform4f(U.uBark, Math.max(0, c.barkWidth || 0) * dpr * c.scale, c.barkRough || 0,
                    (c.barkGap || 0) * dpr * c.scale, Math.max(0.2, c.barkDetail || 4));
-
-      var crRad = (c.creaseAngle || 0) * Math.PI / 180;
-      gl.uniform4f(U.uCrease, Math.cos(crRad), Math.sin(crRad), c.creaseOffset || 0,
-                   Math.max(1, c.creaseWidth || 40));
-      gl.uniform2f(U.uCreaseK, Math.min(0.9, Math.max(0, c.creaseAmt || 0)), c.creaseShear || 0);
 
       // pass 1: coverage mask with MAX blending
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
