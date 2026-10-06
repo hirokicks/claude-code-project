@@ -52,7 +52,6 @@
   // any SVG. Keeping to that subset means the runtime reads it synchronously
   // and without the DOM, and the string travels inside an exported config like
   // any other value.
-  var ICON_SAMPLES = 480;
   var _iconCache = {};
 
   function parseIcon(str){
@@ -74,111 +73,279 @@
     subs = subs.filter(function (s) { return s.length >= 6; });
     if (!subs.length) return (_iconCache[str] = null);
 
-    // every subpath is treated as closed
-    var edges = [], perimeter = 0;
-    subs.forEach(function (s) {
-      var n = s.length / 2;
-      for (var k = 0; k < n; k++){
-        var k1 = (k + 1) % n;
-        edges.push(s[2*k], s[2*k+1], s[2*k1], s[2*k1+1]);
-        perimeter += Math.hypot(s[2*k1] - s[2*k], s[2*k1+1] - s[2*k+1]);
-      }
-    });
-    // evenly spaced boundary samples for the offset rings (see iconRadius);
-    // every original vertex is kept so corners such as a heart's tip and notch
-    // are represented exactly
-    var step = perimeter / ICON_SAMPLES || 1, pts = [];
-    for (var e = 0; e < edges.length; e += 4){
-      var ax = edges[e], ay = edges[e+1], bx = edges[e+2], by = edges[e+3];
-      var n2 = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / step));
-      for (var q = 0; q < n2; q++){
-        var f = q / n2;
-        pts.push(ax + (bx - ax) * f, ay + (by - ay) * f);
-      }
-    }
-    var icon = { edges: new Float64Array(edges), pts: new Float64Array(pts) };
+    var icon = {
+      // every subpath is treated as closed; [x, y] lists, for drawing the
+      // icon ring itself and rasterising the distance field (iconRingLoops)
+      subs: subs.map(function (sp) {
+        var o = [];
+        for (var q = 0; q < sp.length; q += 2) o.push([sp[q], sp[q + 1]]);
+        return o;
+      })
+    };
     _iconCache[str] = icon;
     return icon;
   }
 
-  // Everything about the icon that a ring at angle j needs but that does not
-  // depend on which ring is asking: where that ray leaves the icon, and where
-  // each boundary sample sits along and across the ray.
-  function iconProfile(icon, segments){
-    var M = icon.pts.length / 2, E = icon.edges;
-    var proj = new Float32Array(segments * M), perp2 = new Float32Array(segments * M);
-    var r0 = new Float32Array(segments);
-    for (var j = 0; j < segments; j++){
-      var th = j / segments * Math.PI * 2, dx = Math.cos(th), dy = Math.sin(th);
-      for (var q = 0; q < M; q++){
-        var px = icon.pts[2*q], py = icon.pts[2*q+1];
-        var pr = px * dx + py * dy;
-        proj[j*M + q] = pr;
-        perp2[j*M + q] = Math.max(0, px*px + py*py - pr*pr);
+  // =================================================================
+  // Icon rings as contours of a distance field
+  // =================================================================
+  // Every ring around an icon is a contour line of one field: the distance
+  // from the icon. Contours of a single field keep an even gap and can never
+  // touch or cross, and because they are real 2D curves rather than one
+  // radius per direction, they follow shapes that fold back on themselves —
+  // under a chin, round a neck — instead of jumping across them.
+  //
+  // To let the icon's detail melt away with distance, the field is blurred
+  // more the further a point is from the icon (sigma = 0.5 * iconSmooth *
+  // distance): the first ring is a crisp offset of the icon, the creases at
+  // its concave corners soften ring by ring, and far out the rings are
+  // smooth closed curves that still carry the icon's broad shape. What gets
+  // blurred is the field minus a plain cone (the distance from the centre),
+  // so the blur rounds the shape without pulling the rings inward and stays
+  // well-behaved at the edges of the grid.
+  var EDT_INF = 1e20;
+  function edt1d(f, n, d, v, z){
+    var k = 0;
+    v[0] = 0; z[0] = -EDT_INF; z[1] = EDT_INF;
+    for (var q = 1; q < n; q++){
+      var s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]){
+        k--;
+        s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
       }
-      // outermost crossing of the ray with the outline: solve t*dir = a + s*edge
-      var best = 0;
-      for (var e = 0; e < E.length; e += 4){
-        var ax = E[e], ay = E[e+1], ex = E[e+2] - ax, ey = E[e+3] - ay;
-        var den = dx * ey - dy * ex;
-        if (Math.abs(den) < 1e-12) continue;
-        var tt = (ax * ey - ay * ex) / den;
-        var ss = (ax * dy - ay * dx) / den;
-        if (ss >= 0 && ss <= 1 && tt > best) best = tt;
-      }
-      r0[j] = best;
+      k++; v[k] = q; z[k] = s; z[k + 1] = EDT_INF;
     }
-    return { M: M, proj: proj, perp2: perp2, r0: r0 };
+    k = 0;
+    for (q = 0; q < n; q++){
+      while (z[k + 1] < q) k++;
+      var dq = q - v[k];
+      d[q] = dq * dq + f[v[k]];
+    }
   }
-
-  // Radius, along angle j, of the icon grown outward by distance dn (both in
-  // icon units). Each ring is a true parallel offset of the icon — the outer
-  // edge of a band of width dn around it — rather than a scaled copy. That is
-  // what makes the rings soften naturally as they move out: a heart's notch
-  // fills in and its tip rounds off, and far enough out the ring is simply
-  // round. The offset is the union of discs of radius dn centred on the
-  // outline, so along the ray it is the farthest disc exit.
-  function iconRadius(prof, j, dn){
-    var r = prof.r0[j];
-    if (dn > 0){
-      var M = prof.M, b = j * M, d2 = dn * dn, proj = prof.proj, perp2 = prof.perp2;
-      for (var q = 0; q < M; q++){
-        var p2 = perp2[b + q];
-        if (p2 <= d2){
-          var c = proj[b + q] + Math.sqrt(d2 - p2);
-          if (c > r) r = c;
+  // exact squared Euclidean distance transform (Felzenszwalb & Huttenlocher)
+  function edtSquared(grid, N){
+    var f = new Float64Array(N), d = new Float64Array(N), v = new Int32Array(N), z = new Float64Array(N + 1);
+    var x, y;
+    for (x = 0; x < N; x++){
+      for (y = 0; y < N; y++) f[y] = grid[y * N + x];
+      edt1d(f, N, d, v, z);
+      for (y = 0; y < N; y++) grid[y * N + x] = d[y];
+    }
+    for (y = 0; y < N; y++){
+      for (x = 0; x < N; x++) f[x] = grid[y * N + x];
+      edt1d(f, N, d, v, z);
+      for (x = 0; x < N; x++) grid[y * N + x] = d[x];
+    }
+  }
+  // three separable box passes, a close match to a gaussian of sigma cells
+  function blurField(src, N, sigma){
+    var a = new Float32Array(src);
+    if (!(sigma > 0.5)) return a;
+    var r = Math.max(1, Math.round((Math.sqrt(4 * sigma * sigma + 1) - 1) / 2));
+    var b = new Float32Array(src.length), pre = new Float64Array(N + 1), x, y, lo, hi;
+    for (var pass = 0; pass < 3; pass++){
+      for (y = 0; y < N; y++){
+        var row = y * N;
+        for (x = 0; x < N; x++) pre[x + 1] = pre[x] + a[row + x];
+        for (x = 0; x < N; x++){
+          lo = Math.max(0, x - r); hi = Math.min(N, x + r + 1);
+          b[row + x] = (pre[hi] - pre[lo]) / (hi - lo);
+        }
+      }
+      for (x = 0; x < N; x++){
+        for (y = 0; y < N; y++) pre[y + 1] = pre[y] + b[y * N + x];
+        for (y = 0; y < N; y++){
+          lo = Math.max(0, y - r); hi = Math.min(N, y + r + 1);
+          a[y * N + x] = (pre[hi] - pre[lo]) / (hi - lo);
         }
       }
     }
-    return r;
+    return a;
   }
 
-  // Rounds off the creases a parallel offset keeps wherever the icon is
-  // concave — between a heart's lobes, under a nose or a chin. A true offset
-  // carries a sharp V there for many rings; a drawn contour lets it melt into
-  // a smooth curve. This is a circular gaussian along the ring (three box
-  // passes) whose width, in arc length, is sigmaArc; the caller grows it with
-  // the distance from the icon, so the first ring is still the icon itself.
-  function smoothRing(row, sigmaArc){
-    var n = row.length;
-    if (!(sigmaArc > 0)) return;
-    var mean = 0;
-    for (var i = 0; i < n; i++) mean += row[i];
-    mean /= n;
-    var sigma = sigmaArc / (2 * Math.PI * Math.max(mean, 1e-3) / n);   // in samples
-    if (sigma < 0.3) return;
-    // three passes of a box of width w give variance 3 * (w*w - 1) / 12
-    var rad = Math.max(1, Math.min(Math.floor(n / 2) - 1, Math.round((Math.sqrt(4 * sigma * sigma + 1) - 1) / 2)));
-    var tmp = new Float32Array(n), w = 2 * rad + 1;
-    for (var pass = 0; pass < 3; pass++){
-      var acc = 0;
-      for (var k = -rad; k <= rad; k++) acc += row[(k + n) % n];
-      for (var c = 0; c < n; c++){
-        tmp[c] = acc / w;
-        acc += row[(c + rad + 1) % n] - row[(c - rad + n) % n];
-      }
-      row.set(tmp);
+  // Closed contours of field (N x N, sampled at pixel centres) at each of
+  // the ascending levels, by marching squares in a single pass over the grid.
+  // Returns, per level, a list of loops of [gx, gy] grid coordinates.
+  function contourLoops(field, N, levels){
+    var L = levels.length, segs = [], pts = [];
+    for (var l = 0; l < L; l++){ segs.push([]); pts.push(new Map()); }
+    function firstAbove(v){            // first level index strictly above v
+      var lo = 0, hi = L;
+      while (lo < hi){ var mid = (lo + hi) >> 1; if (levels[mid] > v) hi = mid; else lo = mid + 1; }
+      return lo;
     }
+    for (var j = 0; j < N - 1; j++){
+      for (var i = 0; i < N - 1; i++){
+        var a = field[j * N + i], b = field[j * N + i + 1];
+        var c = field[(j + 1) * N + i + 1], d = field[(j + 1) * N + i];
+        var mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d);
+        for (var li = firstAbove(mn); li < L && levels[li] <= mx; li++){
+          var lv = levels[li], m = pts[li];
+          var cs = (a >= lv ? 1 : 0) | (b >= lv ? 2 : 0) | (c >= lv ? 4 : 0) | (d >= lv ? 8 : 0);
+          // edge keys: top, right, bottom, left of this cell
+          var kT = 2 * (j * N + i), kR = 2 * (j * N + i + 1) + 1;
+          var kB = 2 * ((j + 1) * N + i), kL = 2 * (j * N + i) + 1;
+          if (!m.has(kT) && ((cs & 1) !== ((cs >> 1) & 1))) m.set(kT, [i + (lv - a) / (b - a), j]);
+          if (!m.has(kR) && (((cs >> 1) & 1) !== ((cs >> 2) & 1))) m.set(kR, [i + 1, j + (lv - b) / (c - b)]);
+          if (!m.has(kB) && (((cs >> 3) & 1) !== ((cs >> 2) & 1))) m.set(kB, [i + (lv - d) / (c - d), j + 1]);
+          if (!m.has(kL) && ((cs & 1) !== ((cs >> 3) & 1))) m.set(kL, [i, j + (lv - a) / (d - a)]);
+          var sg = segs[li], centreHigh = (a + b + c + d) * 0.25 >= lv;
+          switch (cs){
+            case 1: case 14: sg.push(kL, kT); break;
+            case 2: case 13: sg.push(kT, kR); break;
+            case 3: case 12: sg.push(kL, kR); break;
+            case 4: case 11: sg.push(kR, kB); break;
+            case 6: case 9:  sg.push(kT, kB); break;
+            case 7: case 8:  sg.push(kL, kB); break;
+            case 5:
+              if (centreHigh){ sg.push(kT, kR); sg.push(kB, kL); }
+              else { sg.push(kL, kT); sg.push(kR, kB); }
+              break;
+            case 10:
+              if (centreHigh){ sg.push(kL, kT); sg.push(kR, kB); }
+              else { sg.push(kT, kR); sg.push(kB, kL); }
+              break;
+          }
+        }
+      }
+    }
+    // link the segments of each level into closed loops
+    return segs.map(function (sg, li) {
+      var m = pts[li], ends = new Map(), used = new Uint8Array(sg.length / 2), loops = [];
+      for (var s2 = 0; s2 < sg.length; s2 += 2){
+        [sg[s2], sg[s2 + 1]].forEach(function (k) {
+          var e = ends.get(k);
+          if (e) e.push(s2 / 2); else ends.set(k, [s2 / 2]);
+        });
+      }
+      for (var s3 = 0; s3 < used.length; s3++){
+        if (used[s3]) continue;
+        var loop = [], seg = s3, from = sg[2 * s3];
+        while (seg >= 0 && !used[seg]){
+          used[seg] = 1;
+          var to = sg[2 * seg] === from ? sg[2 * seg + 1] : sg[2 * seg];
+          loop.push(m.get(from));
+          var nx = (ends.get(to) || []).filter(function (q) { return q !== seg && !used[q]; });
+          from = to;
+          seg = nx.length ? nx[0] : -1;
+        }
+        if (loop.length >= 6) loops.push(loop);
+      }
+      return loops;
+    });
+  }
+
+  // points evenly spaced along a closed loop
+  function resampleLoop(loop, n){
+    var len = 0, acc = [0], k;
+    for (k = 0; k < loop.length; k++){
+      var p = loop[k], q = loop[(k + 1) % loop.length];
+      len += Math.hypot(q[0] - p[0], q[1] - p[1]);
+      acc.push(len);
+    }
+    var out = [], seg = 0;
+    for (var t = 0; t < n; t++){
+      var target = t / n * len;
+      while (seg < loop.length - 1 && acc[seg + 1] < target) seg++;
+      var a = loop[seg], b = loop[(seg + 1) % loop.length], sl = acc[seg + 1] - acc[seg];
+      var f = sl > 0 ? (target - acc[seg]) / sl : 0;
+      out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+    }
+    return out;
+  }
+  function loopLength(loop){
+    var len = 0;
+    for (var k = 0; k < loop.length; k++){
+      var p = loop[k], q = loop[(k + 1) % loop.length];
+      len += Math.hypot(q[0] - p[0], q[1] - p[1]);
+    }
+    return len;
+  }
+
+  // The rings around an icon at the given distances (icon units, ascending):
+  // per level, a list of closed loops in icon units.
+  function iconRingLoops(icon, levels, smooth){
+    var maxL = levels[levels.length - 1];
+    var H = 1 + maxL * 1.12 + 0.3;               // half-size of the grid, icon units
+    var minStep = levels[0];
+    for (var k = 1; k < levels.length; k++) minStep = Math.min(minStep, levels[k] - levels[k - 1]);
+    // fine enough for several samples between neighbouring rings, within limits
+    var N = Math.max(640, Math.min(1024, Math.ceil(2 * H / Math.max(1e-4, minStep / 8))));
+    var cell = 2 * H / N;
+
+    // rasterise the icon
+    var cv = document.createElement('canvas');
+    cv.width = N; cv.height = N;
+    var ctx = cv.getContext('2d');
+    ctx.setTransform(1 / cell, 0, 0, 1 / cell, N / 2, N / 2);
+    ctx.beginPath();
+    icon.subs.forEach(function (sp) {
+      ctx.moveTo(sp[0][0], sp[0][1]);
+      for (var q = 1; q < sp.length; q++) ctx.lineTo(sp[q][0], sp[q][1]);
+      ctx.closePath();
+    });
+    ctx.fillStyle = '#000';
+    ctx.fill('nonzero');
+    var alpha = ctx.getImageData(0, 0, N, N).data;
+
+    // signed distance in icon units: negative inside, positive outside
+    var NN = N * N, out = new Float64Array(NN), inn = new Float64Array(NN), p;
+    for (p = 0; p < NN; p++){
+      var inside = alpha[p * 4 + 3] > 127;
+      out[p] = inside ? 0 : EDT_INF;
+      inn[p] = inside ? EDT_INF : 0;
+    }
+    edtSquared(out, N);
+    edtSquared(inn, N);
+    var sd = new Float32Array(NN), cone = new Float32Array(NN), res = new Float32Array(NN);
+    for (var y = 0; y < N; y++){
+      for (var x = 0; x < N; x++){
+        p = y * N + x;
+        var v = out[p] > 0 ? (Math.sqrt(out[p]) - 0.5) : -(Math.sqrt(inn[p]) - 0.5);
+        sd[p] = v * cell;
+        cone[p] = Math.hypot((x + 0.5) * cell - H, (y + 0.5) * cell - H);
+        res[p] = sd[p] - cone[p];
+      }
+    }
+
+    // Blur growing with the distance from the icon: a few fixed blur levels,
+    // mixed per pixel according to that pixel's own distance. The weakest is
+    // never below one pixel, which irons out the staircase the rasterised
+    // outline leaves in the nearest contours without touching the shape.
+    var SIGMA_MIN = 1;
+    var sigmaMax = Math.max(SIGMA_MIN, smooth > 0 ? 0.5 * smooth * maxL / cell : 0);
+    var B = sigmaMax > SIGMA_MIN * 1.5 ? 6 : 1, blurred = [];
+    for (var bi = 0; bi < B; bi++){
+      blurred.push(blurField(res, N, B > 1 ? SIGMA_MIN + (sigmaMax - SIGMA_MIN) * bi / (B - 1) : SIGMA_MIN));
+    }
+    var field = new Float32Array(NN);
+    for (p = 0; p < NN; p++){
+      var t = 0;
+      if (B > 1){
+        var want = Math.max(SIGMA_MIN, 0.5 * smooth * Math.max(0, sd[p]) / cell);
+        t = Math.min(B - 1, (want - SIGMA_MIN) / (sigmaMax - SIGMA_MIN) * (B - 1));
+      }
+      var b0 = Math.floor(t), b1 = Math.min(B - 1, b0 + 1), f = t - b0;
+      field[p] = cone[p] + blurred[b0][p] + (blurred[b1][p] - blurred[b0][p]) * f;
+    }
+
+    return contourLoops(field, N, levels).map(function (loops) {
+      return loops.map(function (lp) {
+        var pts = lp.map(function (g) { return [(g[0] + 0.5) * cell - H, (g[1] + 0.5) * cell - H]; });
+        // a light pass along the curve for what is left of the pixel grid:
+        // marching squares places points on cell edges, so neighbouring
+        // points carry a little sideways jitter
+        for (var pass = 0; pass < 2; pass++){
+          var sm = [];
+          for (var q = 0; q < pts.length; q++){
+            var a = pts[(q - 1 + pts.length) % pts.length], b = pts[q], c = pts[(q + 1) % pts.length];
+            sm.push([(a[0] + 2 * b[0] + c[0]) / 4, (a[1] + 2 * b[1] + c[1]) / 4]);
+          }
+          pts = sm;
+        }
+        return pts;
+      });
+    });
   }
 
   // Turns any SVG into the icon string the config stores. Needs a browser:
@@ -375,69 +542,13 @@
 
     var icon = parseIcon(p.icon);
     var S = p.baseRadius;
-    var prof = (icon && S > 0.5) ? iconProfile(icon, segments) : null;
-    // The icon bend of every whole ring; a sample part-way along a spiral
-    // interpolates between the two rings around it. Two ways of growing out
-    // from the icon, mixed by iconBlend:
-    //   offset (0) — each ring a fixed distance further out: even spacing
-    //     everywhere, the icon's concave corners rounded off by iconSmooth.
-    //   blend  (1) — each ring a fixed fraction of the way from the icon's
-    //     outline to the outermost ring. Where the icon reaches out toward
-    //     the rim (a face, a neck) the rings have little room and gather into
-    //     tight, almost overlapping bundles; where it is far from the rim they
-    //     open out. Blended rings never cross, so the spacing floors that
-    //     protect the offset rings are relaxed in proportion.
-    var iconRows = null;
-    if (prof){
-      iconRows = [];
-      var blend = Math.max(0, Math.min(1, p.iconBlend === undefined ? 1 : p.iconBlend));
-      var prevDn = 0;
-      // The outermost ring, in icon units: every blended ring heads for it,
-      // so along any direction the rings share out the gap between the icon
-      // and the rim evenly — and a narrow gap makes a tight bundle.
-      // iconOuter gives the rim the icon's own silhouette, broadly smoothed
-      // and enlarged. Then the gap is narrowest along the directions of the
-      // icon's concave parts (under a chin, at the nape, between a heart's
-      // lobes), so the rings gather along those ridges, as in a drawn
-      // contour piece; at 0 the rim is round and the rings gather wherever
-      // the icon reaches out toward it instead.
-      var rOuter = (S + N1 * p.spacing) / S;
-      var kOuter = Math.max(0, Math.min(1, p.iconOuter || 0));
-      var rim = new Float32Array(segments);
-      for (var rj = 0; rj < segments; rj++) rim[rj] = prof.r0[rj];
-      smoothRing(rim, 0.35);
-      var rimMax = 0;
-      for (rj = 0; rj < segments; rj++) rimMax = Math.max(rimMax, rim[rj]);
-      for (rj = 0; rj < segments; rj++){
-        rim[rj] = rOuter * (1 - kOuter + kOuter * rim[rj] / (rimMax || 1));
-      }
-      for (var lv = 0; lv <= ringCount; lv++){
-        var sp = span(lv), dn = sp * p.spacing / S, t = sp / N1;
-        var row = new Float32Array(segments);
-        for (var jj = 0; jj < segments; jj++){
-          var off = iconRadius(prof, jj, dn);
-          var mixed = prof.r0[jj] * (1 - t) + rim[jj] * t;
-          row[jj] = off + (mixed - off) * blend;
-        }
-        var sm = (p.iconSmooth || 0) * dn;
-        if (lv > 0){
-          var prev = iconRows[lv - 1];
-          if (sm > 0) smoothRing(row, sm);
-          // Smoothing pulls convex points (a nose tip, the corners of a flat
-          // base) inward. An offset ring may come at most 30% closer to the
-          // icon than its true offset — floors that are evenly spaced, so
-          // nothing packs into a band; a blended ring only has to stay
-          // outside the ring before it, which is what lets it bunch.
-          for (jj = 0; jj < segments; jj++){
-            var floorR = iconRadius(prof, jj, dn * 0.7) * (1 - blend) + prev[jj] * blend;
-            if (row[jj] < floorR) row[jj] = floorR;
-          }
-          var gap = (dn - prevDn) * (0.15 * (1 - blend) + 0.02 * blend);
-          for (jj = 0; jj < segments; jj++) if (row[jj] < prev[jj] + gap) row[jj] = prev[jj] + gap;
-        }
-        prevDn = dn;
-        iconRows.push(row);
-      }
+    // With an icon, every ring is a contour of the distance from it (see
+    // iconRingLoops): ring k sits span(k) steps out, the icon itself is ring 0.
+    var iconLoops = null;
+    if (icon && S > 0.5 && ringCount > 1){
+      var levels = [];
+      for (var lv = 1; lv < ringCount; lv++) levels.push(span(lv) * p.spacing / S);
+      iconLoops = iconRingLoops(icon, levels, Math.max(0, p.iconSmooth || 0));
     }
 
     // Parallel wobble — the gap between neighbouring rings changing along the
@@ -498,19 +609,43 @@
       var ringPos = i + frac * sb;
       var gi = growthNorm(i), gu = growthNorm(i + frac);
       var f = 1;
-      if (iconRows){
-        var lv0 = Math.min(ringCount, Math.floor(ringPos)), lf = ringPos - lv0, jm = j % segments;
-        var rr = iconRows[lv0][jm];
-        if (lf > 0 && lv0 < ringCount) rr += (iconRows[lv0 + 1][jm] - rr) * lf;
-        f = S * rr / Math.max(0.4, S + span(ringPos) * p.spacing);
-      }
       // wobbleU must match at a closed ring's two ends (same angle), so only
       // the spiral's own advance moves it along the ring
       return [ringPos, gi + (gu - gi) * sb, frac * Math.PI * 2, i + sb * frac, f, i, parallelAt(ringPos, j)];
     }
 
+    // One icon ring sample: the point's own angle from the centre, and an
+    // iconF that scales the plain ring's radius out to the point's distance —
+    // so the shader lands exactly on it while every other effect (outline,
+    // wobble, deform) still applies on top. The angle does not have to rise
+    // steadily along the loop; that is what lets a ring fold under a chin.
+    function iconSample(k, pt){
+      var r = Math.hypot(pt[0], pt[1]), th = Math.atan2(pt[1], pt[0]);
+      var ji = Math.round(((th / (Math.PI * 2)) % 1 + 1) % 1 * segments) % segments;
+      return [k, growthNorm(k), th, k, r * S / Math.max(0.4, S + span(k) * p.spacing), k, parallelAt(k, ji)];
+    }
+    // samples spaced evenly along the loop, at the density a plain ring of
+    // the same mean radius would get
+    function iconStrand(k, loop, density){
+      var len = loopLength(loop), meanR = 0;
+      loop.forEach(function (q) { meanR += Math.hypot(q[0], q[1]); });
+      meanR = Math.max(0.05, meanR / loop.length);
+      var n = Math.max(24, Math.min(segments * 4 * density, Math.round(segments * density * len / (2 * Math.PI * meanR))));
+      var pts = resampleLoop(loop, n).map(function (q) { return iconSample(k, q); });
+      pts.push(pts[0].slice());               // closing sample, as for a plain ring
+      return pts;
+    }
+
     var strands = [], i, j;
-    if (chain){
+    if (iconLoops){
+      // icon rings are always closed loops; a spiral has no meaning around a shape
+      icon.subs.forEach(function (sp) { strands.push({ pts: iconStrand(0, sp, 1), closed: true }); });
+      iconLoops.forEach(function (loops, li) {
+        loops.forEach(function (lp) {
+          if (loopLength(lp) > 0.02) strands.push({ pts: iconStrand(li + 1, lp, 1), closed: true });
+        });
+      });
+    } else if (chain){
       var one = [];
       for (i = 0; i < ringCount; i++) for (j = 0; j < segments; j++) one.push(sample(i, j));
       one.push(sample(ringCount - 1, segments));
@@ -534,20 +669,24 @@
     // finer than the ring spacing, and at the ring's own density the
     // straight segments between samples turned its bumps into spikes.
     var bark = [], outer = ringCount - 1, BARK_DENSITY = 3, bn = segments * BARK_DENSITY;
-    var outerF = function (jj){
-      return iconRows ? S * iconRows[outer][jj % segments] / Math.max(0.4, S + span(outer) * p.spacing) : 1;
-    };
-    for (var k = 0; k <= bn; k++){
-      var jf = k / BARK_DENSITY, j0 = Math.floor(jf), jt = jf - j0;
-      bark.push([
-        outer,                                   // no spiral advance: a closed loop
-        growthNorm(outer),
-        k / bn * Math.PI * 2,
-        outer,
-        outerF(j0) + (outerF(j0 + 1) - outerF(j0)) * jt,
-        outer,
-        parallelAt(outer, j0) + (parallelAt(outer, j0 + 1) - parallelAt(outer, j0)) * jt
-      ]);
+    var outerLoops = iconLoops && iconLoops.length ? iconLoops[iconLoops.length - 1] : null;
+    if (outerLoops && outerLoops.length){
+      // around the largest of the outermost contours
+      var biggest = outerLoops.reduce(function (a, b) { return loopLength(b) > loopLength(a) ? b : a; });
+      bark = iconStrand(outer, biggest, BARK_DENSITY);
+    } else {
+      for (var k = 0; k <= bn; k++){
+        var jf = k / BARK_DENSITY, j0 = Math.floor(jf), jt = jf - j0;
+        bark.push([
+          outer,                                 // no spiral advance: a closed loop
+          growthNorm(outer),
+          k / bn * Math.PI * 2,
+          outer,
+          1,
+          outer,
+          parallelAt(outer, j0) + (parallelAt(outer, j0 + 1) - parallelAt(outer, j0)) * jt
+        ]);
+      }
     }
     strands.push({ pts: bark, closed: true, bark: true });
 
@@ -586,7 +725,7 @@
     return {
       data: data, index: index, verts: nVerts,
       // the icon bend is baked against these; see the re-bake check in render()
-      bakedBase: p.baseRadius, bakedSpacing: p.spacing, bakedCurve: pCurve, hasIcon: !!prof
+      bakedBase: p.baseRadius, bakedSpacing: p.spacing, bakedCurve: pCurve, hasIcon: !!iconLoops
     };
   }
 
@@ -643,14 +782,9 @@
       // centre icon
       icon: '',
       iconAmt: 1,
-      // how quickly the creases at the icon's concave corners round off
+      // how quickly the icon's detail melts away ring by ring (0 = keep the
+      // crisp creases of a pure offset)
       iconSmooth: 1,
-      // 0 = rings spread out from the icon at even spacing; 1 = rings are
-      // interpolated from the icon to the rim and gather where the icon
-      // reaches out toward it
-      iconBlend: 1,
-      // how much the rim takes on the icon's silhouette (blend only)
-      iconOuter: 0.5,
       // large undulation of the whole cross-section, growing toward the bark
       outlineAmt: 58,
       outlineFreq: 1.45,
@@ -701,7 +835,7 @@
   // vertex count, spiralBlend how the rings chain, seed / spacingVarFreq which
   // noise is sampled, icon the shape every ring is bent toward.
   var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon',
-                         'parallelFreq', 'parallelLength', 'iconSmooth', 'iconBlend', 'iconOuter'];
+                         'parallelFreq', 'parallelLength', 'iconSmooth'];
   // Not interpolatable: snapped at the midpoint of a morph.
   var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact'];
   var COLOR_KEYS = ['bgColor', 'textColor', 'color'];
@@ -1388,10 +1522,15 @@
       // built with. Both are tweenable sliders, so once they settle on new
       // values the geometry is rebuilt to match — never mid-transition, where
       // the ratio-based bend is a close enough approximation.
+      // The rebuild waits until the values have held still for a moment:
+      // the contour field costs too much to redo on every frame of a drag,
+      // and in the meantime the ratio-based bend follows the slider closely.
       if (!_tr && live.geom && live.geom.hasIcon &&
           (live.geom.bakedBase !== state.baseRadius || live.geom.bakedSpacing !== state.spacing ||
            live.geom.bakedCurve !== (state.spacingCurve || 1))){
-        regen();
+        var key = state.baseRadius + '/' + state.spacing + '/' + state.spacingCurve;
+        if (live.geom.pendingKey !== key){ live.geom.pendingKey = key; live.geom.pendingSince = performance.now(); }
+        else if (performance.now() - live.geom.pendingSince > 180) regen();
       }
       ensureFBO(canvas.width, canvas.height);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);

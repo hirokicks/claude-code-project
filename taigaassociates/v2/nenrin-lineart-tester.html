@@ -696,9 +696,7 @@
     add(iconField);
     currentSection.keys.push('icon');
     add(slider({ k: 'iconAmt', label: 'アイコンの効き（0=円 / 1=アイコン形状）', min: 0, max: 1, step: 0.01 }));
-    add(slider({ k: 'iconBlend', label: '広がり方（0=等間隔に膨らむ / 1=外形へ補間し、隙間の狭い所で線が寄り集まる）', min: 0, max: 1, step: 0.01, regen: true }));
-    add(slider({ k: 'iconOuter', label: '外形をアイコンに寄せる（くぼみの延長＝稜に沿って線が重なる）', min: 0, max: 1, step: 0.01, regen: true }));
-    add(slider({ k: 'iconSmooth', label: '稜のなめらかさ（くぼみの角が外側ほど丸くなる / 0=角を残す）', min: 0, max: 3, step: 0.05, regen: true }));
+    add(slider({ k: 'iconSmooth', label: '稜のなめらかさ（アイコンの細部が外側ほど溶ける / 0=角を残す）', min: 0, max: 3, step: 0.05, regen: true }));
   });
 
   section('outline', '外形のうねり', 'Outline', true, function(){
@@ -877,9 +875,7 @@
     // the outline undulation and the pressure wander run on the wobble clock too
     if (!s.irregAmt && !s.outlineAmt && !s.widthNoiseAmt) off('wobbleSpeed');
     if (!s.outlineAmt) off('outlineFreq', 'outlineGrowth');
-    if (!s.icon) off('iconAmt', 'iconSmooth', 'iconBlend', 'iconOuter');
-    // the rim only takes the icon's shape for interpolated rings
-    if (!s.iconBlend) off('iconOuter');
+    if (!s.icon) off('iconAmt', 'iconSmooth');
     if (!s.breatheAmp) off('breatheSpeed');
     if (!s.growthAmt) off('growthSpeed', 'growthWaveCount');
     if (!s.rippleAmt) off('rippleFreq', 'rippleSpeed');
