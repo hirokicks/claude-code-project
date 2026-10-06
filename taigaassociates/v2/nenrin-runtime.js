@@ -525,6 +525,32 @@
       }
     }
 
+    // The bark: one more closed strand tracing the outermost ring, flagged
+    // so the shader draws it as a thick band just outside that ring (see
+    // uBark). It is always built — at zero thickness it draws nothing — so the
+    // thickness can tween in and out. Even on a spiral it closes, at the
+    // outermost ring's position, the way a trunk's bark wraps the whole thing.
+    // Sampled three times as densely as a ring: the bark's roughness is
+    // finer than the ring spacing, and at the ring's own density the
+    // straight segments between samples turned its bumps into spikes.
+    var bark = [], outer = ringCount - 1, BARK_DENSITY = 3, bn = segments * BARK_DENSITY;
+    var outerF = function (jj){
+      return iconRows ? S * iconRows[outer][jj % segments] / Math.max(0.4, S + span(outer) * p.spacing) : 1;
+    };
+    for (var k = 0; k <= bn; k++){
+      var jf = k / BARK_DENSITY, j0 = Math.floor(jf), jt = jf - j0;
+      bark.push([
+        outer,                                   // no spiral advance: a closed loop
+        growthNorm(outer),
+        k / bn * Math.PI * 2,
+        outer,
+        outerF(j0) + (outerF(j0 + 1) - outerF(j0)) * jt,
+        outer,
+        parallelAt(outer, j0) + (parallelAt(outer, j0 + 1) - parallelAt(outer, j0)) * jt
+      ]);
+    }
+    strands.push({ pts: bark, closed: true, bark: true });
+
     var nVerts = 0, nIdx = 0;
     strands.forEach(function (st) { nVerts += st.pts.length * 2; nIdx += (st.pts.length - 1) * 6; });
     var data = new Float32Array(nVerts * FLOATS);
@@ -538,13 +564,16 @@
         // outer neighbours are one step past the seam
         var pp = P[k > 0 ? k - 1 : (st.closed ? n - 2 : 0)];
         var pn = P[k < n - 1 ? k + 1 : (st.closed ? 1 : n - 1)];
+        // the bark's vertices carry side +-2 rather than +-1: the flag the
+        // vertex shader uses to draw them as the bark band
+        var sideMag = st.bark ? 2 : 1;
         for (var side = -1; side <= 1; side += 2){
           data[o++] = pk[0]; data[o++] = pk[1]; data[o++] = pk[2]; data[o++] = pk[3];
           data[o++] = pp[0]; data[o++] = pp[1]; data[o++] = pp[2]; data[o++] = pp[3];
           data[o++] = pn[0]; data[o++] = pn[1]; data[o++] = pn[2]; data[o++] = pn[3];
           data[o++] = pp[4]; data[o++] = pk[4]; data[o++] = pn[4];
           data[o++] = pp[6]; data[o++] = pk[6]; data[o++] = pn[6];
-          data[o++] = pk[5]; data[o++] = side;
+          data[o++] = pk[5]; data[o++] = side * sideMag;
         }
       }
       for (var q = 0; q < n - 1; q++){
@@ -595,6 +624,13 @@
       widthDirAngle: 0,
       widthNoiseAmt: 0,
       widthNoiseFreq: 3,
+      // the bark: a thick band around the outermost ring (0 = none), how
+      // rough its outer edge is, how fine that roughness is, and its gap from
+      // the outermost ring
+      barkWidth: 0,
+      barkRough: 0.55,
+      barkDetail: 4,
+      barkGap: 0,
       // ring structure
       ringCount: 46,
       segments: 240,
@@ -778,6 +814,7 @@
     "uniform float uIconAmt;",
     "uniform float uParallelAmt;",
     "uniform float uSpacingCurve;",
+    "uniform vec4 uBark;",   // thickness px, roughness, gap px, detail
     "varying float vEdge;",
     "varying float vExtent;",
     "varying float vHalfW;",
@@ -874,7 +911,8 @@
     "}",
     "void main(){",
     "  float ring = aMeta.x;",
-    "  float side = aMeta.y;",
+    "  bool isBark = abs(aMeta.y) > 1.5;",
+    "  float side = sign(aMeta.y);",
     "  float ringHashW = fract(sin(ring * 12.9898 + uSeedOffset.x * 78.233 + 4.7) * 43758.5453123);",
     "  float ringHashO = fract(sin(ring * 39.3468 + uSeedOffset.y * 11.135 + 19.19) * 24634.6345);",
     "  float ringHashN = fract(sin(ring * 71.2351 + uSeedOffset.x * 3.719 + uSeedOffset.y * 5.331 + 91.7) * 12945.734);",
@@ -927,7 +965,30 @@
     "  else if (uStyleV == 3.0) soft = (1.0 + hw * 0.9) * 1.2;",
     // plus one pixel of geometry beyond the edge for antialiasing
     "  float extent = hw + soft + 1.0;",
-    "  vec2 pos = uTranslate + P * uScale + m * side * extent * miter;",
+    "  float centreOff = 0.0;",
+    // The bark band: its inner edge sits just outside the outermost ring's
+    // own stroke (plus the gap) and stays smooth, its thickness swells in
+    // broad lumps and breaks up finely, so only the outer edge is rough — the
+    // way bark reads in a cross-section. Drawn along the same miter as the
+    // ring, so it is an exact parallel band whatever the ring does.
+    "  if (isBark) {",
+    "    float lumps = noise3D(vec3(dirC * 1.3 + uSeedOffset * 0.11 + 61.0, 0.5));",
+    "    float grain = noise3D(vec3(dirC * uBark.w * 3.0 + uSeedOffset * 0.07 + 83.0, 1.5));",
+    "    float T = uBark.x * max(0.15, 1.0 + uBark.y * (lumps * 0.7 + grain * 0.6));",
+    // outward is whichever side of the ring faces away from the art's centre
+    "    float outward = dot(m, P) < 0.0 ? -1.0 : 1.0;",
+    // the inner edge reaches one pixel back under the ring's own stroke:
+    // two antialiased edges meeting exactly left a faint light seam
+    "    centreOff = outward * (hw + uBark.z + T * 0.5 - 0.5);",
+    "    hw = T * 0.5 + 0.5;",
+    "    soft = 0.0;",
+    "    if (uStyleV == 1.0) soft = 0.9 + hw * 0.6;",
+    "    else if (uStyleV == 3.0) soft = (1.0 + hw * 0.9) * 1.2;",
+    "    extent = hw + soft + 1.0;",
+    // no bark at all: leave the strand invisible
+    "    vRingOpacity = uBark.x > 0.01 ? 1.0 : 0.0;",
+    "  }",
+    "  vec2 pos = uTranslate + P * uScale + m * (centreOff + side * extent) * miter;",
     "  vEdge = side;",
     "  vExtent = extent;",
     "  vHalfW = hw;",
@@ -939,7 +1000,7 @@
     "  vAlong = vec2(cos(aCur.z), sin(aCur.z)) * (uBaseRadius + span(aCur.x) * uSpacing) * 0.09;",
     "  float ringNd = clamp(ring * uRingCountInv, 0.0, 1.0);",
     "  float growthWave = 0.5 + 0.5 * cos((ringNd * uGrowthWaveCount - uGrowthPhase) * 6.28318530718);",
-    "  vGrowth = mix(1.0, growthWave, uGrowthAmt);",
+    "  vGrowth = isBark ? 1.0 : mix(1.0, growthWave, uGrowthAmt);",
     "  vec2 clip = pos / uResolution * 2.0 - 1.0;",
     "  clip.y = -clip.y;",
     "  gl_Position = vec4(clip, 0.0, 1.0);",
@@ -1064,7 +1125,7 @@
      'uBaseRadius', 'uSpacing', 'uSpacingVarAmt', 'uEccentricity', 'uEccDir', 'uBulgeAmt',
      'uGrowthPhase', 'uGrowthWaveCount', 'uGrowthAmt', 'uRippleAmt', 'uRippleFreq', 'uRipplePhase',
      'uRingWidthVar', 'uRingOpacityVar', 'uRingWobbleVar', 'uRingDrift',
-     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt', 'uSpacingCurve'
+     'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt', 'uSpacingCurve', 'uBark'
     ].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -1280,6 +1341,9 @@
       gl.uniform1f(U.uIconAmt, g.hasIcon ? Math.min(1, Math.max(0, c.iconAmt)) : 0);
       gl.uniform1f(U.uParallelAmt, c.parallelAmt || 0);
       gl.uniform1f(U.uSpacingCurve, Math.max(0.1, c.spacingCurve || 1));
+      // the bark scales with the art, like the line width
+      gl.uniform4f(U.uBark, Math.max(0, c.barkWidth || 0) * dpr * c.scale, c.barkRough || 0,
+                   (c.barkGap || 0) * dpr * c.scale, Math.max(0.2, c.barkDetail || 4));
 
       // pass 1: coverage mask with MAX blending
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);

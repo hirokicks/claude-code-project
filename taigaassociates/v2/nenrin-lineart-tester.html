@@ -709,6 +709,15 @@
     add(slider({ k: 'outlineGrowth', label: '外側への増え方（0=一律 / 大きいほど外側に集中）', min: 0, max: 4, step: 0.05 }));
   });
 
+  section('bark', '樹皮', 'Bark', true, function(){
+    return state.barkWidth ? '厚み ' + Number(state.barkWidth).toFixed(1) : 'なし';
+  }, function(add){
+    add(slider({ k: 'barkWidth', label: '樹皮の厚み（最外周の外側に付く帯 / 0=なし）', min: 0, max: 80, step: 0.5 }));
+    add(slider({ k: 'barkRough', label: '外側の荒さ（厚みのムラと凹凸）', min: 0, max: 1, step: 0.01 }));
+    add(slider({ k: 'barkDetail', label: '凹凸の細かさ', min: 0.5, max: 12, step: 0.1 }));
+    add(slider({ k: 'barkGap', label: '最外周の年輪との間隔（マイナスで重ねる）', min: -20, max: 40, step: 0.5 }));
+  });
+
   section('wobble', '細かな揺らぎ', 'Wobble', false, function(){
     return state.irregAmt ? '振れ幅 ' + Number(state.irregAmt).toFixed(1) : 'なし';
   }, function(add){
@@ -861,6 +870,8 @@
     if (!s.widthNoiseAmt) off('widthNoiseFreq');
     if (!s.spacingVarAmt) off('spacingVarFreq');
     if (!s.parallelAmt) off('parallelFreq', 'parallelLength');
+    if (!s.barkWidth) off('barkRough', 'barkDetail', 'barkGap');
+    else if (!s.barkRough) off('barkDetail');
     if (!s.eccentricity) off('eccentricityAngle');
     if (!s.irregAmt) off('irregFreq', 'ringWobbleVar', 'ringDrift');
     // the outline undulation and the pressure wander run on the wobble clock too
@@ -1017,6 +1028,9 @@
       eccentricity: Math.random() < 0.6 ? 0 : rnd(10, 120),
       eccentricityAngle: rnd(0, 360),
       spacingCurve: Math.random() < 0.5 ? 1 : rnd(0.8, 2),
+      barkWidth: Math.random() < 0.6 ? 0 : rnd(6, 30),
+      barkRough: rnd(0.2, 0.9),
+      barkDetail: rnd(2, 8),
       parallelAmt: Math.random() < 0.4 ? 0 : rnd(0.2, 0.8),
       parallelFreq: rnd(0.8, 3.5),
       parallelLength: rnd(2, 14),
