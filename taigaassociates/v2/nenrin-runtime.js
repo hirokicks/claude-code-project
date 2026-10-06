@@ -376,31 +376,63 @@
     var icon = parseIcon(p.icon);
     var S = p.baseRadius;
     var prof = (icon && S > 0.5) ? iconProfile(icon, segments) : null;
-    // the icon bend of every whole ring, offset and then smoothed; a sample
-    // part-way along a spiral interpolates between the two rings around it
+    // The icon bend of every whole ring; a sample part-way along a spiral
+    // interpolates between the two rings around it. Two ways of growing out
+    // from the icon, mixed by iconBlend:
+    //   offset (0) — each ring a fixed distance further out: even spacing
+    //     everywhere, the icon's concave corners rounded off by iconSmooth.
+    //   blend  (1) — each ring a fixed fraction of the way from the icon's
+    //     outline to the outermost ring. Where the icon reaches out toward
+    //     the rim (a face, a neck) the rings have little room and gather into
+    //     tight, almost overlapping bundles; where it is far from the rim they
+    //     open out. Blended rings never cross, so the spacing floors that
+    //     protect the offset rings are relaxed in proportion.
     var iconRows = null;
     if (prof){
       iconRows = [];
+      var blend = Math.max(0, Math.min(1, p.iconBlend === undefined ? 1 : p.iconBlend));
       var prevDn = 0;
+      // The outermost ring, in icon units: every blended ring heads for it,
+      // so along any direction the rings share out the gap between the icon
+      // and the rim evenly — and a narrow gap makes a tight bundle.
+      // iconOuter gives the rim the icon's own silhouette, broadly smoothed
+      // and enlarged. Then the gap is narrowest along the directions of the
+      // icon's concave parts (under a chin, at the nape, between a heart's
+      // lobes), so the rings gather along those ridges, as in a drawn
+      // contour piece; at 0 the rim is round and the rings gather wherever
+      // the icon reaches out toward it instead.
+      var rOuter = (S + N1 * p.spacing) / S;
+      var kOuter = Math.max(0, Math.min(1, p.iconOuter || 0));
+      var rim = new Float32Array(segments);
+      for (var rj = 0; rj < segments; rj++) rim[rj] = prof.r0[rj];
+      smoothRing(rim, 0.35);
+      var rimMax = 0;
+      for (rj = 0; rj < segments; rj++) rimMax = Math.max(rimMax, rim[rj]);
+      for (rj = 0; rj < segments; rj++){
+        rim[rj] = rOuter * (1 - kOuter + kOuter * rim[rj] / (rimMax || 1));
+      }
       for (var lv = 0; lv <= ringCount; lv++){
-        var dn = span(lv) * p.spacing / S;
+        var sp = span(lv), dn = sp * p.spacing / S, t = sp / N1;
         var row = new Float32Array(segments);
-        for (var jj = 0; jj < segments; jj++) row[jj] = iconRadius(prof, jj, dn);
+        for (var jj = 0; jj < segments; jj++){
+          var off = iconRadius(prof, jj, dn);
+          var mixed = prof.r0[jj] * (1 - t) + rim[jj] * t;
+          row[jj] = off + (mixed - off) * blend;
+        }
         var sm = (p.iconSmooth || 0) * dn;
-        if (sm > 0 && lv > 0){
-          smoothRing(row, sm);
-          // Smoothing also pulls convex points (a nose tip, the corners of a
-          // flat base) inward, and strong settings brought rings up against
-          // the ones inside them. A ring may come at most 30% closer to the
-          // icon than its true offset: those floors are themselves evenly
-          // spaced, so nothing gets packed into a dark band, and rings stay
-          // at least 70% of a step apart.
+        if (lv > 0){
+          var prev = iconRows[lv - 1];
+          if (sm > 0) smoothRing(row, sm);
+          // Smoothing pulls convex points (a nose tip, the corners of a flat
+          // base) inward. An offset ring may come at most 30% closer to the
+          // icon than its true offset — floors that are evenly spaced, so
+          // nothing packs into a band; a blended ring only has to stay
+          // outside the ring before it, which is what lets it bunch.
           for (jj = 0; jj < segments; jj++){
-            var floorR = iconRadius(prof, jj, dn * 0.7);
+            var floorR = iconRadius(prof, jj, dn * 0.7) * (1 - blend) + prev[jj] * blend;
             if (row[jj] < floorR) row[jj] = floorR;
           }
-          // a last guard: never at or inside the ring before
-          var prev = iconRows[lv - 1], gap = (dn - prevDn) * 0.15;
+          var gap = (dn - prevDn) * (0.15 * (1 - blend) + 0.02 * blend);
           for (jj = 0; jj < segments; jj++) if (row[jj] < prev[jj] + gap) row[jj] = prev[jj] + gap;
         }
         prevDn = dn;
@@ -577,6 +609,12 @@
       iconAmt: 1,
       // how quickly the creases at the icon's concave corners round off
       iconSmooth: 1,
+      // 0 = rings spread out from the icon at even spacing; 1 = rings are
+      // interpolated from the icon to the rim and gather where the icon
+      // reaches out toward it
+      iconBlend: 1,
+      // how much the rim takes on the icon's silhouette (blend only)
+      iconOuter: 0.5,
       // large undulation of the whole cross-section, growing toward the bark
       outlineAmt: 58,
       outlineFreq: 1.45,
@@ -627,7 +665,7 @@
   // vertex count, spiralBlend how the rings chain, seed / spacingVarFreq which
   // noise is sampled, icon the shape every ring is bent toward.
   var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon',
-                         'parallelFreq', 'parallelLength', 'iconSmooth'];
+                         'parallelFreq', 'parallelLength', 'iconSmooth', 'iconBlend', 'iconOuter'];
   // Not interpolatable: snapped at the midpoint of a morph.
   var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact'];
   var COLOR_KEYS = ['bgColor', 'textColor', 'color'];
