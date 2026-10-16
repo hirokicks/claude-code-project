@@ -923,7 +923,11 @@
     return {
       data: data, index: index, verts: nVerts,
       // the icon bend is baked against these; see the re-bake check in render()
-      bakedBase: p.baseRadius, bakedSpacing: p.spacing, bakedCurve: pCurve, hasIcon: !!iconLoops
+      bakedBase: p.baseRadius, bakedSpacing: p.spacing, bakedCurve: pCurve, hasIcon: !!iconLoops,
+      // the outermost ring, as the ticker runs along it: its samples (the
+      // bark strand's, closing duplicate included) and the radius they were
+      // baked against
+      rim: { samples: bark, R: p.baseRadius + span(outer) * p.spacing }
     };
   }
 
@@ -968,6 +972,18 @@
       barkRough: 0.55,
       barkDetail: 4,
       barkGap: 0,
+      // ticker: text running round the outside of the outermost ring, in the
+      // line colour. Size and gap in px (they scale with the art, like the
+      // line), tracking in em, speed in px per second (positive runs
+      // anticlockwise, the way a ticker reads; 0 = still). The text repeats
+      // round the whole ring, its spacing eased so the repeats close up.
+      tickerShow: false,
+      tickerText: 'TAIGA ASSOCIATES — DISCOVER NEW WAY —',
+      tickerSize: 18,
+      tickerTracking: 0.12,
+      tickerSpeed: 20,
+      tickerGap: 12,
+      tickerFont: "'Futura', 'Century Gothic', 'Avenir Next', 'Helvetica Neue', Arial, sans-serif",
       // ring structure
       ringCount: 46,
       segments: 240,
@@ -1039,7 +1055,8 @@
   var STRUCTURAL_KEYS = ['ringCount', 'segments', 'spiralBlend', 'spacingVarFreq', 'seed', 'icon',
                          'parallelFreq', 'parallelLength', 'iconSmooth', 'iconFlow'];
   // Not interpolatable: snapped at the midpoint of a morph.
-  var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact'];
+  var DISCRETE_KEYS = ['lineStyle', 'deformMode', 'deformType', 'animate', 'mouseDeform', 'mouseReact',
+                       'tickerShow', 'tickerText', 'tickerFont'];
   var COLOR_KEYS = ['bgColor', 'textColor', 'color'];
   var _proto = defaultConfig();
   var NUM_KEYS = Object.keys(_proto).filter(function (k) {
@@ -1411,6 +1428,82 @@
     "}"
   ].join("\n");
 
+  // The ticker's glyphs: one quad each, standing on the outermost ring. The
+  // ring's own placement (everything up to the rings' main) is shared, so a
+  // glyph sits exactly where the ring is — outline, wobble, deform and all —
+  // and turns with it. aCur/aPrev/aNext are the ring samples at the glyph's
+  // centre and a little either side; aGlyph is the quad corner in em, along
+  // the ring and outward from the baseline.
+  var TEXT_VERT_SRC = VERT_SRC.slice(0, VERT_SRC.indexOf("void main(){")) + [
+    "attribute vec2 aGlyph;",
+    "attribute vec2 aGlyphUV;",
+    "uniform vec2 uTicker;",   // em in px, baseline distance from the ring's centre line in px
+    "varying vec2 vGlyphUV;",
+    "void main(){",
+    "  float ring = aCur.x;",
+    "  float ringHashN = fract(sin(ring * 71.2351 + uSeedOffset.x * 3.719 + uSeedOffset.y * 5.331 + 91.7) * 12945.734);",
+    "  float wobMod = max(0.0, 1.0 + (ringHashN - 0.5) * 2.0 * uRingWobbleVar);",
+    "  vec2 sp;",
+    "  vec2 P  = place(aCur,  aIcon.y, aPar.y, wobMod, sp);",
+    "  vec2 Pp = place(aPrev, aIcon.x, aPar.x, wobMod, sp);",
+    "  vec2 Pn = place(aNext, aIcon.z, aPar.z, wobMod, sp);",
+    "  vec2 t = Pn - Pp;",
+    "  float tl = length(t);",
+    "  t = tl > 1e-5 ? t / tl : vec2(1.0, 0.0);",
+    // the samples run clockwise on screen, so this side is the outside
+    "  vec2 n = vec2(t.y, -t.x);",
+    "  vec2 pos = uTranslate + P * uScale + t * (aGlyph.x * uTicker.x) + n * (uTicker.y + aGlyph.y * uTicker.x);",
+    "  vGlyphUV = aGlyphUV;",
+    "  vec2 clip = pos / uResolution * 2.0 - 1.0;",
+    "  clip.y = -clip.y;",
+    "  gl_Position = vec4(clip, 0.0, 1.0);",
+    "}"
+  ].join("\n");
+  var TEXT_FRAG_SRC = [
+    "precision mediump float;",
+    "uniform sampler2D uAtlas;",
+    "uniform vec4 uColor;",
+    "varying vec2 vGlyphUV;",
+    "void main(){",
+    "  gl_FragColor = vec4(uColor.rgb, uColor.a * texture2D(uAtlas, vGlyphUV).a);",
+    "}"
+  ].join("\n");
+
+  // Where the outermost ring actually is this frame — outline, wobble,
+  // deform and all — read back so the ticker can space its letters by the
+  // ring's real length. One point per rim sample, each to its own pixel,
+  // its position packed into the four bytes at 1/8 px.
+  var RIM_VERT_SRC = VERT_SRC.slice(0, VERT_SRC.indexOf("void main(){")) + [
+    "attribute vec2 aRimF;",   // icon bend, parallel wobble
+    "attribute float aRimIndex;",
+    "uniform vec2 uRimGrid;",  // width and height of the readback grid
+    "varying vec2 vRimP;",
+    "void main(){",
+    "  float ring = aCur.x;",
+    "  float ringHashN = fract(sin(ring * 71.2351 + uSeedOffset.x * 3.719 + uSeedOffset.y * 5.331 + 91.7) * 12945.734);",
+    "  float wobMod = max(0.0, 1.0 + (ringHashN - 0.5) * 2.0 * uRingWobbleVar);",
+    "  vec2 sp;",
+    "  vRimP = place(aCur, aRimF.x, aRimF.y, wobMod, sp);",
+    "  float col = mod(aRimIndex, uRimGrid.x), row = floor(aRimIndex / uRimGrid.x);",
+    "  gl_Position = vec4((col + 0.5) / uRimGrid.x * 2.0 - 1.0, (row + 0.5) / uRimGrid.y * 2.0 - 1.0, 0.0, 1.0);",
+    "  gl_PointSize = 1.0;",
+    "}"
+  ].join("\n");
+  var RIM_FRAG_SRC = [
+    "#ifdef GL_FRAGMENT_PRECISION_HIGH",
+    "precision highp float;",
+    "#else",
+    "precision mediump float;",
+    "#endif",
+    "varying vec2 vRimP;",
+    "void main(){",
+    "  vec2 q = clamp(floor(vRimP * 8.0 + 32768.5), 0.0, 65535.0);",
+    "  vec2 hi = floor(q / 256.0);",
+    "  vec2 lo = q - hi * 256.0;",
+    "  gl_FragColor = vec4(hi.x, lo.x, hi.y, lo.y) / 255.0;",
+    "}"
+  ].join("\n");
+
   var LINE_STYLES = { simple: 0, blur: 1, ink: 2, watercolor: 3 };
   var DEFORM_TYPES = { push: 0, pull: 1, swirl: 2 };
 
@@ -1464,6 +1557,252 @@
      'uOutlineAmt', 'uOutlineFreq', 'uOutlineGrowth', 'uIconAmt', 'uParallelAmt', 'uSpacingCurve', 'uBark'
     ].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
+    // ---------------------------------------------------------------
+    // Ticker: glyphs from a texture atlas, laid out along the outermost ring
+    // on the CPU each frame (a few hundred quads at most) and placed on the
+    // live ring by the shader.
+    // ---------------------------------------------------------------
+    var textProg = link(TEXT_VERT_SRC, TEXT_FRAG_SRC);
+    var TA = {}, UT = {};
+    var TEXT_ATTRS = ['aCur', 'aPrev', 'aNext', 'aIcon', 'aPar', 'aGlyph', 'aGlyphUV'];
+    TEXT_ATTRS.forEach(function (n) { TA[n] = gl.getAttribLocation(textProg, n); });
+    Object.keys(U).concat(['uTicker', 'uAtlas']).forEach(function (n) {
+      UT[n] = gl.getUniformLocation(textProg, n);
+    });
+    var TEXT_FLOATS = 22, TEXT_STRIDE = TEXT_FLOATS * 4;
+
+    var rimProg = link(RIM_VERT_SRC, RIM_FRAG_SRC);
+    var RA = { aCur: gl.getAttribLocation(rimProg, 'aCur'), aRimF: gl.getAttribLocation(rimProg, 'aRimF'),
+               aRimIndex: gl.getAttribLocation(rimProg, 'aRimIndex') };
+    var UR = {};
+    Object.keys(U).concat(['uRimGrid']).forEach(function (n) { UR[n] = gl.getUniformLocation(rimProg, n); });
+    var RIM_W = 256, rimFbo = gl.createFramebuffer(), rimTex = gl.createTexture(), rimH = 0, rimPixels = null;
+    // the outermost ring as drawn this frame: arc length, in design units,
+    // sample by sample, along the line the letters stand on — `off` outside
+    // the ring, so they keep their spacing round the swells and hollows
+    function measureRim(g, feed, off){
+      var t = g.rim, n = t.samples.length, rows = Math.ceil(n / RIM_W);
+      if (rows !== rimH){
+        rimH = rows;
+        gl.bindTexture(gl.TEXTURE_2D, rimTex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, RIM_W, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, rimFbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, rimTex, 0);
+        rimPixels = new Uint8Array(RIM_W * rows * 4);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, rimFbo);
+      gl.viewport(0, 0, RIM_W, rows);
+      gl.disable(gl.BLEND);
+      gl.useProgram(rimProg);
+      feed(UR);
+      gl.uniform2f(UR.uRimGrid, RIM_W, rows);
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.rimVbo);
+      gl.vertexAttribPointer(RA.aCur, 4, gl.FLOAT, false, 28, 0);
+      gl.vertexAttribPointer(RA.aRimF, 2, gl.FLOAT, false, 28, 16);
+      gl.vertexAttribPointer(RA.aRimIndex, 1, gl.FLOAT, false, 28, 24);
+      [RA.aCur, RA.aRimF, RA.aRimIndex].forEach(function (l) { if (l >= 0) gl.enableVertexAttribArray(l); });
+      gl.drawArrays(gl.POINTS, 0, n);
+      [RA.aCur, RA.aRimF, RA.aRimIndex].forEach(function (l) { if (l >= 0) gl.disableVertexAttribArray(l); });
+      gl.readPixels(0, 0, RIM_W, rows, gl.RGBA, gl.UNSIGNED_BYTE, rimPixels);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.enable(gl.BLEND);
+
+      var xs = new Float64Array(n), ys = new Float64Array(n), area = 0, k;
+      for (k = 0; k < n; k++){
+        var o = k * 4;
+        xs[k] = ((rimPixels[o] * 256 + rimPixels[o + 1]) - 32768) / 8;
+        ys[k] = ((rimPixels[o + 2] * 256 + rimPixels[o + 3]) - 32768) / 8;
+        if (k > 0) area += xs[k - 1] * ys[k] - xs[k] * ys[k - 1];
+      }
+      // out along the normal (the last sample repeats the first)
+      var flip = area < 0 ? -1 : 1, cum = [0], qx = 0, qy = 0;
+      for (k = 0; k < n; k++){
+        var a = k > 0 ? k - 1 : n - 2, b = k < n - 1 ? k + 1 : 1;
+        var tx = xs[b] - xs[a], ty = ys[b] - ys[a], tl = Math.hypot(tx, ty) || 1;
+        var ox = xs[k] + flip * ty / tl * off, oy = ys[k] - flip * tx / tl * off;
+        if (k > 0) cum.push(cum[k - 1] + Math.hypot(ox - qx, oy - qy));
+        qx = ox; qy = oy;
+      }
+      if (!(cum[n - 1] > 1)) return t;    // nothing sensible came back: keep the bake
+      return { samples: t.samples, cum: cum, len: cum[n - 1], R: t.R, reversed: area < 0 };
+    }
+    var textVbo = gl.createBuffer(), textIbo = gl.createBuffer(), textCap = 0;
+    var atlases = {}, atlasOrder = [];
+
+    // Every distinct character of the text, drawn once, large, into a
+    // power-of-two canvas so it can be mipmapped for small sizes.
+    function buildAtlas(chars, font, F){
+      var cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+      var fontStr = '500 ' + F + 'px ' + font;
+      ctx.font = fontStr;
+      var ref = ctx.measureText('HÅgjpqy|永');
+      var asc = Math.ceil(Math.max(ref.actualBoundingBoxAscent || F * 0.85, ref.fontBoundingBoxAscent || 0));
+      var desc = Math.ceil(Math.max(ref.actualBoundingBoxDescent || F * 0.25, ref.fontBoundingBoxDescent || 0));
+      var pad = Math.ceil(F * 0.12), cellH = asc + desc + pad * 2, W = 1024, x = 0, y = 0, glyphs = {};
+      chars.forEach(function (ch) {
+        if (glyphs[ch]) return;
+        var m = ctx.measureText(ch), adv = m.width;
+        var left = Math.max(0, Math.ceil(m.actualBoundingBoxLeft || 0));
+        var right = Math.max(Math.ceil(adv), Math.ceil(m.actualBoundingBoxRight || adv));
+        var w = left + right + pad * 2;
+        if (x + w > W){ x = 0; y += cellH; }
+        glyphs[ch] = { adv: adv / F, x: x, y: y, w: w, left: left, blank: !ch.trim() };
+        x += w;
+      });
+      var H = 1;
+      while (H < y + cellH) H *= 2;
+      if (H > 4096) return null;
+      cv.width = W; cv.height = H;
+      ctx.font = fontStr;
+      ctx.fillStyle = '#fff';
+      ctx.textBaseline = 'alphabetic';
+      Object.keys(glyphs).forEach(function (ch) {
+        var gl0 = glyphs[ch];
+        if (!gl0.blank) ctx.fillText(ch, gl0.x + pad + gl0.left, gl0.y + pad + asc);
+        // the quad around it, in em from the centre of its advance and the
+        // baseline (up is outward), and where it sits in the atlas
+        gl0.x0 = (-gl0.adv * F / 2 - gl0.left - pad) / F;
+        gl0.x1 = gl0.x0 + gl0.w / F;
+        gl0.top = (asc + pad) / F;
+        gl0.bottom = -(desc + pad) / F;
+        gl0.u0 = gl0.x / W; gl0.u1 = (gl0.x + gl0.w) / W;
+        gl0.v0 = gl0.y / H; gl0.v1 = (gl0.y + cellH) / H;
+      });
+      var tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return { tex: tex, g: glyphs };
+    }
+    // a few atlases are kept, so a crossfade between two texts does not
+    // rebuild one every frame
+    function getAtlas(chars, font){
+      var key = font + '\u0000' + chars.join('');
+      if (atlases[key]) return atlases[key];
+      var a = buildAtlas(chars, font, 96) || buildAtlas(chars, font, 64) || buildAtlas(chars, font, 40);
+      if (!a) return null;
+      atlases[key] = a;
+      atlasOrder.push(key);
+      while (atlasOrder.length > 4){
+        var old = atlasOrder.shift();
+        gl.deleteTexture(atlases[old].tex);
+        delete atlases[old];
+      }
+      return a;
+    }
+
+    // a web font that finishes loading after the first frame: redraw the
+    // atlases with it
+    function dropAtlases(){
+      atlasOrder.forEach(function (k) { gl.deleteTexture(atlases[k].tex); });
+      atlases = {}; atlasOrder = [];
+    }
+    if (typeof document !== 'undefined' && document.fonts && document.fonts.addEventListener){
+      document.fonts.addEventListener('loadingdone', dropAtlases);
+    }
+
+    function drawTicker(slot, dpr, feed){
+      var c = slot.cfg, t = slot.geom && slot.geom.rim;
+      if (!c.tickerShow || !t || !(t.len > 0)) return;
+      var text = String(c.tickerText || '');
+      if (!text.trim()) return;
+      // one space between the end of the text and the next repeat
+      if (!/\s$/.test(text)) text += ' ';
+      var chars = Array.from(text);
+      var atlas = getAtlas(chars, c.tickerFont || 'sans-serif');
+      if (!atlas) return;
+
+      var em = Math.max(1, c.tickerSize || 0), track = c.tickerTracking || 0;
+      // the baseline clears the outermost line's stroke, and the bark too
+      // when there is one, then the chosen gap (design px)
+      var accent = (c.widthAccentEvery || 0) >= 1 ? 1 + (c.widthAccentAmt || 0) : 1;
+      var clear = 0.5 * Math.max(0.1, c.lineWidth) * accent;
+      if ((c.barkWidth || 0) > 0) clear += (c.barkGap || 0) + c.barkWidth * (1 + 0.6 * (c.barkRough || 0));
+      clear += c.tickerGap || 0;
+      // the ring as it is now, measured a third of the way up the letters
+      t = measureRim(slot.geom, feed, clear + em * 0.35);
+      var L = t.len;
+      var unit = 0;
+      chars.forEach(function (ch) { unit += (atlas.g[ch].adv + track) * em; });
+      if (!(unit > 0.5)) return;
+      // As many whole repeats as come closest to filling the ring, the
+      // difference shared out between all the letters — a hair looser or
+      // tighter, never a gap at the seam. A text longer than the ring is cut.
+      var reps = Math.max(1, Math.round(L / unit)), fits = !(reps === 1 && unit > L);
+      var adjust = fits ? (L - reps * unit) / (reps * chars.length) : 0;
+
+      var quads = [];
+      for (var r = 0; r < reps; r++){
+        var cursor = r * L / reps;
+        for (var i = 0; i < chars.length; i++){
+          var gl0 = atlas.g[chars[i]], adv = gl0.adv * em;
+          var centre = cursor + adv / 2;
+          cursor += adv + track * em + adjust;
+          // too long for the ring: what does not fit is left off
+          if (!fits && cursor > L) break;
+          if (!gl0.blank) quads.push([gl0, centre, adv]);
+        }
+      }
+      if (!quads.length) return;
+
+      if (quads.length > textCap){
+        textCap = Math.max(quads.length, textCap * 2, 64);
+        var idx = new Uint16Array(textCap * 6);
+        for (var q = 0; q < textCap; q++){
+          var b = q * 4;
+          idx.set([b, b + 1, b + 2, b + 2, b + 1, b + 3], q * 6);
+        }
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, textIbo);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+      }
+      var data = new Float32Array(quads.length * 4 * TEXT_FLOATS), o = 0;
+      var run = slot.ph.ticker || 0;
+      quads.forEach(function (qd) {
+        var gq = qd[0], a = qd[1] - run;
+        var d = Math.max(qd[2] * 0.5, 3);
+        var cur = rimAt(t, a), pv = rimAt(t, a - d), nx = rimAt(t, a + d);
+        var corners = [[gq.x0, gq.top, gq.u0, gq.v0], [gq.x1, gq.top, gq.u1, gq.v0],
+                       [gq.x0, gq.bottom, gq.u0, gq.v1], [gq.x1, gq.bottom, gq.u1, gq.v1]];
+        corners.forEach(function (cn) {
+          data[o++] = cur[0]; data[o++] = cur[1]; data[o++] = cur[2]; data[o++] = cur[3];
+          data[o++] = pv[0]; data[o++] = pv[1]; data[o++] = pv[2]; data[o++] = pv[3];
+          data[o++] = nx[0]; data[o++] = nx[1]; data[o++] = nx[2]; data[o++] = nx[3];
+          data[o++] = pv[4]; data[o++] = cur[4]; data[o++] = nx[4];
+          data[o++] = pv[6]; data[o++] = cur[6]; data[o++] = nx[6];
+          data[o++] = cn[0]; data[o++] = cn[1]; data[o++] = cn[2]; data[o++] = cn[3];
+        });
+      });
+
+      gl.useProgram(textProg);
+      feed(UT);
+      var unitPx = dpr * c.scale;
+      gl.uniform2f(UT.uTicker, em * unitPx, clear * unitPx);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, atlas.tex);
+      gl.uniform1i(UT.uAtlas, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, textVbo);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      var offs = { aCur: [4, 0], aPrev: [4, 16], aNext: [4, 32], aIcon: [3, 48], aPar: [3, 60],
+                   aGlyph: [2, 72], aGlyphUV: [2, 80] };
+      TEXT_ATTRS.forEach(function (n) {
+        if (TA[n] < 0) return;
+        gl.vertexAttribPointer(TA[n], offs[n][0], gl.FLOAT, false, TEXT_STRIDE, offs[n][1]);
+        gl.enableVertexAttribArray(TA[n]);
+      });
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, textIbo);
+      gl.drawElements(gl.TRIANGLES, quads.length * 6, gl.UNSIGNED_SHORT, 0);
+      TEXT_ATTRS.forEach(function (n) { if (TA[n] >= 0) gl.disableVertexAttribArray(TA[n]); });
+    }
+
     gl.enable(gl.BLEND);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
@@ -1516,7 +1855,7 @@
     // accumulated animation phases.
     // ---------------------------------------------------------------
     var state = normalizeConfig(config);
-    function newPhase(){ return { wobble: 0, ripple: 0, growth: 0, breathe: 0 }; }
+    function newPhase(){ return { wobble: 0, ripple: 0, growth: 0, breathe: 0, ticker: 0 }; }
     var live = { cfg: state, alpha: 1, geom: null, ph: newPhase() };
     var _slots = [live];
     var _running = true, _raf = 0, _tr = null;
@@ -1525,7 +1864,16 @@
       var g = { vbo: gl.createBuffer(), ibo: null, count: 0, indexType: 0,
                 bakedBase: built.bakedBase, bakedSpacing: built.bakedSpacing, bakedCurve: built.bakedCurve,
                 hasIcon: built.hasIcon,
-                verts: built.verts };
+                verts: built.verts, rim: rimTable(built.rim) };
+      if (g.rim){
+        var RS = g.rim.samples, rd = new Float32Array(RS.length * 7);
+        for (var ri = 0; ri < RS.length; ri++){
+          rd.set([RS[ri][0], RS[ri][1], RS[ri][2], RS[ri][3], RS[ri][4], RS[ri][6], ri], ri * 7);
+        }
+        g.rimVbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, g.rimVbo);
+        gl.bufferData(gl.ARRAY_BUFFER, rd, gl.STATIC_DRAW);
+      }
       var data = built.data, index = built.index;
       gl.bindBuffer(gl.ARRAY_BUFFER, g.vbo);
       if (index instanceof Uint32Array && !extUint){
@@ -1546,10 +1894,43 @@
       g.indexType = index instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
       return g;
     }
+    // Arc length along the outermost ring as baked — a stand-in until the
+    // live ring has been measured (see measureRim). Oriented clockwise on
+    // screen, so text laid along it reads left to right across the top.
+    function rimTable(rim){
+      if (!rim || !rim.samples || rim.samples.length < 3) return null;
+      var S = rim.samples, n = S.length, pos = [], cum = [0], area = 0, k;
+      for (k = 0; k < n; k++){
+        var r = S[k][4] * rim.R;
+        pos.push([Math.cos(S[k][2]) * r, Math.sin(S[k][2]) * r]);
+      }
+      for (k = 1; k < n; k++){
+        cum.push(cum[k - 1] + Math.hypot(pos[k][0] - pos[k - 1][0], pos[k][1] - pos[k - 1][1]));
+        area += pos[k - 1][0] * pos[k][1] - pos[k][0] * pos[k - 1][1];
+      }
+      return { samples: S, cum: cum, len: cum[n - 1], R: rim.R, reversed: area < 0 };
+    }
+    // a rim sample at arc length a (any value; wraps), interpolated between
+    // the baked samples — angle the short way round
+    function rimAt(t, a){
+      var L = t.len;
+      a = ((a % L) + L) % L;
+      if (t.reversed) a = L - a;
+      var cum = t.cum, lo = 0, hi = cum.length - 1;
+      while (hi - lo > 1){ var mid = (lo + hi) >> 1; if (cum[mid] <= a) lo = mid; else hi = mid; }
+      var A = t.samples[lo], B = t.samples[hi], seg = cum[hi] - cum[lo];
+      var f = seg > 0 ? (a - cum[lo]) / seg : 0;
+      var dth = B[2] - A[2];
+      dth -= Math.round(dth / (Math.PI * 2)) * Math.PI * 2;
+      return [A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f, A[2] + dth * f,
+              A[3] + (B[3] - A[3]) * f, A[4] + (B[4] - A[4]) * f, A[5], A[6] + (B[6] - A[6]) * f];
+    }
+
     function freeGeometry(g){
       if (!g) return;
       gl.deleteBuffer(g.vbo);
       if (g.ibo) gl.deleteBuffer(g.ibo);
+      if (g.rimVbo) gl.deleteBuffer(g.rimVbo);
     }
 
     function regen(){
@@ -1590,6 +1971,8 @@
       p.ripple += step * (c.rippleSpeed || 0);
       p.growth += step * (c.growthSpeed || 0);
       p.breathe += step * (c.breatheSpeed || 0);
+      // how far the ticker has run, in px along the ring
+      p.ticker = (p.ticker + step * (c.tickerSpeed || 0)) % 1e7;
     }
 
     function resize(){
@@ -1614,72 +1997,77 @@
     function drawSlot(slot, dpr, mouse){
       var c = slot.cfg, g = slot.geom, ph = slot.ph;
       if (!g || !g.count || slot.alpha <= 0) return;
+      // Everything the shared placement reads, fed to whichever program is
+      // drawing: the rings, then the ticker riding on them.
+      function feed(U){
+        gl.uniform2f(U.uResolution, canvas.width, canvas.height);
+
+        var breathPhase = (c.seed % 97) * 0.0647;
+        var breathe = 1 + (c.breatheAmp || 0) * Math.sin(ph.breathe + breathPhase);
+        var s = c.scale * dpr * breathe;
+        var parX = 0, parY = 0;
+        if (c.mouseReact){ parX = mouse.nx * c.mouseStrength; parY = mouse.ny * c.mouseStrength; }
+        var tx = canvas.width / 2 + (c.offsetX + parX) * dpr;
+        var ty = canvas.height / 2 + (c.offsetY + parY) * dpr;
+        // the deform anchor in the art's own design space: the live cursor, or
+        // a fixed point the author placed
+        var lx, ly;
+        if (c.deformMode === 'fixed'){ lx = c.anchorX; ly = c.anchorY; }
+        else { var inv = s || 1e-6; lx = (mouse.wx - tx) / inv; ly = (mouse.wy - ty) / inv; }
+
+        gl.uniform2f(U.uTranslate, tx, ty);
+        gl.uniform1f(U.uScale, s);
+        // the stroke scales with the art, like an SVG stroke, so a piece keeps
+        // its proportions in a smaller or larger block
+        gl.uniform1f(U.uLineWidthPx, Math.max(0.1, c.lineWidth) * dpr * c.scale);
+        gl.uniform1f(U.uStyleV, LINE_STYLES[c.lineStyle] || 0);
+        gl.uniform1f(U.uLineWidthInner, c.lineWidthInner === undefined ? 1 : c.lineWidthInner);
+        gl.uniform1f(U.uLineWidthCurve, Math.max(0.05, c.lineWidthCurve || 1));
+        gl.uniform2f(U.uWidthAccent, c.widthAccentEvery || 0, c.widthAccentAmt || 0);
+        var wdRad = (c.widthDirAngle || 0) * Math.PI / 180;
+        gl.uniform3f(U.uWidthDir, Math.cos(wdRad), Math.sin(wdRad), c.widthDirAmt || 0);
+        gl.uniform2f(U.uWidthNoise, c.widthNoiseAmt || 0, c.widthNoiseFreq || 0);
+        gl.uniform1i(U.uLineStyle, LINE_STYLES[c.lineStyle] || 0);
+        var rgb = hexToRgb(c.color);
+        gl.uniform4f(U.uColor, rgb[0], rgb[1], rgb[2], c.opacity * slot.alpha);
+        gl.uniform1f(U.uIrregAmt, c.irregAmt);
+        gl.uniform1f(U.uIrregFreq, c.irregFreq);
+        gl.uniform1f(U.uWobblePhase, ph.wobble);
+        gl.uniform2f(U.uSeedOffset, c.seed * 0.173, c.seed * 0.911);
+        gl.uniform2f(U.uAnchorLocal, lx, ly);
+        gl.uniform1f(U.uDeformStrength, (c.mouseDeform || c.deformMode === 'fixed') ? c.deformStrength : 0);
+        gl.uniform1f(U.uDeformRadius, Math.max(1, c.deformRadius));
+        gl.uniform1i(U.uDeformType, DEFORM_TYPES[c.deformType] || 0);
+        gl.uniform1f(U.uRingCountInv, 1 / Math.max(1, c.ringCount - 1));
+        gl.uniform1f(U.uBaseRadius, c.baseRadius);
+        gl.uniform1f(U.uSpacing, c.spacing);
+        gl.uniform1f(U.uSpacingVarAmt, c.spacingVarAmt);
+        gl.uniform1f(U.uEccentricity, c.eccentricity);
+        var eccRad = (c.eccentricityAngle || 0) * Math.PI / 180;
+        gl.uniform2f(U.uEccDir, Math.cos(eccRad), Math.sin(eccRad));
+        gl.uniform1f(U.uBulgeAmt, c.bulgeAmt || 0);
+        gl.uniform1f(U.uGrowthPhase, ph.growth);
+        gl.uniform1f(U.uGrowthWaveCount, Math.max(0.01, c.growthWaveCount || 0.01));
+        gl.uniform1f(U.uGrowthAmt, Math.min(1, Math.max(0, c.growthAmt || 0)));
+        gl.uniform1f(U.uRippleAmt, c.rippleAmt || 0);
+        gl.uniform1f(U.uRippleFreq, c.rippleFreq || 0);
+        gl.uniform1f(U.uRipplePhase, ph.ripple);
+        gl.uniform1f(U.uRingWidthVar, c.ringWidthVar || 0);
+        gl.uniform1f(U.uRingOpacityVar, c.ringOpacityVar || 0);
+        gl.uniform1f(U.uRingWobbleVar, c.ringWobbleVar || 0);
+        gl.uniform1f(U.uRingDrift, c.ringDrift || 0);
+        gl.uniform1f(U.uOutlineAmt, c.outlineAmt || 0);
+        gl.uniform1f(U.uOutlineFreq, c.outlineFreq || 0);
+        gl.uniform1f(U.uOutlineGrowth, Math.max(0, c.outlineGrowth || 0));
+        gl.uniform1f(U.uIconAmt, g.hasIcon ? Math.min(1, Math.max(0, c.iconAmt)) : 0);
+        gl.uniform1f(U.uParallelAmt, c.parallelAmt || 0);
+        gl.uniform1f(U.uSpacingCurve, Math.max(0.1, c.spacingCurve || 1));
+        // the bark scales with the art, like the line width
+        gl.uniform4f(U.uBark, Math.max(0, c.barkWidth || 0) * dpr * c.scale, c.barkRough || 0,
+                     (c.barkGap || 0) * dpr * c.scale, Math.max(0.2, c.barkDetail || 4));
+      }
       gl.useProgram(prog);
-      gl.uniform2f(U.uResolution, canvas.width, canvas.height);
-
-      var breathPhase = (c.seed % 97) * 0.0647;
-      var breathe = 1 + (c.breatheAmp || 0) * Math.sin(ph.breathe + breathPhase);
-      var s = c.scale * dpr * breathe;
-      var parX = 0, parY = 0;
-      if (c.mouseReact){ parX = mouse.nx * c.mouseStrength; parY = mouse.ny * c.mouseStrength; }
-      var tx = canvas.width / 2 + (c.offsetX + parX) * dpr;
-      var ty = canvas.height / 2 + (c.offsetY + parY) * dpr;
-      // the deform anchor in the art's own design space: the live cursor, or
-      // a fixed point the author placed
-      var lx, ly;
-      if (c.deformMode === 'fixed'){ lx = c.anchorX; ly = c.anchorY; }
-      else { var inv = s || 1e-6; lx = (mouse.wx - tx) / inv; ly = (mouse.wy - ty) / inv; }
-
-      gl.uniform2f(U.uTranslate, tx, ty);
-      gl.uniform1f(U.uScale, s);
-      // the stroke scales with the art, like an SVG stroke, so a piece keeps
-      // its proportions in a smaller or larger block
-      gl.uniform1f(U.uLineWidthPx, Math.max(0.1, c.lineWidth) * dpr * c.scale);
-      gl.uniform1f(U.uStyleV, LINE_STYLES[c.lineStyle] || 0);
-      gl.uniform1f(U.uLineWidthInner, c.lineWidthInner === undefined ? 1 : c.lineWidthInner);
-      gl.uniform1f(U.uLineWidthCurve, Math.max(0.05, c.lineWidthCurve || 1));
-      gl.uniform2f(U.uWidthAccent, c.widthAccentEvery || 0, c.widthAccentAmt || 0);
-      var wdRad = (c.widthDirAngle || 0) * Math.PI / 180;
-      gl.uniform3f(U.uWidthDir, Math.cos(wdRad), Math.sin(wdRad), c.widthDirAmt || 0);
-      gl.uniform2f(U.uWidthNoise, c.widthNoiseAmt || 0, c.widthNoiseFreq || 0);
-      gl.uniform1i(U.uLineStyle, LINE_STYLES[c.lineStyle] || 0);
-      var rgb = hexToRgb(c.color);
-      gl.uniform4f(U.uColor, rgb[0], rgb[1], rgb[2], c.opacity * slot.alpha);
-      gl.uniform1f(U.uIrregAmt, c.irregAmt);
-      gl.uniform1f(U.uIrregFreq, c.irregFreq);
-      gl.uniform1f(U.uWobblePhase, ph.wobble);
-      gl.uniform2f(U.uSeedOffset, c.seed * 0.173, c.seed * 0.911);
-      gl.uniform2f(U.uAnchorLocal, lx, ly);
-      gl.uniform1f(U.uDeformStrength, (c.mouseDeform || c.deformMode === 'fixed') ? c.deformStrength : 0);
-      gl.uniform1f(U.uDeformRadius, Math.max(1, c.deformRadius));
-      gl.uniform1i(U.uDeformType, DEFORM_TYPES[c.deformType] || 0);
-      gl.uniform1f(U.uRingCountInv, 1 / Math.max(1, c.ringCount - 1));
-      gl.uniform1f(U.uBaseRadius, c.baseRadius);
-      gl.uniform1f(U.uSpacing, c.spacing);
-      gl.uniform1f(U.uSpacingVarAmt, c.spacingVarAmt);
-      gl.uniform1f(U.uEccentricity, c.eccentricity);
-      var eccRad = (c.eccentricityAngle || 0) * Math.PI / 180;
-      gl.uniform2f(U.uEccDir, Math.cos(eccRad), Math.sin(eccRad));
-      gl.uniform1f(U.uBulgeAmt, c.bulgeAmt || 0);
-      gl.uniform1f(U.uGrowthPhase, ph.growth);
-      gl.uniform1f(U.uGrowthWaveCount, Math.max(0.01, c.growthWaveCount || 0.01));
-      gl.uniform1f(U.uGrowthAmt, Math.min(1, Math.max(0, c.growthAmt || 0)));
-      gl.uniform1f(U.uRippleAmt, c.rippleAmt || 0);
-      gl.uniform1f(U.uRippleFreq, c.rippleFreq || 0);
-      gl.uniform1f(U.uRipplePhase, ph.ripple);
-      gl.uniform1f(U.uRingWidthVar, c.ringWidthVar || 0);
-      gl.uniform1f(U.uRingOpacityVar, c.ringOpacityVar || 0);
-      gl.uniform1f(U.uRingWobbleVar, c.ringWobbleVar || 0);
-      gl.uniform1f(U.uRingDrift, c.ringDrift || 0);
-      gl.uniform1f(U.uOutlineAmt, c.outlineAmt || 0);
-      gl.uniform1f(U.uOutlineFreq, c.outlineFreq || 0);
-      gl.uniform1f(U.uOutlineGrowth, Math.max(0, c.outlineGrowth || 0));
-      gl.uniform1f(U.uIconAmt, g.hasIcon ? Math.min(1, Math.max(0, c.iconAmt)) : 0);
-      gl.uniform1f(U.uParallelAmt, c.parallelAmt || 0);
-      gl.uniform1f(U.uSpacingCurve, Math.max(0.1, c.spacingCurve || 1));
-      // the bark scales with the art, like the line width
-      gl.uniform4f(U.uBark, Math.max(0, c.barkWidth || 0) * dpr * c.scale, c.barkRough || 0,
-                   (c.barkGap || 0) * dpr * c.scale, Math.max(0.2, c.barkDetail || 4));
+      feed(U);
 
       // pass 1: coverage mask with MAX blending
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
@@ -1708,6 +2096,9 @@
       gl.bindTexture(gl.TEXTURE_2D, fboTex);
       gl.uniform1i(locBlitTex, 0);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      // the ticker, straight onto the canvas with the same blending
+      drawTicker(slot, dpr, feed);
     }
 
     // opts.transparent leaves the background out (renderNow only; the rAF
@@ -1882,6 +2273,10 @@
       _running = false;
       if (_raf) cancelAnimationFrame(_raf);
       window.removeEventListener('mousemove', onMouseMove);
+      if (typeof document !== 'undefined' && document.fonts && document.fonts.removeEventListener){
+        document.fonts.removeEventListener('loadingdone', dropAtlases);
+      }
+      dropAtlases();
       cancelTransition();
       freeGeometry(live.geom);
       live.geom = null;

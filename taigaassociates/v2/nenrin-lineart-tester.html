@@ -717,6 +717,40 @@
     add(slider({ k: 'barkGap', label: '最外周の年輪との間隔（マイナスで重ねる）', min: -20, max: 40, step: 0.5 }));
   });
 
+  // a free-text field; typing redraws straight away (the atlas is rebuilt
+  // from the new characters on the next frame)
+  function textField(def){
+    var wrap = el('div', 'field'); wrap.dataset.param = def.k;
+    var row = el('div', 'label-row'); row.appendChild(el('span', '', def.label));
+    var ta = document.createElement('textarea');
+    ta.rows = 2; ta.spellcheck = false;
+    ta.style.cssText = 'width:100%;box-sizing:border-box;background:#181818;color:#ccc;border:1px solid #333;' +
+      'border-radius:6px;padding:6px 8px;font-size:11px;line-height:1.5;resize:vertical;';
+    ta.addEventListener('input', function(){ state[def.k] = ta.value.replace(/\n/g, ' '); changed(def); });
+    register(def, function(){ if (ta.value !== state[def.k]) ta.value = state[def.k]; });
+    wrap.appendChild(row); wrap.appendChild(ta);
+    return wrap;
+  }
+  var TICKER_FONTS = [
+    ["'Futura', 'Century Gothic', 'Avenir Next', 'Helvetica Neue', Arial, sans-serif", 'ジオメトリック（Futura 系）'],
+    ["'Helvetica Neue', Helvetica, Arial, sans-serif", 'グロテスク（Helvetica 系）'],
+    ["'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif", '和文ゴシック'],
+    ["'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif", '和文明朝'],
+    ["ui-monospace, 'SF Mono', Menlo, Consolas, monospace", '等幅']
+  ];
+
+  section('ticker', 'テキスト（外周）', 'Ticker', false, function(){
+    return state.tickerShow ? Math.round(state.tickerSize) + 'px' : 'なし';
+  }, function(add){
+    add(check({ k: 'tickerShow', label: '最外周にテキストを表示' }));
+    add(textField({ k: 'tickerText', label: 'テキスト（外周を埋めるように繰り返されます）' }));
+    add(select({ k: 'tickerFont', label: '書体', options: TICKER_FONTS }));
+    add(slider({ k: 'tickerSize', label: '文字サイズ', min: 6, max: 80, step: 0.5 }));
+    add(slider({ k: 'tickerTracking', label: '文字間（文字サイズに対する比率）', min: -0.1, max: 1, step: 0.01 }));
+    add(slider({ k: 'tickerGap', label: '線との間隔', min: -20, max: 80, step: 0.5 }));
+    add(slider({ k: 'tickerSpeed', label: '流れる速度（0=静止 / マイナスで逆回り）', min: -150, max: 150, step: 1 }));
+  });
+
   section('wobble', '細かな揺らぎ', 'Wobble', false, function(){
     return state.irregAmt ? '振れ幅 ' + Number(state.irregAmt).toFixed(1) : 'なし';
   }, function(add){
@@ -870,6 +904,7 @@
     if (!s.spacingVarAmt) off('spacingVarFreq');
     if (!s.parallelAmt) off('parallelFreq', 'parallelLength');
     if (!s.barkWidth) off('barkRough', 'barkDetail', 'barkGap');
+    if (!s.tickerShow) off('tickerText', 'tickerFont', 'tickerSize', 'tickerTracking', 'tickerGap', 'tickerSpeed');
     else if (!s.barkRough) off('barkDetail');
     if (!s.eccentricity) off('eccentricityAngle');
     if (!s.irregAmt) off('irregFreq', 'ringWobbleVar', 'ringDrift');
@@ -887,7 +922,7 @@
     if (!deformLive) off('deformRadius', 'deformType', 'anchorX', 'anchorY');
     if (!s.deformStrength) off('deformMode');
     if (s.deformMode !== 'fixed') off('anchorX', 'anchorY');
-    if (!s.animate) off('wobbleSpeed', 'breatheSpeed', 'growthSpeed', 'rippleSpeed');
+    if (!s.animate) off('wobbleSpeed', 'breatheSpeed', 'growthSpeed', 'rippleSpeed', 'tickerSpeed');
     return out;
   }
   function applyRelevance(root, hide){
